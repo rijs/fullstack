@@ -6,7 +6,7 @@ var resources = {}
 module.exports = ripple
 
 function ripple(server, app){
-  app.use('/', append)
+  app.use(append)
   app.use('/ripple', client)
 
   io = require('socket.io')(server)
@@ -52,7 +52,6 @@ function connected(socket){
   Object 
     .keys(store)
     .forEach(function(name){
-      console.log('name store', name)
       socket.emit('response', { 
         name: name
       , store: store[name]
@@ -63,7 +62,6 @@ function connected(socket){
   socket.on('request', request)
   
   function request(req){
-    console.log('req', req.name, resources[req.name])
     socket.emit('response', {
       store: store[req.name]
     , resource: '' + resources[req.name]
@@ -83,9 +81,17 @@ function meta(name) {
 }
 
 function append(req, res, next){
-  if (!isHTML(req)) return next()
-  res.write('<script src="/socket.io/socket.io.js"></script>')
-  res.write('<script src="/ripple" defer></script>')
+
+  var end = res.end
+  res.end = function() {
+    if (isHTML(this.req)) {
+      res.write('<script src="/socket.io/socket.io.js"></script>')
+      res.write('<script src="/ripple" defer></script>')      
+    }
+    
+    end.apply(this, arguments)
+  }
+
   next()
 }
 
@@ -111,4 +117,4 @@ function objectify(rows) {
 }
 
 var c = 0
-setInterval(function(){ store['events'].push({ id:c++, title: c, host_id: 1}) }, 3000)
+setInterval(function(){ store['events'].push({ id:c++, title: c, host_id: 1, date: +(new Date())}) }, 3000)

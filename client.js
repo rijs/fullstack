@@ -2,9 +2,11 @@ var resources = {}
   , store = {}
   , socket = io()
 
+// init
 // activate()
+setupListeners()
 
-ripple = function(name){
+function ripple(name){
   return resources[name]
 }
 
@@ -52,7 +54,7 @@ function fetch(name){
 }
 
 socket.on('response', function(res) {
-  console.log('res', res.name, res.store)
+  // console.log('res', res.name, res.store)
   res.resource && (resources[res.name] = interpret(res.resource))
   res.store    && (store[res.name]     = res.store)
   // activate(res.name)
@@ -98,98 +100,134 @@ function log(d){
   console.log(d)
 }
 
+function extract(from){
+  var start = from.indexOf('<body') + 6
+    , end = from.indexOf('</body')
+  
+  return from.slice(start, end)
+}
+
+function reinsert(){
+  console.debug('reinsert', this)
+  var script = this.cloneNode()
+  this.parentNode.insertBefore(script, this)
+}
+
+function remove(){
+  this.remove()
+}
+
+function outerHTML(d){
+  return d.outerHTML.trim()
+}
+
+function delegate(selector, fn){
+  return function(){
+    d3.event.target.webkitMatchesSelector(selector) && fn.call(d3.event.target)
+  }
+}
+
 // ----------------------------------------------------------------------------
-// RIPPLE
+// NAVIGATION 
 // ----------------------------------------------------------------------------
-// !(function(){
+function setupListeners(){
+  // console.log('registering listeners')
 
-//   function createRipple() {
-//     var socket = io()
-//       , cache = {}
-//       , audience = []
+  d3.selectAll('form')
+    .on('submit', function(d, i){
+      d3.event.preventDefault()
+      document.body.classList.add('exit')
 
-//     socket.emit('connected', Date())
+      request(this.action)
+        .method(this.method)
+        .data(new FormData(this))()
+    })
 
-//     function ripple(render) {
-//       return function(){
-//         audience
-//           .filter(byNode(this.node()))
-//           .map(setRender(render))
-//       }
-//     }
+  d3.select(document.body)
+    .on(
+        'click'
+      , delegate('a[href]:not([href^=javascript]):not(.bypass)', function() {
+          d3.event.preventDefault()
+          document.body.classList.add('exit')
+          request(this.href)()
+        })
+      )
 
-//     ripple.request = function(resource){
-//       if (!resource) return
-//       if (cache[resource]) return cache[resource]
-//       return fetch(resource)
-//     }
-    
-//     ripple.cache = function(value){
-//       if (!value) return cache
+  window.addEventListener("popstate", function(event) {
+    if (!event.state) return;
+    document.body.classList.add('exit')
+    replace(event.state.page)
+    document.body.classList.remove('exit')
+  })
+}
 
-//     }
+function request(url) {
+  var method = 'GET'
+    , data
+    , node
+    , url = (new URL(url)).pathname
 
-//     socket.on('response', function(res) {
-//       console.log('resource received', res.resource, cache, res)
-//       res.resource.map(to(cache[res.name]))
-//     })
+  call.node = function(_){
+    if (!_) return node
+    node = _
+    return call
+  }
 
-//     return ripple
+  call.method = function(_){
+    if (!_) return method
+    method = _
+    return call
+  }
 
-//     function fetch(resource){
-//       socket.emit('request', { 
-//         name: resource
-//       })
+  call.data = function(_){
+    if (!_) return data
+    data = _
+    return call
+  }
 
-//       return function(){
-//         audience.push({
-//           node: this
-//         , name: resource
-//         })
-//         return Array.observe(cache[resource] = [], eagle(resource)) 
-//       }
-//     }
+  return call
 
-//     function eagle(name){
+  function call() {
+    d3.xhr(url)
+      .send(method, data)
+      .on('load', done)
+  }
 
-//       return function(){
-//         console.log('SOMETHING CHANGED!!!', name, audience)
-//         audience
-//           .filter(byName(name))
-//           .map(invoke)
-//       }
-//     }
-    
-//     function invoke(d){
-//       d3.select(d.node).call(d.render)
-//     }
+  function done(r) {
+    console.log('loaded ', r.getResponseHeader('location') || url)
+    history.replaceState({page: document.body.innerHTML}, "", document.location.pathname);
+    history.pushState({page: replace(extract(r.response)) }, "", r.getResponseHeader('location') || url);
+    document.body.classList.remove('exit')
+  }
+}
 
-//     function to(target){
-//       return function(d){
-//         target.push(d)
-//       }
-//     }
+function replace(using) {
+  d3.select(document.body)
+      .selectAll('body > *')
+      .datum(function(d){ return this.outerHTML })
 
-//     function byName(name){
-//       return function(d){
-//         return d.name == name
-//       }
-//     }
+  var target = document.createElement('body')
+  target.innerHTML = using
 
-//     function byNode(node){
-//       return function(d){
-//         console.log(d.node, node)
-//         return d.node == node
-//       }
-//     }
+  var children = Array.prototype.slice.call(target.children).map(outerHTML)
+  
+  var join = d3.select(document.body)
+      .selectAll('body > *')
+      .data(children, String)
 
-//     function setRender(render){
-//       return function(d){
-//         return d.render = render, d
-//       }
-//     }
+  join.exit().remove()
+  join.enter().append('div').classed('entering', true)
+  join.order()
+  d3.selectAll('.entering').select(function(d){ this.outerHTML = d })
 
-//   }
+  d3.select(document.body)
+    .selectAll('script')
+    .each(reinsert)
+    .each(reinsert)
+    .each(remove)
 
-//   window.ripple = createRipple()
-// })()
+// console.log('reactivating all')
+  // activateAll()
+  setupListeners()
+  return using
+}
