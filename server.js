@@ -1,11 +1,11 @@
 var resources = {}
-  , store = {}
   , fs = require('fs')
   , io
+  , log = console.log.bind(console, '[ripple]')
 
-module.exports = ripple
+module.exports = createRipple
 
-function ripple(server, app){
+function createRipple(server, app) {
   app.use(append)
   app.use('/ripple', client)
 
@@ -15,27 +15,116 @@ function ripple(server, app){
   return ripple
 }
 
+function ripple(name){
+  if (!resources[name]) return console.error('[ripple] No such "'+name+'" resource exists')
+  return resources[name].body
+}
+
 ripple.db = function(config){
   global.con = require('mysql').createPool(config)
-
   // con.query('show tables', function(err, rows, fields) {
   //   rows.map(value)
   // })
-
   return ripple
 }
 
-ripple.resource = function(name, fn){
-  if (!fn) return resources[name]
-  resources[name] = fn
+ripple.resource = function(name, body, headers){
+  isData(headers, name) && store.apply(this, arguments)
+  isHTML(headers, name) && html.apply(this, arguments)
+  isJS  (headers, name) && js.apply(this, arguments)
   return ripple
 }
 
-ripple.store = function(name, table){
-  if (!name) return store
-  con.query('select * from ' + (table || name), function(err, rows) {
-    Array.observe(store[name] = rows, meta(name))
+function table(name) {
+  return resources[name]['headers']['content-location']
+}
+
+function sql(name, body) {
+  var template = 'INSERT INTO {table} ({keys}) VALUES ({values})'
+  template = template.replace('{table}', name)
+  template = template.replace('{keys}', Object.keys(body).filter(noId).join(','))
+  template = template.replace('{values}', Object.keys(body).filter(noId).map(value(body)).join(','))
+  log(template)
+  return template
+}
+
+function noId(key) {
+  return key !== 'id'
+}
+
+function value(arr) {
+  return function(key){
+    return con.escape(arr[key])
+  }
+}
+
+function enhance(body, name) {
+  if (body.push == Array.prototype.push) {
+    body.push = function(data){
+      var d = q.defer()
+        , t = table(name)
+        , s = sql(t, data)
+
+      log('adding ' + name)
+      con.query(s, function(err, rows, fields) {
+        if (err) { return d.reject(log('adding ' + name + ' failed', err)) }
+        log('added ' + name, rows.insertId)
+        data.id = rows.insertId
+        body[body.length] = data
+        d.resolve(rows.insertId)
+      });
+      
+      return d.promise
+    }
+  }
+
+  return body
+}
+
+function js(name, fn, headers){
+  var headers = headers || { 'content-type': 'application/javascript' }
+
+  resources[name] = { 
+    name: name
+  , body: '' + Object.observe(fn, meta(name))
+  , headers: headers 
+  }
+  
+  return ripple
+}
+
+function html(name, html, headers){
+  var headers = headers || { 'content-type': 'text/html' }
+
+  resources[name] = { 
+    name: name
+  , body: Object.observe([html], meta(name))[0]
+  , headers: headers 
+  }
+  
+  return ripple
+}
+
+function store(name, body, headers) {
+  var alias = isString(body) && body
+    , facade = isFunction(body) && body || identity
+    , headers = headers || { 
+        'content-type': 'application/data'
+      , 'content-location': alias || name.split('.')[0] 
+      }
+    , table = headers['content-location']
+
+  log('getting ', table)
+  con.query('select * from ' + headers['content-location'], function(e, rows) {
+    if (e) return log('ERROR', table, e)
+    log('got ', table, rows.length)
+    resources[name] = { 
+      name: name
+    , body: Array.observe(enhance(rows, name), meta(name))
+    , headers: headers
+    }
   })
+
   return ripple
 }
 
@@ -43,39 +132,37 @@ function connected(socket){
   Object 
     .keys(resources)
     .forEach(function(name){
-      socket.emit('response', { 
-        name: name
-      , resource: '' + resources[name]
-      })
-    })
-
-  Object 
-    .keys(store)
-    .forEach(function(name){
-      socket.emit('response', { 
-        name: name
-      , store: store[name]
-      })
+      log('sending', name)
+      socket.emit('response', resources[name])
     })
 
   socket.emit('draw')
   socket.on('request', request)
+  socket.on('push', push)
   
   function request(req){
-    socket.emit('response', {
-      store: store[req.name]
-    , resource: '' + resources[req.name]
-    , name: req.name
-    })
+    log('request', req)
+    return !resources[req.name] 
+      ? log('no resource for', req)
+      : socket.emit('response', resources[req.name])
+      , socket.emit('draw')
+  }
+
+  function push(req) {
+    log('push', req)
+
+    var name = req[0]
+      , added = req[1]
+
+    resources[name].body.push(added)
   }
 }
 
 function meta(name) {
   return function (changes) {
-    io.emit('response', {
-      store: changes[0].object
-    , name: name
-    })
+    resources[name].body = changes[0].object
+    log('observed changes in', name)
+    io.emit('response', resources[name])
     io.emit('draw')
   }
 }
@@ -84,7 +171,7 @@ function append(req, res, next){
 
   var end = res.end
   res.end = function() {
-    if (isHTML(this.req)) {
+    if (acceptsHTML(this.req)) {
       res.write('<script src="/socket.io/socket.io.js"></script>')
       res.write('<script src="/ripple" defer></script>')      
     }
@@ -95,20 +182,53 @@ function append(req, res, next){
   next()
 }
 
-function isHTML(req){
+function acceptsHTML(req){
   return !!~req.headers.accept.indexOf('html')
+}
+
+function isData(headers, name){
+  return headers && headers['content-type'] == 'application/data'
+    || name.contains('.data')
+}
+
+function isJS(headers, name){
+  return headers && headers['content-type'] == 'application/javascript'
+    || name.contains('.js')
+}
+
+function isHTML(headers, name){
+  return headers && headers['content-type'] == 'text/html'
+    || name.contains('.html')
 }
 
 function client(req, res){
   res.sendfile(__dirname + '/client.js')
 }
 
-function value(d){ 
-  return d[Object.keys(d)[0]]
+function id(req) {
+  return req.name + '.' + compress(req.headers['content-type'])
+  // return type 
+  //   ? name + '.' + type
+  //   : name.headers 
+  //   ? name.headers['name'] + '.' + name.headers['content-type']
+  //   : name['name'] + '.' + name['content-type']
 }
 
+function compress(type) {
+  return type == 'application/javascript'
+    ? 'js'
+    : type == 'application/data' 
+    ? 'data'
+    : 'html'
+}
+
+
+// function value(d){ 
+//   return d[Object.keys(d)[0]]
+// }
+
 function log(d){
-  console.log(d)
+  log(d)
 }
 
 function objectify(rows) {
@@ -116,5 +236,16 @@ function objectify(rows) {
   return rows.forEach(function(d){ o[d.id] = d }), o
 }
 
-var c = 0
-setInterval(function(){ store['events'].push({ id:c++, title: c, host_id: 1, date: +(new Date())}) }, 3000)
+function isString(d) {
+  return typeof d == 'string'
+}
+
+function isObject(d) {
+  return typeof d == 'object'
+}
+
+function isFunction(d) {
+  return typeof d == 'function'
+}
+
+function identity(d){ return d }

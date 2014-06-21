@@ -1,51 +1,53 @@
 var resources = {}
-  , store = {}
   , socket = io()
 
-// init
-// activate()
 setupListeners()
 
 function ripple(name){
-  return resources[name]
+  return resources[name].body
 }
 
 function activateAll(){
-  all('[data-resource]')
+  console.log('activateAll')
+  all('[ripple]')
     .map(bind)
     .map(invoke)
     .map(log)
 }
 
-function activate(name) {
-  if (!isJS(name)) return;
-  all('[data-resource='+name+']')
-    .map(bind)
-    .map(invoke)
-}
+// function activate(name) {
+//   console.log('activate', name)
+//   all('[data-resource='+name+']')
+//     .map(bind)
+//     .map(invoke)
+//     .map(log)
+// }
 
 ripple._resources = function(){
   return resources
 }
 
-ripple._store = function(){
-  return store
-}
-
 function invoke(d){ 
-  d.__render__ && d.__render__()
+  try {
+    d.__render__ && d.__render__()
+  } catch (err) {
+    console.error(err)
+  }
   return d
 }
 
 function bind(d){
-  var name = d.dataset.resource
-  ;(!resources[name] && !store[name])
-    ? fetch(name)
-    : (
-        d.__render__ = resources[name]
-      , d.__data__ = store[name]
-      )
+  var name = d.dataset.resource || d.tagName.toLowerCase()
+    , data = attr(d, 'data')
+    , idJS = name + '.js'
+    , idDB = data ? data + '.data' : ''
 
+  idJS && !resources[idJS] && fetch(idJS)
+  idDB && !resources[idDB] && fetch(idDB)
+
+  d.__render__ = resources[idJS] && resources[idJS].body
+  d.__data__   = resources[idDB] && resources[idDB].body
+  
   return d
 }
 
@@ -54,23 +56,71 @@ function fetch(name){
 }
 
 socket.on('response', function(res) {
-  // console.log('res', res.name, res.store)
-  res.resource && (resources[res.name] = interpret(res.resource))
-  res.store    && (store[res.name]     = res.store)
-  // activate(res.name)
+  isJS(res.headers) && (res.body = fn(res.body))
+  isData(res.headers) && Object.observe(res.body, meta(res.name))
+  resources[res.name] = res
+  // isJS(res.headers) && activate(res.name)
 })
 
 socket.on('draw', activateAll)
 
-function type(name) {
-  return resources[name][0] == '<'
-    ? 'text/html'
-    : 'application/javascript'
+function meta(name) {
+  return function (changes) {
+    resources[name].body = changes[0].object
+    console.log('observed changes in', name, changes)
+    changes.forEach(process.bind(name))
+    activateAll()
+  }
 }
 
-function isJS(name) {
-  return type(name) == 'application/javascript'
+function process(change) {
+  var type = change.type
+    , body = change.object
+    , name = this
+    , i = change.name
+
+  type == 'add' && socket.emit('push', [name, body[i]])
 }
+
+function expand(type) {
+  return type == 'js' 
+    ? 'application/javascript'
+    : type == 'data' 
+    ? 'application/data'
+    : 'text/html'
+}
+
+function compress(type) {
+  return type == 'application/javascript'
+    ? 'js'
+    : type == 'application/data' 
+    ? 'data'
+    : 'html'
+}
+
+function id(res) {
+  return res.name + '.' + res.headers['content-type']
+}
+
+function isJS(headers){
+  return headers && headers['content-type'] == 'application/javascript'
+}
+
+function isData(headers){
+  return headers && headers['content-type'] == 'application/data'
+}
+
+
+// function type(name) {
+//   return resources[name][0] == '<'
+//     ? 'text/html'
+//     : 'application/javascript'
+// }
+
+// function isJS(name) {
+//   return type(name) == 'application/javascript'
+// }
+
 function interpret(resource) {
   return resource[0] == '<'
     ? html(resource)
@@ -107,9 +157,16 @@ function extract(from){
   return from.slice(start, end)
 }
 
+function attr(d, name) {
+  return d.attributes.getNamedItem(name)
+      && d.attributes.getNamedItem(name).value
+}
+
 function reinsert(){
   console.debug('reinsert', this)
-  var script = this.cloneNode()
+  var script = document.createElement('script')
+  script.innerHTML = this.innerHTML
+  script.src = this.src
   this.parentNode.insertBefore(script, this)
 }
 
@@ -153,13 +210,15 @@ function setupListeners(){
         })
       )
 
-  window.addEventListener("popstate", function(event) {
-    if (!event.state) return;
-    document.body.classList.add('exit')
-    replace(event.state.page)
-    document.body.classList.remove('exit')
-  })
 }
+
+window.addEventListener("popstate", function(event) {
+  console.log('popstate')
+  if (!event.state) return;
+  document.body.classList.add('exit')
+  replace(event.state.page)
+  document.body.classList.remove('exit')
+})
 
 function request(url) {
   var method = 'GET'
@@ -202,6 +261,7 @@ function request(url) {
 }
 
 function replace(using) {
+  console.log('replacing')
   d3.select(document.body)
       .selectAll('body > *')
       .datum(function(d){ return this.outerHTML })
@@ -221,13 +281,11 @@ function replace(using) {
   d3.selectAll('.entering').select(function(d){ this.outerHTML = d })
 
   d3.select(document.body)
-    .selectAll('script')
-    .each(reinsert)
+    .selectAll('script:not(.bypass)')
     .each(reinsert)
     .each(remove)
 
-// console.log('reactivating all')
-  // activateAll()
+  activateAll()
   setupListeners()
   return using
 }
