@@ -8,7 +8,7 @@ function ripple(name){
 }
 
 function activateAll(){
-  console.log('activateAll')
+  // console.log('activateAll')
   all('[ripple]')
     .map(bind)
     .map(invoke)
@@ -65,6 +65,7 @@ socket.on('response', function(res) {
 socket.on('draw', activateAll)
 
 function meta(name) {
+  console.log('watching', name)
   return function (changes) {
     resources[name].body = changes[0].object
     console.log('observed changes in', name, changes)
@@ -160,6 +161,14 @@ function extract(from){
 function attr(d, name) {
   return d.attributes.getNamedItem(name)
       && d.attributes.getNamedItem(name).value
+}
+
+function matches(k, v){
+  return function(d){
+    return d[k].toLowerCase && v.toLowerCase
+      ? d[k].toLowerCase() == v.toLowerCase()
+      : d[k] == v
+  }
 }
 
 function reinsert(){
