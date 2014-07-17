@@ -12,7 +12,7 @@ function activateAll(){
   all('[ripple]')
     .map(bind)
     .map(invoke)
-    .map(log)
+    // .map(log)
 }
 
 // function activate(name) {
@@ -29,8 +29,9 @@ ripple._resources = function(){
 
 function invoke(d){ 
   try {
-    d.__render__ && d.__render__()
+    d.__render__ && d.__render__(d.__data__)
   } catch (err) {
+    // debugger
     console.error(err)
   }
   return d
@@ -52,6 +53,7 @@ function bind(d){
 }
 
 function fetch(name){
+  console.log('fetch', name)
   socket.emit('request', { name: name })
 }
 
@@ -221,11 +223,11 @@ function setupListeners(){
 
 }
 
-window.addEventListener("popstate", function(event) {
+d3.select(window).on("popstate", function() {
   console.log('popstate')
-  if (!event.state) return;
+  if (!d3.event.state) return;
   document.body.classList.add('exit')
-  replace(event.state.page)
+  replace(d3.event.state.page)
   document.body.classList.remove('exit')
 })
 
