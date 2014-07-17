@@ -1,9 +1,11 @@
 var resources = {}
   , fs = require('fs')
+  , q = require('q')
   , io
   , log = console.log.bind(console, '[ripple]')
   , onHeaders = require('on-headers')
   , apn = require('apn')
+  , con
 
 // ----------------------------------------------------------------------------
 // APNS
@@ -34,7 +36,7 @@ ripple._resources = function(){
 }
 
 ripple.db = function(config){
-  global.con = require('mysql').createPool(config)
+  con = require('mysql').createPool(config)
   // con.query('show tables', function(err, rows, fields) {
   //   rows.map(value)
   // })
@@ -75,10 +77,13 @@ function enhance(body, name) {
   if (body.push == Array.prototype.push) {
     body.push = function(data){
       var d = q.defer()
-        , t = table(name)
+      log('adding ' + name)
+      
+      if (!con) return d.resolve(body[body.length] = data, data.id)
+      
+      var t = table(name)
         , s = sql(t, data)
 
-      log('adding ' + name)
       con.query(s, function(err, rows, fields) {
         if (err) { return d.reject(log('adding ' + name + ' failed', err)) }
         log('added ' + name, rows.insertId)
@@ -121,6 +126,7 @@ function html(name, html, headers){
 function store(name, body, headers) {
   var alias = isString(body) && body
     , facade = isFunction(body) && body || identity
+    , body = isObject(body) && body || []
     , headers = headers || { 
         'content-type': 'application/data'
       , 'content-location': alias || name.split('.')[0] 
@@ -128,15 +134,22 @@ function store(name, body, headers) {
     , table = headers['content-location']
 
   log('getting', table)
-  con.query('select * from ' + headers['content-location'], function(e, rows) {
-    if (e) return log('ERROR', table, e)
-    log('got ', table, rows.length)
+
+  con 
+  ? con.query('select * from '+headers['content-location'], function(e, rows) {
+      if (e) return log('ERROR', table, e)
+      log('got ', table, rows.length)
+      register(rows)
+    })
+  : register(body)
+
+  function register(rows) {
     resources[name] = { 
       name: name
     , body: Array.observe(enhance(rows, name), meta(name))
     , headers: headers
     }
-  })
+  }
 
   return ripple
 }
