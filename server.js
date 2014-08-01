@@ -16,9 +16,9 @@ var apnConnection = new apn.Connection(options)
 module.exports = createRipple
 
 function createRipple(server, app) {
-  console.log('creating')
-  app.use('/ripple', client)
-  app.use(append)
+  console.log('creating ripple')
+  // app.use('/ripple', client)
+  // app.use(append)
 
   io = require('socket.io')(server)
   io.on('connection', connected)
@@ -214,7 +214,7 @@ function append(req, res, next){
 }
 
 function acceptsHTML(req){
-  return !!~req.headers.accept.indexOf('html')
+  return req.headers.accept && !!~req.headers.accept.indexOf('html')
 }
 
 function isData(headers, name){

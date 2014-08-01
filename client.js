@@ -223,7 +223,7 @@ function setupListeners(){
 
 }
 
-d3.select(window).on("popstate", function() {
+d3.select(window).on("popstate.ripple", function() {
   console.log('popstate')
   if (!d3.event.state) return;
   document.body.classList.add('exit')
