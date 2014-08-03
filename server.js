@@ -15,10 +15,12 @@ var apnConnection = new apn.Connection(options)
 
 module.exports = createRipple
 
-function createRipple(server, app) {
-  console.log('creating ripple')
-  // app.use('/ripple', client)
-  // app.use(append)
+function createRipple(server, app, appendClient) {
+  log('creating')
+  if (appendClient) {
+    app.use('/ripple', client)
+    app.use(append)
+  }
 
   io = require('socket.io')(server)
   io.on('connection', connected)
@@ -124,12 +126,13 @@ function html(name, html, headers){
 }
 
 function store(name, body, headers) {
-  var alias = isString(body) && body
-    , facade = isFunction(body) && body || identity
-    , body = isObject(body) && body || []
+  var alias   = isString(body) && body
+    , facade  = isFunction(body) && body || identity
+    , body    = isObject(body) && body || []
     , headers = headers || { 
         'content-type': 'application/data'
       , 'content-location': alias || name.split('.')[0] 
+      , 'private': body.private
       }
     , table = headers['content-location']
 
@@ -157,10 +160,9 @@ function store(name, body, headers) {
 function connected(socket){
   Object 
     .keys(resources)
-    .forEach(function(name){
-      log('sending', name)
-      socket.emit('response', resources[name])
-    })
+    .filter(notPrivate)
+    .map(logSending)
+    .map(emit(socket))
 
   socket.emit('draw')
   socket.on('request', request)
@@ -168,8 +170,8 @@ function connected(socket){
   
   function request(req){
     log('request', req)
-    return !resources[req.name] 
-      ? log('no resource for', req)
+    return !resources[req.name] || resources[name].headers.private
+      ? log('private or no resource for', req)
       : socket.emit('response', resources[req.name])
       , socket.emit('draw')
   }
@@ -182,6 +184,21 @@ function connected(socket){
 
     resources[name].body.push(added)
   }
+}
+
+function emit(socket) {
+  return function (name) {
+    socket.emit('response', resources[name])
+  }
+}
+
+function logSending(name) {
+  log('sending', name)
+  return name
+}
+
+function notPrivate(name) {
+  return !resources[name].headers.private
 }
 
 function meta(name) {
