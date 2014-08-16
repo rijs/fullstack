@@ -1,4 +1,7 @@
 var resources = {}
+  , options = {}
+  , permissions = {}
+  , userSession
   , fs = require('fs')
   , io
   , log = console.log.bind(console, '[ripple]')
@@ -17,7 +20,7 @@ function createRipple(server, app) {
 
 function ripple(name){
   if (!resources[name]) return console.error('[ripple] No such "'+name+'" resource exists')
-  return resources[name].body
+  return resources[name].body.filter(checkPerms(name, 'read'))
 }
 
 ripple.db = function(config){
@@ -28,25 +31,66 @@ ripple.db = function(config){
   return ripple
 }
 
-ripple.resource = function(name, body, headers){
+ripple.resource = function(name, body, headers, options,  permissions){
   isData(headers, name) && store.apply(this, arguments)
   isHTML(headers, name) && html.apply(this, arguments)
   isJS  (headers, name) && js.apply(this, arguments)
+
+  permissions[name] = permissions
+  options[name] = options
+
   return ripple
+}
+
+ripple.userSession = function(userFrom){
+  return function(req, res, next){
+    userSession = userFrom(req)
+    next()
+  }
+}
+
+function checkPerms(name, type){
+  return function(ele){
+    var perms = permissions[name]
+    return (type in perms)? perms[type].call(this, userSession, ele): true
+  }
+}
+
+function notPrivate(name){
+  return ('private' in options[name])? !options[name].private : true
 }
 
 function table(name) {
   return resources[name]['headers']['content-location']
 }
 
-function sql(name, body) {
-  var template = 'INSERT INTO {table} ({keys}) VALUES ({values})'
+function sqlc(name, body) {
+  var template = 'INSERT INTO {table} ({keys}) VALUES ({values});'
   template = template.replace('{table}', name)
   template = template.replace('{keys}', Object.keys(body).filter(noId).join(','))
   template = template.replace('{values}', Object.keys(body).filter(noId).map(value(body)).join(','))
   log(template)
   return template
 }
+
+function sqlu(name, body) {
+    var template = 'UPDATE {table} SET ({kvpairs}) WHERE id = {id};'
+    template = template.replace('{table}', name)
+    template = template.replace('{id}', body['id'])
+    template = template.replace('{kvpairs}', Object.keys(body).filter(noId)).map(kvpair(body).join(','))
+    log(template)
+    return template
+}
+
+function sqld(name, body) {
+    var template = 'DELETE FROM {table} WHERE id = {id};'
+    template = template.replace('{table}', name)
+    template = template.replace('{id}', body['id'])
+    log(template)
+    return template
+}
+
+
 
 function noId(key) {
   return key !== 'id'
@@ -58,25 +102,59 @@ function value(arr) {
   }
 }
 
+function kvpair(arr) {
+  return function(key){
+    return key+'='+con.escape(arr[key])
+  }
+}
+
 function enhance(body, name) {
   if (body.push == Array.prototype.push) {
     body.push = function(data){
       var d = q.defer()
         , t = table(name)
-        , s = sql(t, data)
+        , s = sqlc(t, data)
 
       log('adding ' + name)
+
+      if (checkPerms(name, 'create')(data)){
+        log('insuffcient permissions for ' + name)
+        return
+      }
+
       con.query(s, function(err, rows, fields) {
         if (err) { return d.reject(log('adding ' + name + ' failed', err)) }
         log('added ' + name, rows.insertId)
         data.id = rows.insertId
         body[body.length] = data
         d.resolve(rows.insertId)
-      });
+      })
       
       return d.promise
     }
   }
+
+  body.remove = function(data){
+    var d = q.defer()
+      , t = table(name)
+      , s = sqld(t, data)
+
+      log('removing ' + name)
+
+      if (checkPerms(name, 'delete')(data)){
+        log('insuffcient permissions for ' + name)
+        return
+      }
+
+      con.query(s, function(err, rows, fields){
+        if (err) { return d.reject(log('removing ' + name + ' failed', err)) }
+        log('removed' + name)
+        body.splice(body.indexOf(data), 1)
+        d.resolve()
+      })
+
+      return d.promise
+}
 
   return body
 }
@@ -131,6 +209,7 @@ function store(name, body, headers) {
 function connected(socket){
   Object 
     .keys(resources)
+    .filter(notPrivate)
     .forEach(function(name){
       log('sending', name)
       socket.emit('response', resources[name])
@@ -160,11 +239,29 @@ function connected(socket){
 
 function meta(name) {
   return function (changes) {
-    resources[name].body = changes[0].object
     log('observed changes in', name)
-    io.emit('response', resources[name])
-    io.emit('draw')
-  }
+
+    var t = table(name)
+      , data = changes[0].object
+      , s = sqlu(t, data)
+
+
+    //check perms and persist changes
+    if (checkPerms(name, 'update')(data)){
+      log('insuffcient permissions for ' + name)
+      return
+    }
+
+    con.query(s, function(err, rows, fields) {
+      if (err) { return d.reject(log('removing ' + name + ' failed', err)) }
+      log('updated' + name)
+      resources[name].body = data
+
+      io.emit('response', resources[name])
+      io.emit('draw')
+
+      })
+    }
 }
 
 function append(req, res, next){
