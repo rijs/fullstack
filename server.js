@@ -170,7 +170,7 @@ function connected(socket){
   
   function request(req){
     log('request', req)
-    return !resources[req.name] || resources[name].headers.private
+    return !resources[req.name] || resources[req.name].headers.private
       ? log('private or no resource for', req)
       : socket.emit('response', resources[req.name])
       , socket.emit('draw')
