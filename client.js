@@ -1,7 +1,7 @@
 var resources = {}
   , socket = io()
 
-setupListeners()
+ripple.activateAll = activateAll
 
 function ripple(name){
   return resources[name].body
@@ -153,13 +153,6 @@ function log(d){
   console.log(d)
 }
 
-function extract(from){
-  var start = from.indexOf('<body') + 6
-    , end = from.indexOf('</body')
-  
-  return from.slice(start, end)
-}
-
 function attr(d, name) {
   return d.attributes.getNamedItem(name)
       && d.attributes.getNamedItem(name).value
@@ -171,132 +164,4 @@ function matches(k, v){
       ? d[k].toLowerCase() == v.toLowerCase()
       : d[k] == v
   }
-}
-
-function reinsert(){
-  console.debug('reinsert', this)
-  var script = document.createElement('script')
-  script.innerHTML = this.innerHTML
-  script.src = this.src
-  this.parentNode.insertBefore(script, this)
-}
-
-function remove(){
-  this.remove()
-}
-
-function outerHTML(d){
-  return d.outerHTML.trim()
-}
-
-function delegate(selector, fn){
-  return function(){
-    d3.event.target.webkitMatchesSelector(selector) && fn.call(d3.event.target)
-  }
-}
-
-// ----------------------------------------------------------------------------
-// NAVIGATION 
-// ----------------------------------------------------------------------------
-function setupListeners(){
-  // console.log('registering listeners')
-
-  d3.selectAll('form')
-    .on('submit', function(d, i){
-      d3.event.preventDefault()
-      document.body.classList.add('exit')
-
-      request(this.action)
-        .method(this.method)
-        .data(new FormData(this))()
-    })
-
-  d3.select(document.body)
-    .on(
-        'click'
-      , delegate('a[href]:not([href^=javascript]):not(.bypass)', function() {
-          d3.event.preventDefault()
-          document.body.classList.add('exit')
-          request(this.href)()
-        })
-      )
-
-}
-
-d3.select(window).on("popstate.ripple", function() {
-  console.log('popstate')
-  if (!d3.event.state) return;
-  document.body.classList.add('exit')
-  replace(d3.event.state.page)
-  document.body.classList.remove('exit')
-})
-
-function request(url) {
-  var method = 'GET'
-    , data
-    , node
-    , url = (new URL(url)).pathname
-
-  call.node = function(_){
-    if (!_) return node
-    node = _
-    return call
-  }
-
-  call.method = function(_){
-    if (!_) return method
-    method = _
-    return call
-  }
-
-  call.data = function(_){
-    if (!_) return data
-    data = _
-    return call
-  }
-
-  return call
-
-  function call() {
-    d3.xhr(url)
-      .send(method, data)
-      .on('load', done)
-  }
-
-  function done(r) {
-    console.log('loaded ', r.getResponseHeader('location') || url)
-    history.replaceState({page: document.body.innerHTML}, "", document.location.pathname);
-    history.pushState({page: replace(extract(r.response)) }, "", r.getResponseHeader('location') || url);
-    document.body.classList.remove('exit')
-  }
-}
-
-function replace(using) {
-  console.log('replacing')
-  d3.select(document.body)
-      .selectAll('body > *')
-      .datum(function(d){ return this.outerHTML })
-
-  var target = document.createElement('body')
-  target.innerHTML = using
-
-  var children = Array.prototype.slice.call(target.children).map(outerHTML)
-  
-  var join = d3.select(document.body)
-      .selectAll('body > *')
-      .data(children, String)
-
-  join.exit().remove()
-  join.enter().append('div').classed('entering', true)
-  join.order()
-  d3.selectAll('.entering').select(function(d){ this.outerHTML = d })
-
-  d3.select(document.body)
-    .selectAll('script:not(.bypass)')
-    .each(reinsert)
-    .each(remove)
-
-  activateAll()
-  setupListeners()
-  return using
 }
