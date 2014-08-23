@@ -218,6 +218,9 @@ function connected(socket){
   socket.emit('draw')
   socket.on('request', request)
   socket.on('push', push)
+  socket.on('remove', remove)
+  socket.on('update', update)
+  
   
   function request(req){
     log('request', req)
@@ -234,6 +237,20 @@ function connected(socket){
       , added = req[1]
 
     resources[name].body.push(added)
+  }
+
+  function remove(req) {
+    log('remove', req)
+
+    var [name, removed] = req
+    resources[name].body.remove(removed)
+  }
+
+  function update(req) {
+    log('update', req)
+
+    var [name, updated] = req
+    meta(name)([{object: updated}]) //should refactor meta to have an update function
   }
 }
 
