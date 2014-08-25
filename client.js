@@ -83,6 +83,8 @@ function process(change) {
     , i = change.name
 
   type == 'add' && socket.emit('push', [name, body[i]])
+  type == 'delete' && socket.emit('remove', [name, body[i]])
+  type == 'update' && socket.emit('update', [name, body[i]])
 }
 
 function expand(type) {
@@ -165,3 +167,4 @@ function matches(k, v){
       : d[k] == v
   }
 }
+
