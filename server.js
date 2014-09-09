@@ -15,9 +15,9 @@ var apnConnection = new apn.Connection(options)
 
 module.exports = createRipple
 
-function createRipple(server, app, appendClient) {
+function createRipple(server, app, noClient) {
   log('creating')
-  if (appendClient) {
+  if (!noClient) {
     app.use('/ripple', client)
     app.use(append)
   }
