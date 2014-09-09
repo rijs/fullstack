@@ -29,8 +29,8 @@ function createRipple(server, app, appendClient) {
 }
 
 function ripple(name){
-  if (!resources[name]) return console.error('[ripple] No such "'+name+'" resource exists')
-  return resources[name].body
+  if (!resources[name]) return console.error('[ripple] No such "'+name+'" resource exists'), []
+  return resources[name].body 
 }
 
 ripple._resources = function(){
