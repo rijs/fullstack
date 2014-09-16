@@ -56,13 +56,36 @@ function table(name) {
   return resources[name]['headers']['content-location']
 }
 
-function sql(name, body) {
+function sqlc(name, body) {
   var template = 'INSERT INTO {table} ({keys}) VALUES ({values})'
   template = template.replace('{table}', name)
   template = template.replace('{keys}', Object.keys(body).filter(noId).join(','))
   template = template.replace('{values}', Object.keys(body).filter(noId).map(value(body)).join(','))
   log(template)
   return template
+}
+
+function sqlu(name, body) {
+  var template = 'UPDATE {table} SET {kvpairs} WHERE id = {id};'
+  template = template.replace('{table}', name)
+  template = template.replace('{id}', body['id'])
+  template = template.replace('{kvpairs}', Object.keys(body).filter(noId).map(kvpair(body)).join(','))
+  log(template)
+  return template
+}
+
+function sqld(name, body) {
+  var template = 'DELETE FROM {table} WHERE id = {id};'
+  template = template.replace('{table}', name)
+  template = template.replace('{id}', body['id'])
+  log(template)
+  return template
+}
+
+function kvpair(arr) {
+  return function(key){
+    return key+'='+con.escape(arr[key])
+  }
 }
 
 function noId(key) {
@@ -76,6 +99,10 @@ function value(arr) {
 }
 
 function enhance(body, name) {
+  body.forEach(function(d){
+    Object.observe(d, metau(name))
+  })
+  // INSERT
   if (body.push == Array.prototype.push) {
     body.push = function(data){
       var d = q.defer()
@@ -84,7 +111,7 @@ function enhance(body, name) {
       if (!con) return d.resolve(body[body.length] = data, data.id)
       
       var t = table(name)
-        , s = sql(t, data)
+        , s = sqlc(t, data)
 
       con.query(s, function(err, rows, fields) {
         if (err) { return d.reject(log('adding ' + name + ' failed', err)) }
@@ -207,6 +234,25 @@ function meta(name) {
     log('observed changes in', name)
     io.emit('response', resources[name])
     io.emit('draw')
+  }
+}
+
+function metau(name){
+  // UPDATE
+  return function(changes){
+    log('updating', name)
+   
+    var t = table(name)
+      , data = changes[0].object
+      , s = sqlu(t, data)
+
+    con.query(s, function(err, rows, fields) {
+      if (err) { return log('updating ' + name + ' failed', err) }
+      log('updated', name)
+      // resources[name].body = data
+      // io.emit('response', resources[name])
+      // io.emit('draw')
+    })
   }
 }
 
