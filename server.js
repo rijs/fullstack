@@ -1,6 +1,6 @@
 var resources = {}
-  , permissions = {}
-  , userSession
+  , _permissions = {}
+  , _userSession
   , fs = require('fs')
   , q = require('q')
   , io
@@ -45,28 +45,30 @@ ripple.db = function(config){
   //   rows.map(value)
   // })
   return ripple
-}
+5,2,3}
 
 ripple.resource = function(name, body, headers, permissions){
   isData(headers, name) && store.apply(this, arguments)
   isHTML(headers, name) && html.apply(this, arguments)
   isJS  (headers, name) && js.apply(this, arguments)
 
-  permissions[name] = permissions
+  permissions && (_permissions[name] = permissions)
   return ripple
 }
 
 ripple.userSession = function(userFrom){
   return function(req, res, next){
-    userSession = userFrom(req)
+    _userSession = userFrom(req)
     next()
   }
 }
 
 function checkPerms(name, type){
+  log('Checking Permissions for ' + type + ' on '+ name)
   return function(ele){
-    var perms = permissions[name]
-    return (type in perms)? perms[type].call(this, userSession, ele): true
+    var perms = _permissions[name]
+    return (perms && type in perms)
+      ? perms[type].call(this, _userSession, ele): true
   }
 }
 
@@ -117,12 +119,12 @@ function kvpair(arr) {
 }
 
 function enhance(body, name) {
+  log('enhancing ' +  name)
   if (body.push == Array.prototype.push) {
     body.push = function(data){
       var d = q.defer()
       log('adding ' + name)
       
-      if (!con) return d.resolve(body[body.length] = data, data.id)
       
       var t = table(name)
         , s = sql(t, data)
@@ -131,6 +133,8 @@ function enhance(body, name) {
         log('insuffcient permissions for ' + name)
         return
       }
+
+      if (!con) return d.resolve(body[body.length] = data, data.id)
 
       con.query(s, function(err, rows, fields) {
         if (err) { return d.reject(log('adding ' + name + ' failed', err)) }
@@ -144,23 +148,25 @@ function enhance(body, name) {
     }
   }
 
-  body.remove = function(data){
+  body.remove = function(idx){
     var d = q.defer()
       , t = table(name)
+      , data = body[idx]
       , s = sqld(t, data)
 
-      log('removing ' + name)
-      if (!con) return d.resolve(body[body.length] = data, data.id)
-
-      if (checkPerms(name, 'delete')(data)){
+     if (checkPerms(name, 'delete')(data)){
         log('insuffcient permissions for ' + name)
         return
       }
 
+     log('removing ' + name)
+      if (!con) return d.resolve(body.splice(idx, 1))
+
+
       con.query(s, function(err, rows, fields){
         if (err) { return d.reject(log('removing ' + name + ' failed', err)) }
         log('removed' + name)
-        body.splice(body.indexOf(data), 1)
+        body.splice(idx, 1)
         d.resolve()
       })
 
@@ -261,14 +267,17 @@ function connected(socket){
   function remove(req) {
     log('remove', req)
 
-    var [name, removed] = req
-    resources[name].body.remove(removed)
+    var name = req[0]
+      , body = resources[name].body
+      , removed = body.indexOf(req[1])
+    body.remove(removed)
   }
 
   function update(req) {
     log('update', req)
 
-    var [name, updated] = req
+    var name = req[0]
+      , updated = req[1]
     meta(name)([{object: updated}]) //should refactor meta to have an update function
   }
 }
@@ -296,6 +305,7 @@ function meta(name) {
     var d = q.defer()
       , t = table(name)
       , data = changes[0].object
+      , body = resources[name].body
       , s = sqlu(t, data)
 
 
@@ -304,6 +314,8 @@ function meta(name) {
       log('insuffcient permissions for ' + name)
       return d.reject()
     }
+
+    if (!con) return d.resolve(body = data)
 
     con.query(s, function(err, rows, fields) {
       if (err) { return d.reject(log('removing ' + name + ' failed', err)) }
@@ -345,22 +357,24 @@ function acceptsHTML(req){
 }
 
 function isData(headers, name){
-  return headers && headers['content-type'] == 'application/data'
+  return headers && (headers['content-type'] == 'application/data') 
     || name.contains('.data')
 }
 
 function isJS(headers, name){
-  return headers && headers['content-type'] == 'application/javascript'
+  return (typeof headers !== 'undefined') 
+    && headers['content-type'] == 'application/javascript'
     || name.contains('.js')
 }
 
 function isHTML(headers, name){
-  return headers && headers['content-type'] == 'text/html'
+  return (typeof headers !== 'undefined') 
+    && headers['content-type'] == 'text/html'
     || name.contains('.html')
 }
 
 function client(req, res){
-  res.sendfile(__dirname + '/client.js')
+  res.sendFile(__dirname + '/client.js')
 }
 
 function id(req) {
