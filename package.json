@@ -8,7 +8,7 @@
   },
   "devDependencies": {
     "chai": "~1.9.1",
-    "sinon": "~1.10.2",
+    "sinon": "~1.10.2"
   },
   "dependencies": {
     "express":"*",
