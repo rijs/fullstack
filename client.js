@@ -27,6 +27,10 @@ ripple._resources = function(){
   return resources
 }
 
+ripple.on = function(event, callback){
+  ripple.on[event] = callback
+}
+
 function invoke(d){ 
   try {
     d.__render__ && d.__render__(d.__data__)
@@ -65,6 +69,11 @@ socket.on('response', function(res) {
 })
 
 socket.on('draw', activateAll)
+socket.on('ready', ready)
+
+function ready(){ 
+  ripple.on['ready'] && ripple.on['ready']()
+}
 
 function meta(name) {
   console.log('watching', name)
@@ -82,7 +91,7 @@ function process(change) {
     , name = this
     , i = change.name
 
-  type == 'add' && socket.emit('push', [name, body[i]])
+  type == 'add'    && socket.emit('push', [name, body[i]])
   type == 'delete' && socket.emit('remove', [name, body[i]])
   type == 'update' && socket.emit('update', [name, body[i]])
 }

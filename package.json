@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "main": "server.js",
   "scripts": {
-    "test": "mocha -w --reporter spec --harmony"
+    "test-server": "mocha test/server -w --reporter spec --harmony"
+  , "test-client": "nodemon --harmony test/client"
   },
   "devDependencies": {
     "chai": "~1.9.1",
