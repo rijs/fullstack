@@ -26,6 +26,10 @@ describe('Ripple Server', function(){
     , escape: escape
     })
     
+    ripple
+      .db()
+      .resource('some.data')
+
     done()
   })
 
@@ -34,42 +38,31 @@ describe('Ripple Server', function(){
     assert.equal('function', typeof ripple.resource)  
   })
 
-  it('should add a resource', function(){  
-    ripple
-      .db()
-      .resource('some.data')
-
+  it('should register a resource', function(){  
     assert.equal(3, ripple('some.data').length)
   })
 
-  it('should CRUD a resource', function(done){
-    ripple
-      .db()
-      .resource('some.data')
+  it('should update a resource', function(done){
+    ripple('some.data').on('response', function(){ done() })
 
-    var i = 0
-
-    // subscribe to confirmations
-    ripple('some.data')
-      .on('response', function(d){ (++i == 3) && done() })
-
-    // update
     ripple('some.data')[0] = { id: 5, val: 5 }
     assert.deepEqual({ id: 5, val: 5 }, ripple('some.data')[0])
     assert.equal(2, ripple('some.data')[1])
     assert.equal(3, ripple('some.data')[2])
-    ripple._flush('some.data')
+  })
 
-    // create
-    ripple('some.data')
-      .push({ id: 7, value: 7 })
+  it('should add to a resource', function(done){
+    ripple('some.data').on('response', function(){ done() })
+
+    ripple('some.data').push({ id: 7, value: 7 })
     assert.equal(4, ripple('some.data').length)
-    ripple._flush('some.data')
+  })
 
-    // delete
-    ripple('some.data')
-      .pop()
-    assert.equal(3, ripple('some.data').length)
+  it('should delete from a resource', function(done){
+    ripple('some.data').on('response', function(){ done() })
+
+    ripple('some.data').pop()
+    assert.equal(2, ripple('some.data').length)
   })
 
 })
