@@ -33,6 +33,10 @@ ripple._resources = function(){
   return resources
 }
 
+ripple._drop = function(){
+  resources = {}
+}
+
 ripple._flush = function(name){
   Object.deliverChangeRecords(resources[name].observer)
 }
@@ -200,14 +204,14 @@ function connected(socket){
 
   function update(req) {
     log('client update', req)
-console.log('socket', socket.request.connection.remoteAddress)
+
     var name = req.name
       , key  = req.key
       , val  = req.val
       , fn   = resources[name].headers['proxy-from']
 
     fn 
-      ? fn(key, val, resources[name].body)
+      ? fn(key, val, resources[name].body, socket.request)
       : resources[name].body[key] = val
   }
 }
@@ -216,7 +220,7 @@ function emit(socket) {
   return function (name) {
     return !resources[name] || resources[name].headers.private
       ? log('private or no resource for', name)
-      : socket.emit('response', to(resources[name]))
+      : logSending(name), socket.emit('response', to(resources[name]))
   }
 }
 
@@ -236,7 +240,7 @@ function notPrivate(name) {
 
 function meta(name) {
   return function (changes) {
-    log('observed changes in', name, resources[name].body)
+    log('observed changes in', name)
     changes.forEach(process(name))
   }
 }
@@ -249,7 +253,7 @@ function process(name) {
       , key = change.name || change.index
       , value = data[key]
 
-    return type == 'update' ?             crud(name, value, 'update')
+    return type == 'update' ?             crud(name, value  , 'update')
          : type == 'splice' &&  removed ? crud(name, removed, 'remove')
          : type == 'splice' && !removed ? crud(name, value  , 'push')
          : false
@@ -258,16 +262,16 @@ function process(name) {
 
 function crud(name, data, type) {
   log('crud', type, name)
+
   var d = q.defer()
     , t = table(name)
     , f = type == 'update' ? sqlu
         : type == 'remove' ? sqld
                            : sqlc
     , s = f(t, data)
-    , r = resources[name].body.on.response
-
-  if (!con) return d.resolve()
+    , r = response(name)
   
+  if (!con) return d.resolve()
   con.query(s, function(err, rows, fields) {
     if (err) return d.reject(log(type, name, 'failed', err))
     log(type, name, 'done')
@@ -276,6 +280,10 @@ function crud(name, data, type) {
     io.emit('draw')
     r(rows.insertId || [name, type, 'done'].join(' '))
   })
+}
+
+function response(name){
+  return resources[name].body.on && resources[name].body.on.response
 }
 
 function emitterify(body) {

@@ -4,7 +4,16 @@ var resources = {}
 ripple.activateAll = activateAll
 
 function ripple(name){
-  return resources[name].body
+  return emitterify(resources[name].body)
+}
+
+function emitterify(body) {
+  return body.on = on, body
+}
+
+function on(type, callback) {
+  // log('registering callback', type)
+  this.on[type] = callback
 }
 
 function activateAll(){
@@ -58,12 +67,21 @@ function fetch(name){
 }
 
 socket.on('response', function(res) {
+  var r = response(res.name)
   isFunction(res.body) && (res.body = fn(res.body))
-  isObject(res.body) && Array.observe(res.body, meta(res.name))
+  isObject(res.body) 
+    && (res.body.on = on, res.body.on.response = r, true)
+    && Array.observe(res.body, meta(res.name))
   resources[res.name] = res
+  r && r()
 })
 
 socket.on('draw', activateAll)
+
+function response(name) {
+  var r = resources[name]
+  return r && r.body && r.body.on && r.body.on.response
+}
 
 function meta(name) {
   console.log('watching', name)
@@ -86,7 +104,7 @@ function process(name) {
         , key : key
         , val : val 
         }
-console.log('emitting..', type, details)
+
     // type == 'add'    && socket.emit('push'  , [name, body[i]])
     // type == 'delete' && socket.emit('remove', [name, body[i]])
     type == 'update' && socket.emit('update', details)

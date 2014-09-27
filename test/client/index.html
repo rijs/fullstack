@@ -11,13 +11,13 @@
     <script src="chai.js"></script>
     <script>mocha.setup("bdd")</script>
     <script src="tests.js"></script>
+    <script>
+      io().on('draw', function(){
+        if (document.body.innerHTML.trim() !== '') return;
+        document.body.innerHTML = '<div id="mocha"></div>'
+        mocha.run()
+      })
+    </script>
   </head>
-  <body>
-  </body>
+  <body></body>
 </html>
-<script>
-  io().on('draw', function(){
-    document.body.innerHTML = '<div id="mocha"></div>'
-    mocha.run()
-  })
-</script>
