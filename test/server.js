@@ -72,26 +72,4 @@ describe('Ripple Server', function(){
     assert.equal(3, ripple('some.data').length)
   })
 
-  // it('can restrict CRUD ops with permissions', function(){
-  //   ripple
-  //     .db()
-  //     .resource('some.data', undefined, undefined, {
-  //         'create' : function() { return false }
-  //       , 'read'   : function() { return false }
-  //       , 'update' : function() { return false }
-  //       , 'delete' : function() { return false }
-  //     })
-
-  //   //check cannot read 
-  //   assert.equal(0, ripple('some.data').length)
-
-  //   //check create failure
-  //   ripple('some.data').push(7)
-  //   assert.equal(3, ripple._resources()['some.data'].length)
-
-  //   //check delete failure
-  //   ripple('some.data').pop()
-  //   assert.equal(3, ripple._resources()['some.data'].length)
-  // })
-
 })

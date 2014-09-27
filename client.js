@@ -27,10 +27,6 @@ ripple._resources = function(){
   return resources
 }
 
-ripple.on = function(event, callback){
-  ripple.on[event] = callback
-}
-
 function invoke(d){ 
   try {
     d.__render__ && d.__render__(d.__data__)
@@ -62,38 +58,39 @@ function fetch(name){
 }
 
 socket.on('response', function(res) {
-  isJS(res.headers) && (res.body = fn(res.body))
-  isData(res.headers) && Object.observe(res.body, meta(res.name))
+  isFunction(res.body) && (res.body = fn(res.body))
+  isObject(res.body) && Array.observe(res.body, meta(res.name))
   resources[res.name] = res
-  // isJS(res.headers) && activate(res.name)
 })
 
 socket.on('draw', activateAll)
-socket.on('ready', ready)
-
-function ready(){ 
-  ripple.on['ready'] && ripple.on['ready']()
-}
 
 function meta(name) {
   console.log('watching', name)
   return function (changes) {
     resources[name].body = changes[0].object
     console.log('observed changes in', name, changes)
-    changes.forEach(process.bind(name))
+    changes.forEach(process(name))
     activateAll()
   }
 }
 
-function process(change) {
-  var type = change.type
-    , body = change.object
-    , name = this
-    , i = change.name
-
-  type == 'add'    && socket.emit('push', [name, body[i]])
-  type == 'delete' && socket.emit('remove', [name, body[i]])
-  type == 'update' && socket.emit('update', [name, body[i]])
+function process(name) {
+  return function(change) {
+    var type = change.type
+      , body = change.object
+      , key  = change.name
+      , val  = body[key]
+      , details = {
+          name: name
+        , key : key
+        , val : val 
+        }
+console.log('emitting..', type, details)
+    // type == 'add'    && socket.emit('push'  , [name, body[i]])
+    // type == 'delete' && socket.emit('remove', [name, body[i]])
+    type == 'update' && socket.emit('update', details)
+  }
 }
 
 function expand(type) {
@@ -177,3 +174,14 @@ function matches(k, v){
   }
 }
 
+function isString(d) {
+  return typeof d == 'string'
+}
+
+function isObject(d) {
+  return typeof d == 'object'
+}
+
+function isFunction(d) {
+  return typeof d == 'function'
+}
