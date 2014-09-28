@@ -96,18 +96,22 @@ function meta(name) {
 function process(name) {
   return function(change) {
     var type = change.type
-      , body = change.object
-      , key  = change.name
-      , val  = body[key]
+      , removed = type == 'delete' ? change.oldValue : change.removed && change.removed[0]
+      , data = change.object
+      , key  = change.name || change.index
+      , value = data[key]
       , details = {
-          name: name
-        , key : key
-        , val : val 
+          name : name
+        , key  : key
+        , value: removed || value 
         }
 
-    // type == 'add'    && socket.emit('push'  , [name, body[i]])
-    // type == 'delete' && socket.emit('remove', [name, body[i]])
-    type == 'update' && socket.emit('update', details)
+    return type == 'update'             ? socket.emit('update', details)
+         : type == 'delete'             ? socket.emit('remove', details)
+         : type == 'splice' &&  removed ? socket.emit('remove', details)
+         : type == 'splice' && !removed ? socket.emit('push'  , details)
+         : type == 'add'                ? socket.emit('push'  , details)
+         : false
   }
 }
 

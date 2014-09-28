@@ -24,7 +24,10 @@ io.on('connection', function(socket) {
     ripple
       .db()
       .resource('some.data')
-      .resource('protected.data', [{i:0}, {i:1},{i:2}], { to: to, from: from })
+      .resource('object.data', { a:0 , b:1, c:2 })
+      .resource('array.data' , [{i:0}, {i:1},{i:2}])
+      .resource('proxy.data' , [{i:0}, {i:1},{i:2}], { to: to, from: from })
+      
     socket.emit('reset')
   })
 })
