@@ -294,6 +294,7 @@ function emitterify(body) {
 function on(type, callback) {
   log('registering callback', type)
   this.on[type] = callback
+  return this
 }
 
 function update(name, data) {
