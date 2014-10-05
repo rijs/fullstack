@@ -4,16 +4,25 @@ var resources = {}
 ripple.activateAll = activateAll
 
 function ripple(name){
-  return emitterify(resources[name].body)
+  return resources[name].body
 }
 
-function emitterify(body) {
-  return body.on = on, body
-}
+function emitterify(body, opts) {
+  return body.on = on
+       , body.once = once
+       , opts && (body.on[opts.type] = opts.listeners)
+       , body
 
-function on(type, callback) {
-  // log('registering callback', type)
-  this.on[type] = callback
+  function on(type, callback, opts) {
+    opts = opts || {}
+    opts.fn = callback
+    this.on[type] = this.on[type] || []
+    this.on[type].push(opts)
+  }
+
+  function once(type, callback){
+    this.on.call(this, type, callback, { once: true })
+  }
 }
 
 function activateAll(){
@@ -62,21 +71,27 @@ function bind(d){
 }
 
 function fetch(name){
-  console.log('fetch', name)
+  log('fetch', name)
   socket.emit('request', { name: name })
 }
 
 socket.on('response', function(res) {
-  var r = response(res.name)
+  var listeners = response(res.name) || []
+    , opts = { type: 'response', listeners: listeners }
+
   isFunction(res.body) && (res.body = fn(res.body))
   isObject(res.body) 
-    && (res.body.on = on, res.body.on.response = r, true)
-    && Array.observe(res.body, meta(res.name))
+    && Array.observe(emitterify(res.body, opts), meta(res.name))
+
   resources[res.name] = res
-  r && r()
+  listeners.map(call)
 })
 
 socket.on('draw', activateAll)
+
+function call(d, i, a) {
+  (d.once ? a.splice(i, 1)[0].fn : d.fn)()
+}
 
 function response(name) {
   var r = resources[name]
@@ -84,10 +99,10 @@ function response(name) {
 }
 
 function meta(name) {
-  console.log('watching', name)
+  log('watching', name)
   return function (changes) {
     resources[name].body = changes[0].object
-    console.log('observed changes in', name, changes)
+    log('observed changes in', name, changes)
     changes.forEach(process(name))
     activateAll()
   }
@@ -206,4 +221,8 @@ function isObject(d) {
 
 function isFunction(d) {
   return typeof d == 'function'
+}
+
+function str(d){
+  return JSON.stringify(d)
 }

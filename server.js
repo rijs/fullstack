@@ -26,7 +26,7 @@ function createRipple(server, app, noClient) {
 
 function ripple(name){
   if (!resources[name]) return console.error('[ripple] No such "'+name+'" resource exists'), []
-  return emitterify(resources[name].body)
+  return resources[name].body
 }
 
 ripple._resources = function(){
@@ -151,7 +151,7 @@ function store(name, body, headers) {
     var observer
     resources[name] = { 
       name: name
-    , body: Array.observe(rows, observer = meta(name))
+    , body: Array.observe(emitterify(rows), observer = meta(name))
     , headers: headers
     , observer: observer
     }
@@ -160,21 +160,23 @@ function store(name, body, headers) {
   return ripple
 }
 
+ripple.draw = function() {
+  return draw(io), ripple
+}
+
+function draw(socket) {
+  Object 
+    .keys(resources)
+    .filter(notPrivate)
+    .map(emit(socket))
+  socket.emit('draw')
+}
+
 function connected(socket){
   
-  function redraw() {
-    Object 
-      .keys(resources)
-      .filter(notPrivate)
-      .map(logSending)
-      .map(emit(socket))
-    
-    socket.emit('draw')
-  }
+  draw(socket)
 
-  redraw()
   socket.on('request', request)
-  socket.on('redraw' , redraw)
   socket.on('remove' , remove)
   socket.on('update' , update)
   socket.on('push'   , push)
@@ -210,13 +212,11 @@ function connected(socket){
       , value = req.value
       , fn    = resources[name].headers['proxy-from']
 
-console.log('before', resources[name].body, typeof key)
-    // fn 
-      // ? fn(key, value, resources[name].body, socket.request, 'remove')
-      // : isArray(resources[name].body)
-      /*?*/ resources[name].body.splice(key, 1) 
-      // : delete resources[name].body[key]
-console.log('after',resources[name].body)
+    fn 
+      ? fn(key, value, resources[name].body, socket.request, 'remove')
+      : isArray(resources[name].body)
+      ? resources[name].body.splice(key, 1) 
+      : delete resources[name].body[key]
   }
 
   function update(req) {
@@ -264,7 +264,6 @@ function meta(name) {
 
 function process(name) {
   return function(change){
-    console.log('change', change)
     var type = change.type
       , removed = change.removed && change.removed[0]
       , data = change.object
@@ -404,7 +403,7 @@ function isFunction(d) {
 }
 
 function isArray(d) {
-  return Object.prototype.toString.call(d) === '[object Array]'
+  return d instanceof Array
 }
 
 function identity(d){ return d }
