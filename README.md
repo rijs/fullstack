@@ -10,7 +10,7 @@ Design Goals
 * Keep everything native (e.g. Object.observe, Plain Old Javascript Objects)
  
 Roadmap
-* [ ] Complete CRUD operations
+* [x] Complete CRUD operations
 * [ ] At least one more database adapter (~~MySQL~~, MongoDB, Neo4j)
 * [ ] Make ripple components Web Component spec-compliant [i.e. Shadow DOM isolation, HTMLElement Registration] - (Google Maps, Lookups)
 * [ ] Create more examples (persistence, multiple-server, different ripple-starters [client/server], React view, app [todo?])
@@ -19,4 +19,11 @@ Roadmap
 * [ ] Objective-C Client
 * [ ] Android Client
 * [ ] Go one level deeper with MutationObservers
-* [ ] Add unit tests
+* [*] Add unit tests
+
+## Tests
+
+```
+npm run test-server
+npm run test-client // localhost:3000
+```
