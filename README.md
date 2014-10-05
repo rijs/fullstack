@@ -19,7 +19,7 @@ Roadmap
 * [ ] Objective-C Client
 * [ ] Android Client
 * [ ] Go one level deeper with MutationObservers
-* [*] Add unit tests
+* [x] Add unit tests
 
 ## Tests
 
