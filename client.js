@@ -1,10 +1,29 @@
 var resources = {}
   , socket = io()
-
+  , log = console.log.bind(console, '[ripple]')
+  
 ripple.activateAll = activateAll
 
 function ripple(name){
   return resources[name].body
+}
+
+function emitterify(body, opts) {
+  return body.on = on
+       , body.once = once
+       , opts && (body.on[opts.type] = opts.listeners)
+       , body
+
+  function on(type, callback, opts) {
+    opts = opts || {}
+    opts.fn = callback
+    this.on[type] = this.on[type] || []
+    this.on[type].push(opts)
+  }
+
+  function once(type, callback){
+    this.on.call(this, type, callback, { once: true })
+  }
 }
 
 function activateAll(){
@@ -25,10 +44,6 @@ function activateAll(){
 
 ripple._resources = function(){
   return resources
-}
-
-ripple.on = function(event, callback){
-  ripple.on[event] = callback
 }
 
 function invoke(d){ 
@@ -57,43 +72,63 @@ function bind(d){
 }
 
 function fetch(name){
-  console.log('fetch', name)
+  log('fetch', name)
   socket.emit('request', { name: name })
 }
 
 socket.on('response', function(res) {
-  isJS(res.headers) && (res.body = fn(res.body))
-  isData(res.headers) && Object.observe(res.body, meta(res.name))
+  var listeners = response(res.name) || []
+    , opts = { type: 'response', listeners: listeners }
+
+  isFunction(res.body) && (res.body = fn(res.body))
+  isObject(res.body) 
+    && Array.observe(emitterify(res.body, opts), meta(res.name))
+
   resources[res.name] = res
-  // isJS(res.headers) && activate(res.name)
+  listeners.map(call)
 })
 
 socket.on('draw', activateAll)
-socket.on('ready', ready)
 
-function ready(){ 
-  ripple.on['ready'] && ripple.on['ready']()
+function call(d, i, a) {
+  (d.once ? a.splice(i, 1)[0].fn : d.fn)()
+}
+
+function response(name) {
+  var r = resources[name]
+  return r && r.body && r.body.on && r.body.on.response
 }
 
 function meta(name) {
-  console.log('watching', name)
+  log('watching', name)
   return function (changes) {
     resources[name].body = changes[0].object
-    console.log('observed changes in', name, changes)
-    changes.forEach(process.bind(name))
+    log('observed changes in', name, changes)
+    changes.forEach(process(name))
     activateAll()
   }
 }
 
-function process(change) {
-  var type = change.type
-    , body = change.object
-    , name = this
-    , i = change.name
+function process(name) {
+  return function(change) {
+    var type = change.type
+      , removed = type == 'delete' ? change.oldValue : change.removed && change.removed[0]
+      , data = change.object
+      , key  = change.name || change.index
+      , value = data[key]
+      , details = {
+          name : name
+        , key  : key
+        , value: removed || value 
+        }
 
-  type == 'add'    && socket.emit('push', [name, body[i]])
-  type == 'delete' && socket.emit('remove', [name, body[i]])
-  type == 'update' && socket.emit('update', [name, body[i]])
+    return type == 'update'             ? socket.emit('update', details)
+         : type == 'delete'             ? socket.emit('remove', details)
+         : type == 'splice' &&  removed ? socket.emit('remove', details)
+         : type == 'splice' && !removed ? socket.emit('push'  , details)
+         : type == 'add'                ? socket.emit('push'  , details)
+         : false
+  }
 }
 
 function expand(type) {
@@ -160,10 +195,6 @@ function html(resource){
   return resource
 }
 
-function log(d){
-  console.log(d)
-}
-
 function attr(d, name) {
   return d.attributes.getNamedItem(name)
       && d.attributes.getNamedItem(name).value
@@ -177,3 +208,18 @@ function matches(k, v){
   }
 }
 
+function isString(d) {
+  return typeof d == 'string'
+}
+
+function isObject(d) {
+  return typeof d == 'object'
+}
+
+function isFunction(d) {
+  return typeof d == 'function'
+}
+
+function str(d){
+  return JSON.stringify(d)
+}

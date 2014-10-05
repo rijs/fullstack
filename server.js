@@ -1,6 +1,4 @@
 var resources = {}
-  , _permissions = {}
-  , _userSession
   , fs = require('fs')
   , q = require('q')
   , io
@@ -28,11 +26,15 @@ function createRipple(server, app, noClient) {
 
 function ripple(name){
   if (!resources[name]) return console.error('[ripple] No such "'+name+'" resource exists'), []
-  return emitterify(resources[name].body)
+  return resources[name].body
 }
 
 ripple._resources = function(){
   return resources
+}
+
+ripple._drop = function(){
+  resources = {}
 }
 
 ripple._flush = function(name){
@@ -47,30 +49,11 @@ ripple.db = function(config){
   return ripple 
 }
 
-ripple.resource = function(name, body, headers, permissions){
+ripple.resource = function(name, body, headers){
   isData(headers, name) && store.apply(this, arguments)
   isHTML(headers, name) && html.apply(this, arguments)
   isJS  (headers, name) && js.apply(this, arguments)
-
-  permissions && (_permissions[name] = permissions)
   return ripple
-}
-
-ripple.userSession = function(userFrom){
-  return function(req, res, next){
-    _userSession = userFrom(req)
-    next()
-  }
-}
-
-function checkPerms(name, type){
-  log('checking permissions for ' + type + ' on '+ name)
-  return function(el, i, a){
-    var perms = _permissions[name]
-    return (perms && type in perms)
-      ? perms[type].call(this, _userSession, el) 
-      : true
-  }
 }
 
 function table(name) {
@@ -87,20 +70,20 @@ function sqlc(name, body) {
 }
 
 function sqlu(name, body) {
-    var template = 'UPDATE {table} SET {kvpairs} WHERE id = {id};'
-    template = template.replace('{table}', name)
-    template = template.replace('{id}', body['id'])
-    template = template.replace('{kvpairs}', Object.keys(body).filter(noId).map(kvpair(body)).join(','))
-    log(template)
-    return template
+  var template = 'UPDATE {table} SET {kvpairs} WHERE id = {id};'
+  template = template.replace('{table}', name)
+  template = template.replace('{id}', body['id'])
+  template = template.replace('{kvpairs}', Object.keys(body).filter(noId).map(kvpair(body)).join(','))
+  log(template)
+  return template
 }
 
 function sqld(name, body) {
-    var template = 'DELETE FROM {table} WHERE id = {id};'
-    template = template.replace('{table}', name)
-    template = template.replace('{id}', body['id'])
-    log(template)
-    return template
+  var template = 'DELETE FROM {table} WHERE id = {id};'
+  template = template.replace('{table}', name)
+  template = template.replace('{id}', body['id'])
+  log(template)
+  return template
 }
 
 function noId(key) {
@@ -144,20 +127,20 @@ function html(name, html, headers){
 }
 
 function store(name, body, headers) {
-  var alias   = isString(body) && body
-    , facade  = isFunction(body) && body || identity
-    , body    = isObject(body) && body || []
-    , headers = headers || { 
+  var headers = headers || {}
+    , headers = { 
         'content-type': 'application/data'
-      , 'content-location': alias || name.split('.')[0] 
-      , 'private': body.private
+      , 'content-location': headers['table'] || name.split('.')[0] 
+      , 'private': headers['private']
+      , 'proxy-to': headers['to']
+      , 'proxy-from': headers['from']
       }
     , table = headers['content-location']
 
   log('getting', table)
 
-  con 
-  ? con.query('select * from '+headers['content-location'], function(e, rows) {
+  con && !body
+  ? con.query('select * from ' + table, function(e, rows) {
       if (e) return log('ERROR', table, e)
       log('got ', table, rows.length)
       register(rows)
@@ -168,7 +151,7 @@ function store(name, body, headers) {
     var observer
     resources[name] = { 
       name: name
-    , body: Array.observe(rows, observer = meta(name))
+    , body: Array.observe(emitterify(rows), observer = meta(name))
     , headers: headers
     , observer: observer
     }
@@ -177,60 +160,90 @@ function store(name, body, headers) {
   return ripple
 }
 
-function connected(socket){
-  
+ripple.draw = function() {
+  return draw(io), ripple
+}
+
+function draw(socket) {
   Object 
     .keys(resources)
     .filter(notPrivate)
-    .map(logSending)
     .map(emit(socket))
-    
-  socket.emit('ready')
   socket.emit('draw')
+}
+
+function connected(socket){
+  
+  draw(socket)
+
   socket.on('request', request)
-  socket.on('push', push)
-  socket.on('remove', remove)
-  socket.on('update', update)
+  socket.on('remove' , remove)
+  socket.on('update' , update)
+  socket.on('push'   , push)
 
   function request(req){
     log('request', req)
     return !resources[req.name] || resources[req.name].headers.private
       ? log('private or no resource for', req)
-      : socket.emit('response', resources[req.name])
+      : emit(socket)(req.name)
       , socket.emit('draw')
   }
 
   function push(req) {
-    log('push', req)
+    log('client push', req)
 
-    var name = req[0]
-      , added = req[1]
+    var name  = req.name
+      , key   = req.key
+      , value = req.value
+      , fn    = resources[name].headers['proxy-from']
 
-    resources[name].body.push(added)
+    fn 
+      ? fn(key, value, resources[name].body, socket.request, 'push')
+      : isArray(resources[name].body)
+      ? resources[name].body.splice(key, 0, value) 
+      : resources[name].body[key] = value
   }
 
   function remove(req) {
-    log('remove', req)
+    log('client remove', req)
 
-    var name = req[0]
-      , body = resources[name].body
-      , removed = body.indexOf(req[1])
-    body.remove(removed)
+    var name  = req.name
+      , key   = req.key
+      , value = req.value
+      , fn    = resources[name].headers['proxy-from']
+
+    fn 
+      ? fn(key, value, resources[name].body, socket.request, 'remove')
+      : isArray(resources[name].body)
+      ? resources[name].body.splice(key, 1) 
+      : delete resources[name].body[key]
   }
 
   function update(req) {
-    log('update', req)
+    log('client update', req)
 
-    var name = req[0]
-      , updated = req[1]
-    meta(name)([{object: updated}]) //should refactor meta to have an update function
+    var name  = req.name
+      , key   = req.key
+      , value = req.value
+      , fn    = resources[name].headers['proxy-from']
+
+    fn 
+      ? fn(key, value, resources[name].body, socket.request, 'update')
+      : resources[name].body[key] = value
   }
 }
 
 function emit(socket) {
   return function (name) {
-    socket.emit('response', resources[name])
+    return !resources[name] || resources[name].headers.private
+      ? log('private or no resource for', name)
+      : logSending(name), socket.emit('response', to(resources[name]))
   }
+}
+
+function to(resource){
+  var fn = resource.headers['proxy-to'] || identity
+  return { name: resource.name, body: fn(resource.body) }
 }
 
 function logSending(name) {
@@ -257,7 +270,8 @@ function process(name) {
       , key = change.name || change.index
       , value = data[key]
 
-    return type == 'update' ?             crud(name, value, 'update')
+    return !isArray(data)               ? crud(name)
+         : type == 'update'             ? crud(name, value  , 'update')
          : type == 'splice' &&  removed ? crud(name, removed, 'remove')
          : type == 'splice' && !removed ? crud(name, value  , 'push')
          : false
@@ -265,26 +279,31 @@ function process(name) {
 }
 
 function crud(name, data, type) {
-  log('crud', type, name)
+  log('crud', name, type || '[none]')
+
   var d = q.defer()
     , t = table(name)
     , f = type == 'update' ? sqlu
         : type == 'remove' ? sqld
-                           : sqlc
-    , s = f(t, data)
-    , r = resources[name].body.on.response
+        : type == 'push'   ? sqlc
+        : false
+    , s = f && f(t, data)
+    , r = response(name)
 
-  if (!checkPerms(name, 'update')(data)) return log('no auth:', type, name), d.reject()
-  if (!con) return d.resolve()
-  
-  con.query(s, function(err, rows, fields) {
-    if (err) return d.reject(log(type, name, 'failed', err))
-    log(type, name, 'done')
-    
-    io.emit('response', resources[name])
-    io.emit('draw')
-    r(rows.insertId || [name, type, 'done'].join(' '))
-  })
+  con && s
+  ? con.query(s, function(err, rows, fields) {
+      if (err) return log(type, name, 'failed', err)
+      log(type, name, 'done')
+      
+      emit(io)(name)
+      io.emit('draw')
+      r(rows.insertId || [name, type, 'done'].join(' '))
+    })
+  : emit(io)(name), io.emit('draw')
+}
+
+function response(name){
+  return resources[name].body.on && resources[name].body.on.response
 }
 
 function emitterify(body) {
@@ -295,70 +314,6 @@ function on(type, callback) {
   log('registering callback', type)
   this.on[type] = callback
   return this
-}
-
-function update(name, data) {
-  log('updating', name)
-  var d = q.defer()
-    , t = table(name)
-    , s = sqlu(t, data)
-
-  if (!checkPerms(name, 'update')(data)) return log('no auth: updating', name), d.reject()
-  if (!con) return d.resolve()
-  
-  con.query(s, function(err, rows, fields) {
-    if (err) return d.reject(log('updating ' + name + ' failed', err))
-    log('updated', name)
-    
-    io.emit('response', resources[name])
-    io.emit('draw')
-    d.resolve()
-  })
-
-  return d.promise
-}
-
-function remove(name, data){
-  log('removing', name)
-  var d = q.defer()
-    , t = table(name)
-    , s = sqld(t, data)
-
-  if (!checkPerms(name, 'delete')(data)) return log('no auth: removing', name), d.reject()
-  if (!con) return d.resolve()
-
-  con.query(s, function(err, rows, fields){
-    if (err) return d.reject(log('removing ' + name + ' failed', err))
-    log('removed', name)
-    
-    io.emit('response', resources[name])
-    io.emit('draw')
-    d.resolve()
-  })
-
-  return d.promise
-}
-
-function push(name, data){
-  log('adding', name, data)
-  
-  var d = q.defer()
-    , t = table(name)
-    , s = sqlc(t, data)
-
-  if (!checkPerms(name, 'create')(data)) return log('no auth: adding', name), d.reject()
-  if (!con) return d.resolve()
-
-  con.query(s, function(err, rows, fields) {
-    if (err) return d.reject(log('adding ' + name + ' failed', err))
-    log('added ', name, rows.insertId)
-    
-    io.emit('response', resources[name])
-    io.emit('draw')
-    d.resolve(rows.insertId)
-  })
-  
-  return d.promise
 }
 
 function append(req, res, next){
@@ -446,6 +401,10 @@ function isObject(d) {
 
 function isFunction(d) {
   return typeof d == 'function'
+}
+
+function isArray(d) {
+  return d instanceof Array
 }
 
 function identity(d){ return d }
