@@ -1,6 +1,7 @@
 var resources = {}
   , socket = io()
-
+  , log = console.log.bind(console, '[ripple]')
+  
 ripple.activateAll = activateAll
 
 function ripple(name){
@@ -192,10 +193,6 @@ function fn(resource){
 
 function html(resource){
   return resource
-}
-
-function log(d){
-  console.log(d)
 }
 
 function attr(d, name) {
