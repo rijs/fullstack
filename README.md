@@ -1,7 +1,7 @@
 ripple
 ======
 
-The beginnings of a new library. See the discussion here: https://github.com/pemrouz/ripple/issues/1
+See the discussion here: https://github.com/pemrouz/ripple/issues/1
 
 Design Goals
 * Maximise realtime interactivity (making it the default pattern rather than afterthought)
@@ -20,6 +20,7 @@ Roadmap
 * [ ] Android Client
 * [ ] Go one level deeper with MutationObservers
 * [x] Add unit tests
+* [ ] Make each instance an self-contained, independent node
 
 ## Tests
 
