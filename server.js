@@ -24,7 +24,7 @@ function createRipple(server, app, noClient) {
   return ripple
 }
 
-function ripple(name){
+function ripple(name){ 
   if (!resources[name]) return console.error('[ripple] No such "'+name+'" resource exists'), []
   return resources[name].body
 }
@@ -138,11 +138,10 @@ function store(name, body, headers) {
     , table = headers['content-location']
 
   log('getting', table)
-
-  con && !body
+  con && (!body || (isArray(body) && !body.length))
   ? con.query('select * from ' + table, function(e, rows) {
       if (e) return log('ERROR', table, e)
-      log('got ', table, rows.length)
+      log('got', table, rows.length)
       register(rows)
     })
   : register(body)
@@ -235,10 +234,16 @@ function connected(socket){
 
 function emit(socket) {
   return function (name) {
-    return !resources[name] || resources[name].headers.private
+    var r = resources[name]
+    return !r || r.headers.private
       ? log('private or no resource for', name)
-      : logSending(name), socket.emit('response', to(resources[name]))
+      : logSending(name)
+      , socket.emit('response', to(r), type(r) )
   }
+}
+
+function type(r) {
+  return r.headers['content-type']
 }
 
 function to(resource){
@@ -357,7 +362,7 @@ function isHTML(headers, name){
 }
 
 function client(req, res){
-  res.sendFile(__dirname + '/client.js')
+  res.sendfile(__dirname + '/client.js')
 }
 
 function id(req) {

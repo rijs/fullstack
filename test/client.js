@@ -28,8 +28,9 @@ io.on('connection', function(socket) {
   })
 })
 
-server.listen(3000)
-io.listen(4000)
+server.listen(5000)
+io.listen(8080)
+
 app.use(express.static(__dirname+'/client'))
 
 function from(key, val, body) {

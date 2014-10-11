@@ -1,5 +1,5 @@
 var assert = chai.assert
-  , pipe = io('http://localhost:4000')
+  , pipe = io('localhost:8080')
   , i = 0
   
 describe('Ripple Client', function(){

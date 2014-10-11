@@ -76,12 +76,13 @@ function fetch(name){
   socket.emit('request', { name: name })
 }
 
-socket.on('response', function(res) {
+socket.on('response', function(res, type) {
   var listeners = response(res.name) || []
     , opts = { type: 'response', listeners: listeners }
 
-  isFunction(res.body) && (res.body = fn(res.body))
-  isObject(res.body) 
+  isJS(type) 
+    && (res.body = fn(res.body))
+  isData(type) 
     && Array.observe(emitterify(res.body, opts), meta(res.name))
 
   resources[res.name] = res
@@ -103,7 +104,7 @@ function meta(name) {
   log('watching', name)
   return function (changes) {
     resources[name].body = changes[0].object
-    log('observed changes in', name, changes)
+    log('observed changes in', name)
     changes.forEach(process(name))
     activateAll()
   }
@@ -151,12 +152,12 @@ function id(res) {
   return res.name + '.' + res.headers['content-type']
 }
 
-function isJS(headers){
-  return headers && headers['content-type'] == 'application/javascript'
+function isJS(candidate){
+  return candidate == 'application/javascript'
 }
 
-function isData(headers){
-  return headers && headers['content-type'] == 'application/data'
+function isData(candidate){
+  return candidate == 'application/data'
 }
 
 

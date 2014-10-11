@@ -12,7 +12,7 @@
     "sinon": "~1.10.2"
   },
   "dependencies": {
-    "express": "*",
+    "express": "<4.0.0",
     "socket.io": "~1.0.6",
     "mysql": "~2.3.2",
     "apn": "*",
