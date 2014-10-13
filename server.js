@@ -154,9 +154,11 @@ function store(name, body, headers) {
 
   function register(rows) {
     var observer
+      , opts = { type: 'response', listeners: [] }
+
     resources[name] = { 
       name: name
-    , body: Array.observe(emitterify(rows), observer = meta(name))
+    , body: Array.observe(emitterify(rows, opts), observer = meta(name))
     , headers: headers
     , observer: observer
     }
@@ -302,26 +304,45 @@ function crud(name, data, type) {
   ? con.query(s, function(err, rows, fields) {
       if (err) return log(type, name, 'failed', err)
       log(type, name, 'done')
-      
+      rows.insertId && (data.id = rows.insertId)
       emit(io)(name)
       // io.emit('draw')
-      r && r(rows.insertId || [name, type, 'done'].join(' '))
+      r.map(call(rows.insertId || [name, type, 'done'].join(' ')))
     })
   : emit(io)(name)//, io.emit('draw')
 }
 
-function response(name){
-  return resources[name].body.on && resources[name].body.on.response
+function call(param) {
+  return function (d,i,a) {
+    (d.once ? a.splice(i, 1)[0].fn : d.fn)(param)
+  }
 }
 
-function emitterify(body) {
-  return body.on = on, body
+
+function response(name) {
+  var r = resources[name]
+  return (r && r.body && r.body.on && r.body.on.response) || []
 }
 
-function on(type, callback) {
-  log('registering callback', type)
-  this.on[type] = callback
-  return this
+function emitterify(body, opts) {
+  return body.on = on
+       , body.once = once
+       , opts && (body.on[opts.type] = opts.listeners)
+       , body
+
+  function on(type, callback, opts) {
+    log('registering callback', type)
+    opts = opts || {}
+    opts.fn = callback
+    this.on[type] = this.on[type] || []
+    this.on[type].push(opts)
+    return this
+  }
+
+  function once(type, callback){
+    this.on.call(this, type, callback, { once: true })
+    return this
+  }
 }
 
 function append(req, res, next){

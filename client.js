@@ -21,10 +21,12 @@
       opts.fn = callback
       this.on[type] = this.on[type] || []
       this.on[type].push(opts)
+      return this
     }
 
     function once(type, callback){
       this.on.call(this, type, callback, { once: true })
+      return this
     }
   }
 
@@ -111,7 +113,7 @@
 
   function response(name) {
     var r = resources[name]
-    return r && r.body && r.body.on && r.body.on.response
+    return (r && r.body && r.body.on && r.body.on.response) || []
   }
 
   function meta(name) {
