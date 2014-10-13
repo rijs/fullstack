@@ -6,6 +6,7 @@
   window.ripple = ripple  
 
   function ripple(name){
+    if (!resources[name]) return console.error('[ripple] No such "'+name+'" resource exists'), []
     return resources[name].body
   }
 
