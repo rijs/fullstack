@@ -194,50 +194,56 @@
       ? html(resource)
       : fn(resource)
   }
-
-  // ----------------------------------------------------------------------------
-  // HELPERS
-  // ----------------------------------------------------------------------------
-  function all(selector){
-    return array(document.querySelectorAll(selector))
-  }
-
-  function array(d){
-    return Array.prototype.slice.call(d, 0)
-  }
-
-  function fn(resource){
-    return (new Function("return " + resource))()
-  }
-
-  function html(resource){
-    return resource
-  }
-
-  function matches(k, v){
-    return function(d){
-      return d[k].toLowerCase && v.toLowerCase
-        ? d[k].toLowerCase() == v.toLowerCase()
-        : d[k] == v
-    }
-  }
-
-  function isString(d) {
-    return typeof d == 'string'
-  }
-
-  function isObject(d) {
-    return typeof d == 'object'
-  }
-
-  function isFunction(d) {
-    return typeof d == 'function'
-  }
-
-  function str(d){
-    return JSON.stringify(d)
-  }
 }()
+
+// ----------------------------------------------------------------------------
+// HELPERS
+// ----------------------------------------------------------------------------
+function all(selector){
+  return array(document.querySelectorAll(selector))
+}
+
+function array(d){
+  return Array.prototype.slice.call(d, 0)
+}
+
+function fn(resource){
+  return (new Function("return " + resource))()
+}
+
+function html(resource){
+  return resource
+}
+
+function matches(k, v){
+  return function(d){
+    return d[k].toLowerCase && v.toLowerCase
+      ? d[k].toLowerCase() == v.toLowerCase()
+      : d[k] == v
+  }
+}
+
+function exists(v){
+  return function(d){
+    return d == v
+  }
+}
+
+function isString(d) {
+  return typeof d == 'string'
+}
+
+function isObject(d) {
+  return typeof d == 'object'
+}
+
+function isFunction(d) {
+  return typeof d == 'function'
+}
+
+function str(d){
+  return JSON.stringify(d)
+}
 
 function attr(d, name) {
   return d.attributes.getNamedItem(name)
@@ -246,4 +252,14 @@ function attr(d, name) {
 
 function clone(d) {
   return JSON.parse(JSON.stringify(d))
+}
+
+function remove(k, v) {
+  return function(d, i, a) {
+    (d[k] == v) && a.splice(i,1)
+  }
+}
+
+function last(d) {
+  return d[d.length-1]
 }
