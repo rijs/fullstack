@@ -28,20 +28,25 @@
   }
 
   function activateAll(){
-    // console.log('activateAll')
+    console.log('activateAll')
     all('[ripple]')
       .map(bind)
       .map(invoke)
       // .map(log)
   }
 
-  // function activate(name) {
-  //   console.log('activate', name)
-  //   all('[data-resource='+name+']')
-  //     .map(bind)
-  //     .map(invoke)
-  //     .map(log)
-  // }
+  function activate(name) {
+    console.log('activate', name)
+    all('[data='+strip(name)+']')
+      .map(bind)
+      .map(invoke)
+      // .map(log)
+  }
+
+  function strip(d) {
+    return d.split('.')[0]
+  }
+
   ripple.activateAll = activateAll
 
   ripple._resources = function(){
@@ -50,7 +55,9 @@
 
   function invoke(d){ 
     try {
-      d.__render__ && d.__render__(d.__data__)
+          d.__render__ 
+      && (d.__data__ || !attr(d, 'data'))
+      &&  d.__render__(d.__data__)
     } catch (err) {
       // debugger
       console.error(err)
@@ -64,12 +71,8 @@
       , idJS = name + '.js'
       , idDB = data ? data + '.data' : ''
 
-    idJS && !resources[idJS] && fetch(idJS)
-    idDB && !resources[idDB] && fetch(idDB)
-
     d.__render__ = resources[idJS] && resources[idJS].body
     d.__data__   = resources[idDB] && resources[idDB].body
-    
     return d
   }
 
@@ -82,16 +85,24 @@
     var listeners = response(res.name) || []
       , opts = { type: 'response', listeners: listeners }
 
-    isJS(type) 
-      && (res.body = fn(res.body))
-    isData(type) 
-      && Array.observe(emitterify(res.body, opts), meta(res.name))
+    isJS(type) && (res.body = fn(res.body))
+    isData(type) && Array.observe(emitterify(res.body, opts), meta(res.name))
 
-    resources[res.name] = res
+    resources[res.name] = res 
+    isData(type) && activate(res.name)
     listeners.map(call)
   })
 
   socket.on('draw', activateAll)
+
+  // function replace(name) {
+  //   return function(source){
+  //     return function(key){
+  //       console.log('name', name, key, resources[name][key], source[key])
+  //       resources[name].body[key] = source[key]
+  //     }
+  //   }
+  // }
 
   function call(d, i, a) {
     (d.once ? a.splice(i, 1)[0].fn : d.fn)()
@@ -162,6 +173,10 @@
     return candidate == 'application/data'
   }
 
+  function isHTML(candidate){
+    return candidate == 'text/html'
+  }
+
 
   // function type(name) {
   //   return resources[name][0] == '<'
@@ -226,4 +241,8 @@
 function attr(d, name) {
   return d.attributes.getNamedItem(name)
       && d.attributes.getNamedItem(name).value
+}
+
+function clone(d) {
+  return JSON.parse(JSON.stringify(d))
 }

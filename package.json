@@ -17,6 +17,7 @@
     "mysql": "~2.3.2",
     "apn": "*",
     "on-headers": "*",
-    "q": "~1.0.1"
+    "q": "~1.0.1",
+    "socket.io-session-middleware": "*"
   }
 }

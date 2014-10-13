@@ -5,6 +5,7 @@ var resources = {}
   , log = console.log.bind(console, '[ripple]')
   , onHeaders = require('on-headers')
   , apn = require('apn')
+  , socketSession = require("socket.io-session-middleware")
   , con
 
 // ----------------------------------------------------------------------------
@@ -15,11 +16,14 @@ var apnConnection = new apn.Connection(options)
 
 module.exports = createRipple
 
-function createRipple(server, app, noClient) {
+function createRipple(server, app, opts) {
   log('creating')
-  if (!noClient) app.use(append)
-  app.use('/ripple', client)
+  var opts = opts || {}
   io = require('socket.io')(server)
+  if (!opts.noClient) app.use(append)
+  if (opts.session) io.use(socketSession(opts. session))
+  app.use('/ripple', client)
+
   io.on('connection', connected)
   return ripple
 }
@@ -36,6 +40,8 @@ ripple._resources = function(){
 ripple._drop = function(){
   resources = {}
 }
+
+ripple.emit = emit
 
 ripple._flush = function(name){
   Object.deliverChangeRecords(resources[name].observer)
@@ -176,9 +182,9 @@ function connected(socket){
   draw(socket)
 
   socket.on('request', request)
-  socket.on('remove' , remove)
-  socket.on('update' , update)
-  socket.on('push'   , push)
+  socket.on('remove' , handle(remove))
+  socket.on('update' , handle(update))
+  socket.on('push'   , handle(push))
 
   function request(req){
     log('request', req)
@@ -188,47 +194,38 @@ function connected(socket){
       , socket.emit('draw')
   }
 
-  function push(req) {
-    log('client push', req)
+  function handle(next) {
+    return function(req) {
+      log('client', next.name, req.name, req.key)
 
-    var name  = req.name
-      , key   = req.key
-      , value = req.value
-      , fn    = resources[name].headers['proxy-from']
+      var name  = req.name
+        , key   = req.key
+        , value = req.value
+        , fn    = resources[name].headers['proxy-from']
+        , body  = resources[name].body
+        , type  = next.name
 
-    fn 
-      ? fn(key, value, resources[name].body, socket.request, 'push')
-      : isArray(resources[name].body)
-      ? resources[name].body.splice(key, 0, value) 
-      : resources[name].body[key] = value
+      ;(!fn || (fn && fn(key, value, body, name, type, socket)))
+          && next(key, value, body)
+           // , emit(io)(name)
+           // , io.emit('draw')
+    }
   }
 
-  function remove(req) {
-    log('client remove', req)
-
-    var name  = req.name
-      , key   = req.key
-      , value = req.value
-      , fn    = resources[name].headers['proxy-from']
-
-    fn 
-      ? fn(key, value, resources[name].body, socket.request, 'remove')
-      : isArray(resources[name].body)
-      ? resources[name].body.splice(key, 1) 
-      : delete resources[name].body[key]
+  function push(key, value, body) {
+    isArray(body)
+      ? body.splice(key, 0, value) 
+      : body[key] = value
   }
 
-  function update(req) {
-    log('client update', req)
+  function remove(key, value, body) {
+    isArray(body)
+      ? body.splice(key, 1) 
+      : delete body[key]
+  }
 
-    var name  = req.name
-      , key   = req.key
-      , value = req.value
-      , fn    = resources[name].headers['proxy-from']
-
-    fn 
-      ? fn(key, value, resources[name].body, socket.request, 'update')
-      : resources[name].body[key] = value
+  function update(key, value, body) {
+    body[key] = value
   }
 }
 
@@ -238,7 +235,13 @@ function emit(socket) {
     return !r || r.headers.private
       ? log('private or no resource for', name)
       : logSending(name)
-      , socket.emit('response', to(r), type(r) )
+      , socket == io
+      ? io.of('/').sockets.forEach(sendTo)
+      : sendTo(socket)
+
+    function sendTo(s) {
+      s.emit('response', to(r, s), type(r) )
+    }
   }
 }
 
@@ -246,9 +249,9 @@ function type(r) {
   return r.headers['content-type']
 }
 
-function to(resource){
+function to(resource, socket){
   var fn = resource.headers['proxy-to'] || identity
-  return { name: resource.name, body: fn(resource.body) }
+  return { name: resource.name, body: fn(resource.body, socket) }
 }
 
 function logSending(name) {
@@ -301,10 +304,10 @@ function crud(name, data, type) {
       log(type, name, 'done')
       
       emit(io)(name)
-      io.emit('draw')
-      r(rows.insertId || [name, type, 'done'].join(' '))
+      // io.emit('draw')
+      r && r(rows.insertId || [name, type, 'done'].join(' '))
     })
-  : emit(io)(name), io.emit('draw')
+  : emit(io)(name)//, io.emit('draw')
 }
 
 function response(name){
@@ -331,7 +334,7 @@ function append(req, res, next){
   res.end = function() {
     if (acceptsHTML(this.req)) {
       res.write('<script src="/socket.io/socket.io.js" defer></script>')
-      res.write('<script src="/ripple" defer></script>')      
+      res.write('<script src="/ripple" defer></script>')
     }
     
     end.apply(this, arguments)
