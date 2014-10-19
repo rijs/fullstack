@@ -353,7 +353,6 @@ function append(req, res, next){
   })
 
   res.end = function() {
-    console.log('boo', this.req.url)
     if (acceptsHTML(this.req)) {
       res.write('<script src="/socket.io/socket.io.js" defer></script>')
       res.write('<script src="/ripple" defer></script>')
