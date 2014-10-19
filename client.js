@@ -46,11 +46,17 @@
       // .map(log)
   }
 
+  function activateNode() {
+    bind(this)
+    invoke(this)
+  }
+
   function strip(d) {
     return d.split('.')[0]
   }
 
   ripple.activateAll = activateAll
+  ripple.activate = activateNode
 
   ripple._resources = function(){
     return resources
@@ -264,4 +270,8 @@ function remove(k, v) {
 
 function last(d) {
   return d[d.length-1]
+}
+
+function l(d){
+  return d.toLowerCase()
 }
