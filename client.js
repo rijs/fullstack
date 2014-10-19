@@ -33,7 +33,7 @@
   function activateAll(){
     console.log('activateAll')
     all('[ripple]')
-      .map(bind)
+      // .map(bind)
       .map(invoke)
       // .map(log)
   }
@@ -41,13 +41,13 @@
   function activate(name) {
     console.log('activate', name)
     all('[data='+strip(name)+']')
-      .map(bind)
+      // .map(bind)
       .map(invoke)
       // .map(log)
   }
 
   function activateNode() {
-    bind(this)
+    // bind(this)
     invoke(this)
   }
 
@@ -63,6 +63,8 @@
   }
 
   function invoke(d){ 
+    bind(d)
+    
     try {
           d.__render__ 
       && (d.__data__ || !attr(d, 'data'))
@@ -82,7 +84,6 @@
 
     d.__render__ = resources[idJS] && resources[idJS].body
     d.__data__   = resources[idDB] && resources[idDB].body
-    return d
   }
 
   function fetch(name){
