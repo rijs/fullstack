@@ -47,7 +47,7 @@ nodemon index.js --harmony
 
 ##### Reactive Data
 
-Then open `localhost:4000` in two tabs and then try doing `ripple('tweets.data').push('new tweet! :o')` to add new data (same API server-side). 
+Now open `localhost:4000` in two tabs and then try doing `ripple('tweets.data').push('new tweet! :o')` to add new data (same API server-side). 
 
 ![reactive-data](https://cloud.githubusercontent.com/assets/2184177/4209638/ce377c08-386b-11e4-9e80-362d888842ca.gif)
 
