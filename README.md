@@ -63,11 +63,11 @@ You can also grab this demo by doing a `git clone` on the [vanilla example from 
 
 ## API
 
-<a name="api-ripple" href="#api-resource">#</a> __ripple__(_name_)
+#### __ripple__(_name_)
 
 This will return the latest value of the resource stored against the provided _name_. Same on client and server.
 
-<br><a name="api-db" href="#api-db">#</a> ripple.__db__(_config_)
+#### ripple.__db__(_config_)
 
 This method is optional. But if Ripple successfully connects to the database described in _config_, you can easily load tables as arrays of records and persist all changes back to the database.
 
@@ -87,7 +87,7 @@ ripple
 
 Later, a `ripple('tweets.data').push({ text: 'new tweet! :o' })` on the client or server would insert a new record in to the database.
 
-<br><a name="api-resource" href="#api-resource">#</a> ripple.__resource__(_name_, _body_, _opts_)
+#### ripple.__resource__(_name_, _body_, _opts_)
 
 This will register a new resource with as _name_ the name provided. The _body_ can be pretty much anything: a `String`, `Number`, `Boolean`, `Object`, `Array`, `Function`. If the body is an object, array or function, any changes made to it on the server/client will propagate to other nodes. This API only works on the server. Clients may wish to update the value of a resource and whilst it is trivial to enable resource registration on the client, I have not come across a use case for clients pushing back _new_ resources to the server yet. In a proper app, normally you wouldn't define your resources inline as above but load them from external modules, pre-compiling templates:
 
@@ -101,7 +101,7 @@ ripple
 
 The _opts_ parameter can be an object with any of the following properties:
 
-* `table` (`String`): This is used to link a resource to a particular table for persistence (see [ripple.db API](#api-db))
+* `table` (`String`): This is used to link a resource to a particular table for persistence (see [ripple.db API](#rippledbconfig))
 
 ```js
 ripple.resource('users.data', [], { table: 'users })
@@ -134,7 +134,7 @@ For an example of using the `to/from` proxy functions, see the [client tests](ht
 * [ ] Extend Examples Repo
 * [ ] Add Shortcuts
 * [ ] Create Components Repo
-* [ ] (iOS) Objective-C Client
+* [ ] Objective-C (iOS) Client
 * [ ] Android Client
 * [ ] MutationObservers Change Detection
 * [x] Unit Tests
