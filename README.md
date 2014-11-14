@@ -121,7 +121,7 @@ For an example of using the `to/from` proxy functions, see the [client tests](ht
 
 #### ripple(_name_).on(_event_, _callback_)
 
-This API is used to receive a confirmation, from the database if used on the server, and from the server if used on the client, when a change to a resource is made. _name_ is the name of the resource, _event_ is the event type (currently only 'response') and callback is the function to be called. Same on server and client.
+This API is used to receive a confirmation, from the database if used on the server, and from the server if used on the client, when a change to a resource is made. _name_ is the name of the resource, _event_ is the event type (currently only `'response'`) and callback is the function to be called. Same on server and client.
 
 ```js
 ripple('fruit.data')
