@@ -137,7 +137,7 @@ Same as above, but the callback is only invoked once. Same on server and client.
 
 ```js
 ripple('users.data')
-  .once('response', renderConfirmationPage('Thank you for signing up!'))
+  .once('response', res.send('Thank you for signing up!'))
   .push(req.body)
 ```
 
