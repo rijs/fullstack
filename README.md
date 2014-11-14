@@ -59,7 +59,7 @@ Or you could try changing the implementation of the renderer by switching `green
 
 ##### Examples 
 
-You can also grab this demo by doing a `git clone` on the [vanilla example from the examples repo](https://github.com/pemrouz/ripple-examples) or exploring the examples.
+You can also grab this demo by doing a `git clone` on the [vanilla example from the examples repo](https://github.com/pemrouz/ripple-examples) or explore the other examples.
 
 ## API
 
