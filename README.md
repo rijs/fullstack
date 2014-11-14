@@ -87,7 +87,15 @@ ripple
 
 <br><a name="api-resource" href="#api-resource">#</a> ripple.__resource__(_name_, _value_, _opts_)
 
-This will register a new resource with the _name_ value. The value can be pretty much anything: a `String`, `Number`, `Boolean`, `Object`, `Array`, `Function`. If the value is an object, array or function, any changes made to it on the server/client will propagate to other nodes. This API only works on the server. Clients may wish to update the value of a resource and whilst it is trivial to enable resource registration on the client, I have not come across a use case for clients pushing back _new_ resources to the server yet.
+This will register a new resource with the _name_ value. The value can be pretty much anything: a `String`, `Number`, `Boolean`, `Object`, `Array`, `Function`. If the value is an object, array or function, any changes made to it on the server/client will propagate to other nodes. This API only works on the server. Clients may wish to update the value of a resource and whilst it is trivial to enable resource registration on the client, I have not come across a use case for clients pushing back _new_ resources to the server yet. In a proper app, normally you wouldn't define your resources inline as above but load them from modules, pre-compiling templates:
+
+```js
+ripple
+  .resource('calendar.js'  , require('./resources/calendar.js'))
+  .resource('profiles.js'  , require('./resources/profiles.js'))
+  .resource('template.html', jade('./views/template.jade'))
+  ...
+```
 
 The _opts_ parameter can be an object with any of the following properties:
 
