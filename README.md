@@ -13,7 +13,7 @@ Roadmap
 * [x] Complete CRUD operations
 * [ ] At least one more database adapter (~~MySQL~~, MongoDB, Neo4j)
 * [ ] Make ripple components Web Component spec-compliant [i.e. Shadow DOM isolation, HTMLElement Registration] - (Google Maps, Lookups)
-* [ ] Create more examples (persistence, multiple-server, different ripple-starters [client/server], React view, app [todo?])
+* [ ] Create more examples (persistence, multiple-server, different ripple-starters [client/server], ~~React view~~, app [todo?])
 * [ ] Add more shortcuts (e.g. jade/views, ripple/components, deprecate extensions)
 * [ ] Open source ripple components (Google Maps, Lookups, Calendar)
 * [ ] Objective-C Client
