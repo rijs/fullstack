@@ -65,7 +65,7 @@ You can also grab this demo by doing a `git clone` on the [vanilla example from 
 
 <a name="api-ripple" href="#api-resource">#</a> __ripple__(_name_)
 
-This will retrieve the latest value of the resource stored against the provided _name_. Same on client and server.
+This will return the latest value of the resource stored against the provided _name_. Same on client and server.
 
 <br><a name="api-db" href="#api-db">#</a> ripple.__db__(_config_)
 
@@ -87,9 +87,9 @@ ripple
 
 Later, a `ripple('tweets.data').push({ text: 'new tweet! :o' })` on the client or server would insert a new record in to the database.
 
-<br><a name="api-resource" href="#api-resource">#</a> ripple.__resource__(_name_, _value_, _opts_)
+<br><a name="api-resource" href="#api-resource">#</a> ripple.__resource__(_name_, _body_, _opts_)
 
-This will register a new resource with the _name_ value. The value can be pretty much anything: a `String`, `Number`, `Boolean`, `Object`, `Array`, `Function`. If the value is an object, array or function, any changes made to it on the server/client will propagate to other nodes. This API only works on the server. Clients may wish to update the value of a resource and whilst it is trivial to enable resource registration on the client, I have not come across a use case for clients pushing back _new_ resources to the server yet. In a proper app, normally you wouldn't define your resources inline as above but load them from modules, pre-compiling templates:
+This will register a new resource with as _name_ the name provided. The _body_ can be pretty much anything: a `String`, `Number`, `Boolean`, `Object`, `Array`, `Function`. If the body is an object, array or function, any changes made to it on the server/client will propagate to other nodes. This API only works on the server. Clients may wish to update the value of a resource and whilst it is trivial to enable resource registration on the client, I have not come across a use case for clients pushing back _new_ resources to the server yet. In a proper app, normally you wouldn't define your resources inline as above but load them from external modules, pre-compiling templates:
 
 ```js
 ripple
