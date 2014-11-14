@@ -85,6 +85,8 @@ ripple
   .resource('tweets.data', [], { table: 'tweets' })
 ```
 
+Later, a `ripple('tweets.data').push({ text: 'new tweet! :o' })` on the client or server would insert a new record in to the database.
+
 <br><a name="api-resource" href="#api-resource">#</a> ripple.__resource__(_name_, _value_, _opts_)
 
 This will register a new resource with the _name_ value. The value can be pretty much anything: a `String`, `Number`, `Boolean`, `Object`, `Array`, `Function`. If the value is an object, array or function, any changes made to it on the server/client will propagate to other nodes. This API only works on the server. Clients may wish to update the value of a resource and whilst it is trivial to enable resource registration on the client, I have not come across a use case for clients pushing back _new_ resources to the server yet. In a proper app, normally you wouldn't define your resources inline as above but load them from modules, pre-compiling templates:
