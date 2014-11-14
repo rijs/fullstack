@@ -104,7 +104,7 @@ The _opts_ parameter can be an object with any of the following properties:
 * `table` (`String`): This is used to link a resource to a particular table for persistence (see [ripple.db API](#rippledbconfig))
 
 ```js
-ripple.resource('users.data', [], { table: 'users })
+ripple.resource('users.data', [], { table: 'users' })
 ```
 
 * `private` (`Boolean`): This is used to exclude sending a resource to clients. For example, you may not want to expose your raw list of users to every client: 
