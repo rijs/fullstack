@@ -131,7 +131,7 @@ ripple('fruit.data')
 
 In the case of `push` changes, the first parameter to the callback is the ID of the newly created record, if connected to a database.
 
-#### ripple(name).once(event, callback)
+#### ripple(_name_).once(_event_, _callback_)
 
 Same as above, but the callback is only invoked once. Same on server and client.
 
