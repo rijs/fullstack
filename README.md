@@ -65,11 +65,11 @@ You can also grab this demo by doing a `git clone` on the [vanilla example from 
 
 #### __ripple__(_name_)
 
-This will return the latest value of the resource stored against the provided _name_. Same on client and server.
+This will return the latest value of the resource stored against the provided _name_. Same on server and client.
 
 #### ripple.__db__(_config_)
 
-This method is optional. But if Ripple successfully connects to the database described in _config_, you can easily load tables as arrays of records and persist all changes back to the database.
+This method is optional. But if Ripple successfully connects to the database described in _config_, you can easily load tables as arrays of records and persist all changes back to the database. This is obviously only for the server.
 
 ```js
 var db = {
@@ -118,6 +118,29 @@ ripple.resource('users.data', [], { private: true })
 * `from` (`Function`): This is a reverse proxy function applied to the resource body when receiving updates to resources from the client. Extending the likes example, we could simply do `ripple('likes.data')++` on the client, and then in this function interpret that by pushing a new object with the logged in user's ID if one does not already exist.
 
 For an example of using the `to/from` proxy functions, see the [client tests](https://github.com/pemrouz/ripple/blob/master/test/client.js#L36-L43).
+
+#### ripple(_name_).on(_event_, _callback_)
+
+This API is used to receive a confirmation, from the database if used on the server, and from the server if used on the client, when a change to a resource is made. _name_ is the name of the resource, _event_ is the event type (currently only 'response') and callback is the function to be called. Same on server and client.
+
+```js
+ripple('fruit.data')
+  .on('response', function(){ alert('new fruit added!') })
+  .push('apple')
+```
+
+In the case of `push` changes, the first parameter to the callback is the ID of the newly created record, if connected to a database.
+
+#### ripple(name).once(event, callback)
+
+Same as above, but the callback is only invoked once. Same on server and client.
+
+```js
+ripple('users.data')
+  .once('response', renderConfirmationPage('Thank you for signing up!'))
+  .push(req.body)
+```
+
 
 ## Design Goals
 * Maximise realtime interactivity (making it the default pattern rather than afterthought)
