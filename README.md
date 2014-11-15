@@ -1,6 +1,6 @@
 # Ripple
 
-Ripple is a reactive, resource-oriented, realtime app architecture built on top of express and socket.io. The philosophy is that _all_ changes ripple across the network to all other connected servers, clients and databases synchronising them in realtime where possible.
+Ripple is a reactive, resource-oriented, native-focused, realtime app architecture built on top of express and socket.io. The philosophy is that _all_ changes ripple across the network to all other connected servers, clients and databases synchronising them in realtime where possible.
 
 ## Quick Start
 
@@ -61,6 +61,54 @@ Or you could try changing the implementation of the renderer by switching `green
 
 You can also grab this demo by doing a `git clone` on the [vanilla example from the examples repo](https://github.com/pemrouz/ripple-examples) or explore the other examples.
 
+## Rationale
+
+The Ripple pattern evolved naturally from developing web apps that were recursively composed of [idempotent components](http://ag.svbtle.com/on-d3-components) (i.e. components as simple transformation functions of data - `html = f(data)`). Reinvoking the function with new data would always produce the latest representation of that component, so rather than each component setting up it's own plumbing, listening to data change events to receive/dispatch data, the concern of _streaming data to components_ can be effectively abstracted out. This makes realtime components the default behaviour, not an afterthought. Most alternatives in this area also did not make any attempt to be a lightweight library, embracing standards and native behaviour but went down the road of being a heavyweight framework, inventing concepts and large API surfaces. Applying RESTful principles in the client - the concept of organising applications from _resources and their different representations_ - is also a key part of the philosophy, which currently seems relatively unexplored in other JavaScript projects.
+
+### Ripple vs Flux
+
+Ripple shares key architectural concepts with Flux, such as the single dispatcher, data-flow programming, and views updating when the associated data changes, etc. However, **Ripple is an extension to the Flux paradigm**, in that the dispatcher will not update only the data/views on the current page, but on all other clients too. Ripple introduces much less proprietary concepts (everything is a resource) and the API aims to embrace standards rather than invent new ones.
+
+### Ripple vs Meteor
+
+Ripple and Meteor share some key benefits, such as reactive programming, hot code push, database everywhere, etc. The key difference however is that **Ripple is a _library_ whereas Meteor is a _framework_** - one that takes over your entire development fabric and locks you in. There is no [inversion of control](http://martinfowler.com/bliki/InversionOfControl.html) with Ripple and you can use it many different ways. Besides that, the implementation of the aforementioned benefits is more powerful in Ripple: For example, not being tied to a particular templating engine (Spacebars) and the Meteor 'database everywhere' is just a 'prototyping concept' [removed for production apps](https://www.meteor.com/try/11) requiring [additional wiring that defeats the original friction-reducing purpose of having it](https://www.meteor.com/try/10). In contrast, Ripple's [generic proxies](#rippleresourcename-body-opts) allows you to filter out 'privacy-sensitive data' and the overall architecture gives you 'latency compensation' for free (changes to data update dependent views immediately, and if the change was unsuccessful there will be another invocation to put it in the correct state).
+
+### Ripple vs Compoxure
+
+Ripple and [Compoxure](https://medium.com/@clifcunn/nodeconf-eu-29dd3ed500ec) are very similar in decomposing applications in terms of independent resources. Like Compoxure, Ripple can call out for resources from separate micro-services, avoiding the monolith criticism (1), it can pre-render views avoiding the SEO-incompatibility criticism (2) and it's doesn't lock you in to using a particular hybrid-approach like React or rendr (i.e. you could call a Java service to generate the resource) (3). The key difference is that whereas Compoxure is only concerned with the first render and requires manually wiring up event listeners and AJAX calls for updates, **resources in Ripple are long-lived and continue to send/receive updates after the first render**. Ripple does not currently cache resources in Redis (but that's on the roadmap).
+
+## Design Goals
+* Maximise realtime interactivity (making it the default pattern rather than afterthought)
+* Minimise app development friction (convention over configuration)
+* Keep it agnostic (small, high power-to-weight ratio API surface)
+* Keep everything native (e.g. Object.observe, Plain Old Javascript Objects)
+
+## Roadmap
+* [x] Complete CRUD operations
+* [ ] Parameterise Resources
+* [ ] ORM Database Adapters
+* [ ] Offline Storage Support
+* [ ] Web Component Compliant
+* [ ] Extend Examples Repo
+* [ ] Add Conventional Folder Shortcuts
+* [ ] Create Components Repo
+* [ ] Objective-C (iOS) Client
+* [ ] Android Client
+* [ ] MutationObservers Change Detection
+* [x] Unit Tests
+* [ ] Encapsulates Ripple Nodes
+* [ ] Immutable Data & Time Travel
+* [ ] Server-Side Rendering as Middleware
+* [ ] Cache Resources in Redis
+
+## Tests
+
+```
+npm run test-server
+npm run test-client 
+explorer http://localhost:3000
+```
+
 ## API
 
 #### __ripple__(_name_)
@@ -95,6 +143,7 @@ This will register a new resource with as _name_ the name provided. The _body_ c
 ripple
   .resource('calendar.js'  , require('./resources/calendar.js'))
   .resource('profiles.js'  , require('./resources/profiles.js'))
+  .resource('tweets.data'  , request('localhost:8080/tweets'))
   .resource('template.html', jade('./views/template.jade'))
   ...
 ```
@@ -141,32 +190,6 @@ ripple('users.data')
   .push(req.body)
 ```
 
+# Contact
 
-## Design Goals
-* Maximise realtime interactivity (making it the default pattern rather than afterthought)
-* Minimise app development friction (convention over configuration)
-* Keep it agnostic (small, high power-to-weight ratio API surface)
-* Keep everything native (e.g. Object.observe, Plain Old Javascript Objects)
-
-## Roadmap
-* [x] Complete CRUD operations
-* [ ] Parameterise Resources
-* [ ] ORM Database Adapters
-* [ ] Offline Storage Support
-* [ ] Web Component Compliant
-* [ ] Extend Examples Repo
-* [ ] Add Shortcuts
-* [ ] Create Components Repo
-* [ ] Objective-C (iOS) Client
-* [ ] Android Client
-* [ ] MutationObservers Change Detection
-* [x] Unit Tests
-* [ ] Encapsulates Ripple Nodes
-
-## Tests
-
-```
-npm run test-server
-npm run test-client 
-explorer http://localhost:3000
-```
+Twitter: [@pemrouz](https://twitter.com/pemrouz)
