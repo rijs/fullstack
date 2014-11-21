@@ -85,7 +85,7 @@ Ripple and [Compoxure](https://medium.com/@clifcunn/nodeconf-eu-29dd3ed500ec) ar
 
 ## Roadmap
 * [x] Complete CRUD operations
-* [ ] Parameterise Resources
+* [ ] [Parameterise Resources](https://github.com/pemrouz/ripple/issues/6)
 * [ ] [ORM Database Adapters](https://github.com/pemrouz/ripple/issues/4)
 * [x] [Offline Storage Support](https://github.com/pemrouz/ripple/issues/5)
 * [ ] Web Component Compliant
