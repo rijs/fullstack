@@ -6,7 +6,8 @@
   window.ripple = ripple  
 
   function ripple(name){
-    if (!resources[name]) return console.error('[ripple] No such "'+name+'" resource exists'), []
+    if (!resources[name]) 
+      return console.error('[ripple] No such "'+name+'" resource exists'), []
     return resources[name].body
   }
 
@@ -91,19 +92,28 @@
     socket.emit('request', { name: name })
   }
 
-  socket.on('response', function(res, type) {
+  socket.on('response', register)
+
+  function register(res) {
     var listeners = response(res.name) || []
       , opts = { type: 'response', listeners: listeners }
 
-    isJS(type) && (res.body = fn(res.body))
-    isData(type) && Array.observe(emitterify(res.body, opts), meta(res.name))
+    isJS(res) && (res.body = fn(res.body))
+    isData(res) && Array.observe(emitterify(res.body, opts), meta(res.name))
 
     resources[res.name] = res 
-    isData(type) && activate(res.name)
+    localStorage.ripple = freeze(resources)
+    isData(res) && activate(res.name)
     listeners.map(call)
-  })
+  }
 
   socket.on('draw', activateAll)
+  var offline = parse(localStorage.ripple)
+
+  values(offline)
+    .forEach(register)
+
+  activateAll()
 
   // function replace(name) {
   //   return function(source){
@@ -175,12 +185,15 @@
     return res.name + '.' + res.headers['content-type']
   }
 
-  function isJS(candidate){
-    return candidate == 'application/javascript'
+  function isJS(resource){
+    return isString(resource.body) && !resource.body.indexOf('function')
+    // return candidate == 'application/javascript'
   }
 
-  function isData(candidate){
-    return candidate == 'application/data'
+  function isData(resource){
+    return typeof resource.body == 'object'
+        || typeof resource.body == 'array'
+    // return candidate == 'application/data'
   }
 
   function isHTML(candidate){
@@ -250,8 +263,35 @@ function isFunction(d) {
   return typeof d == 'function'
 }
 
+function values(o) {
+  return !o ? [] : Object
+    .keys(o)
+    .map(base(o))
+}
+
+function base(o) {
+  return function(k){
+    return o[k]
+  }
+}
+
+function freeze(r){
+  var stripped = parse(str(r))
+
+  Object.keys(r)
+    .map(function(name){ return r[name] })
+    .filter(function(res){ return isFunction(res.body) })
+    .map(function(res){ return stripped[res.name].body = res.body.toString() })
+
+  return str(stripped)
+}
+
 function str(d){
   return JSON.stringify(d)
+}
+
+function parse(d){
+  return d && JSON.parse(d)
 }
 
 function attr(d, name) {
