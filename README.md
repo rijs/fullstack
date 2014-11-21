@@ -87,7 +87,7 @@ Ripple and [Compoxure](https://medium.com/@clifcunn/nodeconf-eu-29dd3ed500ec) ar
 * [x] Complete CRUD operations
 * [ ] Parameterise Resources
 * [ ] ORM Database Adapters
-* [ ] Offline Storage Support
+* [x] [Offline Storage Support](https://github.com/pemrouz/ripple/issues/5)
 * [ ] Web Component Compliant
 * [ ] Extend Examples Repo
 * [ ] Add Conventional Folder Shortcuts
