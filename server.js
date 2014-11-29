@@ -67,6 +67,7 @@ function table(name) {
 }
 
 function sqlc(name, body) {
+  if (!isObject(body)) return;
   var template = 'INSERT INTO {table} ({keys}) VALUES ({values});'
   template = template.replace('{table}', name)
   template = template.replace('{keys}', Object.keys(body).filter(noId).join(','))
@@ -76,6 +77,7 @@ function sqlc(name, body) {
 }
 
 function sqlu(name, body) {
+  if (!isObject(body)) return;
   var template = 'UPDATE {table} SET {kvpairs} WHERE id = {id};'
   template = template.replace('{table}', name)
   template = template.replace('{id}', body['id'])
@@ -85,6 +87,7 @@ function sqlu(name, body) {
 }
 
 function sqld(name, body) {
+  if (!isObject(body)) return;
   var template = 'DELETE FROM {table} WHERE id = {id};'
   template = template.replace('{table}', name)
   template = template.replace('{id}', body['id'])
