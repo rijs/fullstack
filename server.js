@@ -287,6 +287,7 @@ function process(name) {
          : type == 'update'             ? crud(name, value  , 'update')
          : type == 'splice' &&  removed ? crud(name, removed, 'remove')
          : type == 'splice' && !removed ? crud(name, value  , 'push')
+         : type == 'add'                ? crud(name, value  , 'push')
          : false
   }
 }
