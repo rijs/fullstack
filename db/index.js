@@ -4,7 +4,11 @@ var adaptors = {
     }
 
 module.exports = function adaptor(config){
-  var adaptor = adaptors[config.type] || stub
+  var type = isString(config) 
+        ? config.split(':')[0]
+        : config.type
+
+  var adaptor = adaptors[type] || stub
   adaptor.noop = noop
   return adaptor(config)
 }

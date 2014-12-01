@@ -365,3 +365,4 @@ function promise() {
 global.log = console.log.bind(console, '[ripple]')
 global.promise = promise
 global.isObject = isObject
+global.isString = isString
