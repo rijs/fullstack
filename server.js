@@ -1,57 +1,34 @@
-var resources = {}
-  , fs = require('fs')
-  , q = require('q')
-  , io
-  , log = console.log.bind(console, '[ripple]')
-  , onHeaders = require('on-headers')
-  , apn = require('apn')
-  , socketSession = require("socket.io-session-middleware")
-  , con
+var io, db, resources = {}
 
 // ----------------------------------------------------------------------------
-// APNS
+// INIT
 // ----------------------------------------------------------------------------
-var options = { }
-var apnConnection = new apn.Connection(options)
-
 module.exports = createRipple
 
 function createRipple(server, app, opts) {
   log('creating')
   var opts = opts || {}
+    , socketSession = require("socket.io-session-middleware")
+
   io = require('socket.io')(server)
   if (!opts.noClient) app.use(append)
-  if (opts.session) io.use(socketSession(opts. session))
+  if (opts.session) io.use(socketSession(opts.session))
   app.use('/ripple', client)
 
   io.on('connection', connected)
   return ripple
 }
 
+// ----------------------------------------------------------------------------
+// API
+// ----------------------------------------------------------------------------
 function ripple(name){ 
   if (!resources[name]) return console.error('[ripple] No such "'+name+'" resource exists'), []
   return resources[name].body
 }
 
-ripple._resources = function(){
-  return resources
-}
-
-ripple._drop = function(){
-  resources = {}
-}
-
-ripple.emit = emit
-
-ripple._flush = function(name){
-  Object.deliverChangeRecords(resources[name].observer)
-}
-
 ripple.db = function(config){
-  con = require('mysql').createPool(config)
-  // con.query('show tables', function(err, rows, fields) {
-  //   rows.map(value)
-  // })
+  db = require('./db')(config)
   return ripple 
 }
 
@@ -62,54 +39,7 @@ ripple.resource = function(name, body, headers){
   return ripple
 }
 
-function table(name) {
-  return resources[name]['headers']['content-location']
-}
-
-function sqlc(name, body) {
-  if (!isObject(body)) return;
-  var template = 'INSERT INTO {table} ({keys}) VALUES ({values});'
-  template = template.replace('{table}', name)
-  template = template.replace('{keys}', Object.keys(body).filter(noId).join(','))
-  template = template.replace('{values}', Object.keys(body).filter(noId).map(value(body)).join(','))
-  log(template)
-  return template
-}
-
-function sqlu(name, body) {
-  if (!isObject(body)) return;
-  var template = 'UPDATE {table} SET {kvpairs} WHERE id = {id};'
-  template = template.replace('{table}', name)
-  template = template.replace('{id}', body['id'])
-  template = template.replace('{kvpairs}', Object.keys(body).filter(noId).map(kvpair(body)).join(','))
-  log(template)
-  return template
-}
-
-function sqld(name, body) {
-  if (!isObject(body)) return;
-  var template = 'DELETE FROM {table} WHERE id = {id};'
-  template = template.replace('{table}', name)
-  template = template.replace('{id}', body['id'])
-  log(template)
-  return template
-}
-
-function noId(key) {
-  return key !== 'id'
-}
-
-function value(arr) {
-  return function(key){
-    return con.escape(arr[key])
-  }
-}
-
-function kvpair(arr) {
-  return function(key){
-    return key+'='+con.escape(arr[key])
-  }
-}
+ripple.emit = emit
 
 function js(name, fn, headers){
   var headers = headers || { 'content-type': 'application/javascript' }
@@ -147,13 +77,10 @@ function store(name, body, headers) {
     , table = headers['content-location']
 
   log('getting', table)
-  con && (!body || (isArray(body) && !body.length))
-  ? con.query('select * from ' + table, function(e, rows) {
-      if (e) return log('ERROR', table, e)
-      log('got', table, rows.length)
-      register(rows)
-    })
-  : register(body)
+  
+  ;(!body || (isArray(body) && !body.length))
+    ? db.all(table).then(register)
+    : register(body)
 
   function register(rows) {
     var observer
@@ -210,10 +137,8 @@ function connected(socket){
         , body  = resources[name].body
         , type  = next.name
 
-      ;(!fn || (fn && fn(key, value, body, name, type, socket)))
-          && next(key, value, body)
-           // , emit(io)(name)
-           // , io.emit('draw')
+      if (!fn || fn(key, value, body, name, type, socket))
+        next(key, value, body)
     }
   }
 
@@ -293,32 +218,21 @@ function process(name) {
 }
 
 function crud(name, data, type) {
-  log('crud', name, type || '[none]')
+  log('crud', name, type = type || 'noop')
 
-  var d = q.defer()
-    , t = table(name)
-    , f = type == 'update' ? sqlu
-        : type == 'remove' ? sqld
-        : type == 'push'   ? sqlc
-        : false
-    , s = f && f(t, data)
+  var t = table(name)
+    , f = type && db[type]
     , r = response(name)
 
-  con && s
-  ? con.query(s, function(err, rows, fields) {
-      if (err) return log(type, name, 'failed', err)
-      log(type, name, 'done')
-      rows.insertId && (data.id = rows.insertId)
-      emit(io)(name)
-      // io.emit('draw')
-      r.map(call(rows.insertId || [name, type, 'done'].join(' ')))
-    })
-  : emit(io)(name)//, io.emit('draw')
+  f(t, data).then(function(id){
+    emit(io)(name)
+    r.map(call(id))    
+  })
 }
 
 function call(param) {
   return function (d,i,a) {
-    (d.once ? a.splice(i, 1)[0].fn : d.fn)(param)
+    (d.once ? a.splice(i, 1).pop().fn : d.fn)(param)
   }
 }
 
@@ -352,7 +266,7 @@ function emitterify(body, opts) {
 function append(req, res, next){
   var end = res.end
 
-  onHeaders(res, function () {
+  require('on-headers')(res, function () {
     this.removeHeader('Content-Length')
   })
 
@@ -368,6 +282,9 @@ function append(req, res, next){
   next()
 }
 
+// ----------------------------------------------------------------------------
+// HELPERS
+// ----------------------------------------------------------------------------
 function acceptsHTML(req){
   return req.headers.accept && !!~req.headers.accept.indexOf('html')
 }
@@ -395,11 +312,6 @@ function client(req, res){
 
 function id(req) {
   return req.name + '.' + compress(req.headers['content-type'])
-  // return type 
-  //   ? name + '.' + type
-  //   : name.headers 
-  //   ? name.headers['name'] + '.' + name.headers['content-type']
-  //   : name['name'] + '.' + name['content-type']
 }
 
 function compress(type) {
@@ -408,15 +320,6 @@ function compress(type) {
     : type == 'application/data' 
     ? 'data'
     : 'html'
-}
-
-
-// function value(d){ 
-//   return d[Object.keys(d)[0]]
-// }
-
-function log(d){
-  log(d)
 }
 
 function objectify(rows) {
@@ -441,3 +344,24 @@ function isArray(d) {
 }
 
 function identity(d){ return d }
+
+function table(name) {
+  return resources[name]['headers']['content-location']
+}
+
+function promise() {
+  var resolve
+    , reject
+    , p = new Promise(function(res, rej){ 
+        resolve = res, reject = rej
+      })
+
+  arguments.length && resolve(arguments[0])
+  p.resolve = resolve
+  p.reject  = reject
+  return p
+}
+
+global.log = console.log.bind(console, '[ripple]')
+global.promise = promise
+global.isObject = isObject
