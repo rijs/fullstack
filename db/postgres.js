@@ -5,7 +5,6 @@ var con
 // API
 // ----------------------------------------------------------------------------
 function postgres(url){
-  console.log('url', url)
   var pg = require('pg')
   con = new pg.Client(url)
   con.connect()
@@ -15,10 +14,10 @@ function postgres(url){
 postgres.all = function(table){
   var p = promise()
 
-  con.query('SELECT * FROM ' + table, function(e, rows) {
+  con.query('SELECT * FROM ' + table, function(e, result) {
     if (e) return log('ERROR', table, e)
-    log('got', table, rows.length)
-    p.resolve(rows)
+    log('got', table, result.rows.length)
+    p.resolve(result.rows)
   })
 
   return p
@@ -28,7 +27,7 @@ postgres.update = function(table, data){
   var sql = sqlu(table, data)
     , p = promise()
 
-  con.query(sql, function(err, rows, fields) {
+  con.query(sql, function(err, result, fields) {
     if (err) return log('update', table, 'failed', err)
     log('update', table, 'done')
     p.resolve()
@@ -42,10 +41,10 @@ postgres.push = function(table, data){
   var sql = sqlc(table, data)
   var p = promise()
 
-  con.query(sql, function(err, rows, fields) {
+  con.query(sql, function(err, result, fields) {
     if (err) return log('push', table, 'failed', err)
     log('push', table, 'done')
-    p.resolve(data.id = rows.insertId)
+    p.resolve(data.id = result.rows.insertId)
   })
 
   return p
@@ -55,7 +54,7 @@ postgres.remove = function(table, data){
   var sql = sqld(table, data)
     , p = promise()
 
-  con.query(sql, function(err, rows, fields) {
+  con.query(sql, function(err, result, fields) {
     if (err) return log('remove', table, 'failed', err)
     log('remove', table, 'done')
     p.resolve()
