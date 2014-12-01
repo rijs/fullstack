@@ -4,10 +4,10 @@ var con
 // ----------------------------------------------------------------------------
 // API
 // ----------------------------------------------------------------------------
-function postgres(config){
-  console.log('config', config)
+function postgres(url){
+  console.log('url', url)
   var pg = require('pg')
-  con = new pg.Client(config.url)
+  con = new pg.Client(url)
   con.connect()
   return postgres
 }
