@@ -17,12 +17,13 @@
     "sinon": "~1.10.2"
   },
   "dependencies": {
-    "express": "<4.0.0",
-    "socket.io": "~1.0.6",
-    "mysql": "*",
     "apn": "*",
+    "express": "<4.0.0",
+    "mysql": "*",
     "on-headers": "*",
+    "pg": "^4.0.0",
     "q": "~1.0.1",
+    "socket.io": "~1.0.6",
     "socket.io-session-middleware": "*"
   }
 }
