@@ -4,9 +4,9 @@ var adaptors = {
     }
 
 module.exports = function adaptor(config){
-  var type = isString(config) 
-        ? config.split(':')[0]
-        : config.type
+  var type = !config ? undefined
+           : isString(config) ? config.split(':')[0]
+           : config.type
 
   var adaptor = adaptors[type] || stub
   adaptor.noop = noop
