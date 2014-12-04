@@ -120,13 +120,19 @@ function value(arr) {
   return function(key){
     console.log('key', key)
     console.log('arr[key]', arr[key])
-    console.log('escaped', con.escapeLiteral(arr[key]))
-    return con.escapeLiteral(arr[key])
+    console.log('escaped', escape(arr[key]))
+    return escape(arr[key])
   }
 }
 
 function kvpair(arr) {
   return function(key){
-    return con.escapeIdentifier(key)+'='+con.escapeLiteral(arr[key])
+    return con.escapeIdentifier(key)+'='+escape(arr[key])
   }
+}
+
+function escape(d){
+  return isString(d)
+    ? con.escapeLiteral(arr[key])
+    : d
 }
