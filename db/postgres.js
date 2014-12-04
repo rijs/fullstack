@@ -67,6 +67,7 @@ postgres.remove = function(table, data){
 // HELPERS
 // ----------------------------------------------------------------------------
 function sqlc(name, body) {
+  console.log('body', body)
   if (!isObject(body)) return;
   var template = 'INSERT INTO {table} ({keys}) VALUES ({values});'
   template = template.replace('{table}', name)
