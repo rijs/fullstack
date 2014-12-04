@@ -118,6 +118,9 @@ function skip(d) {
 
 function value(arr) {
   return function(key){
+    console.log('key', key)
+    console.log('arr[key]', arr[key])
+    console.log('escaped', con.escapeLiteral(arr[key]))
     return con.escapeLiteral(arr[key])
   }
 }
