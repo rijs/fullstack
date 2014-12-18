@@ -10,6 +10,7 @@ function createRipple(server, app, opts) {
   var opts = opts || {}
     , socketSession = require("socket.io-session-middleware")
 
+  db = require('./db')()
   io = require('socket.io')(server)
   if (!opts.noClient) app.use(append)
   if (opts.session) io.use(socketSession(opts.session))

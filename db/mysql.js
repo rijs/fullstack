@@ -35,7 +35,6 @@ mysql.update = function(table, data){
 }
 
 mysql.push = function(table, data){
-  console.log('push', arguments)
   var sql = sqlc(table, data)
   var p = promise()
 

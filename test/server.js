@@ -3,7 +3,6 @@ var assert  = require('assert')
   , http    = require('http')
   , sinon   = require('sinon')
   , rip     = require('../server')
-  , mysql   = require('mysql')
   , app
   , server
   , ripple
@@ -18,17 +17,8 @@ describe('Ripple Server', function(){
     server = http.createServer(app)
     ripple = rip(server, app)
     
-    var query = sinon.stub().callsArgWith(1, 0, [1,2,3])
-      , escape = function(d){ return d }
-
-    mysql.createPool = sinon.stub().returns({ 
-      query: query
-    , escape: escape
-    })
-    
     ripple
-      .db()
-      .resource('some.data')
+      .resource('some.data', [1,2,3])
 
     done()
   })
