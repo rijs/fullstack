@@ -9,6 +9,7 @@
     return !arguments.length               ? activateAll()
      : this.tagName                        ? invoke(this)
      : thing.tagName                       ? invoke(thing)
+     : this.node                           ? invoke(this.node())
      : thing[0] instanceof MutationRecord  ? invoke(thing[0].target.parentNode)
      : isString(thing) && resources[thing] ? resources[thing].body
      : (log('[ripple] No such "'+thing+'" resource exists'), [])
