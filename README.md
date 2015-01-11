@@ -7,7 +7,7 @@ Ripple is a reactive, resource-oriented, native-focused, realtime app architectu
 ##### Installation
 
 ```
-npm install pemrouz/github
+npm install pemrouz/ripple
 ```
 
 ##### index.js
@@ -88,7 +88,7 @@ Ripple and [Compoxure](https://medium.com/@clifcunn/nodeconf-eu-29dd3ed500ec) ar
 * [ ] [Parameterise Resources](https://github.com/pemrouz/ripple/issues/6)
 * [ ] [ORM Database Adapters](https://github.com/pemrouz/ripple/issues/4)
 * [x] [Offline Storage Support](https://github.com/pemrouz/ripple/issues/5)
-* [ ] Web Component Compliant
+* [ ] Web Components: Custom Elements and Shadow Dom
 * [ ] Extend Examples Repo
 * [ ] Add Conventional Folder Shortcuts
 * [ ] Create Components Repo
@@ -100,6 +100,7 @@ Ripple and [Compoxure](https://medium.com/@clifcunn/nodeconf-eu-29dd3ed500ec) ar
 * [ ] Immutable Data & Time Travel
 * [ ] Server-Side Rendering as Middleware
 * [ ] Cache Resources in Redis
+* [ ] Service Workers: Background Sync and Push
 
 ## Tests
 
