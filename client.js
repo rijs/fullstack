@@ -35,7 +35,6 @@
   }
 
   function activateAll(){
-    console.log('activateAll')
     all(':unresolved')
       .map(invoke)
   }
@@ -53,6 +52,10 @@
   function activateHTML(name) {
     all('body /deep/ [html="'+name+'"]:not([inert])')
       .map(invoke)
+  }
+
+  function activateNode() {
+    invoke(this)
   }
 
   ripple._resources = function(){
@@ -122,7 +125,7 @@
       extend && (opts.extends = extend)
       proto.attachedCallback = 
       proto.attributeChangedCallback =
-        ripple
+        activateNode
       document.registerElement(res.name, opts)
     } catch (e){}
   }
