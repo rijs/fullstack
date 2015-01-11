@@ -1,14 +1,17 @@
 !function(){ 
   var resources = {}
-    , socket = io()
-    , log = console.log.bind(console, '[ripple]')
+    , socket    = io()
+    , log       = Function() // console.log.bind(console, '[ripple]')
   
   window.ripple = ripple  
 
-  function ripple(name){
-    if (!resources[name]) 
-      return console.error('[ripple] No such "'+name+'" resource exists'), []
-    return resources[name].body
+  function ripple(thing){
+    return !arguments.length               ? activateAll()
+     : this.tagName                        ? invoke(this)
+     : thing.tagName                       ? invoke(thing)
+     : thing[0] instanceof MutationRecord  ? invoke(thing[0].target.parentNode)
+     : isString(thing) && resources[thing] ? resources[thing].body
+     : (log('[ripple] No such "'+thing+'" resource exists'), [])
   }
 
   function emitterify(body, opts) {
@@ -33,68 +36,100 @@
 
   function activateAll(){
     console.log('activateAll')
-    all('[ripple]')
-      // .map(bind)
+    all(':unresolved')
       .map(invoke)
-      // .map(log)
   }
 
-  function activate(name) {
-    console.log('activate', name)
-    all('[data='+strip(name)+']')
-      // .map(bind)
+  function activateData(name) {
+    all('body /deep/ [data="'+name+'"]:not([inert])')
       .map(invoke)
-      // .map(log)
   }
 
-  function activateNode() {
-    // bind(this)
-    invoke(this)
+  function activateCSS(name) {
+    all('body /deep/ [css="'+name+'"]:not([inert])')
+      .map(invoke)
   }
 
-  function strip(d) {
-    return d.split('.')[0]
+  function activateHTML(name) {
+    all('body /deep/ [html="'+name+'"]:not([inert])')
+      .map(invoke)
   }
-
-  ripple.activateAll = activateAll
-  ripple.activate = activateNode
 
   ripple._resources = function(){
     return resources
   }
 
+  var i = 0;
+
   function invoke(d){ 
-    bind(d)
-    
+    var delay = attr(d, 'delay')
+      , inert = attr(d, 'inert')
+
+    if (inert != null) return;
+    if (delay != null) {
+      d.setAttribute('inert', '')
+      d.removeAttribute('delay')
+      return setTimeout(d.removeAttribute.bind(d,'inert'), +delay)
+    }
+
+    var root = d.shadowRoot || d.createShadowRoot()
+      , name = attr(d, 'is') || d.tagName.toLowerCase()
+      , data = attr(d, 'data')
+      , html = attr(d, 'template')
+      , css  = attr(d, 'css')
+      , fn   = resources[name] && resources[name].body
+      , data = resources[data] && resources[data].body
+      , html = resources[html] && resources[html].body
+      , css  = resources[css ] && resources[css ].body
+      , start = performance.now()
+
     try {
-          d.__render__ 
-      && (d.__data__ || !attr(d, 'data'))
-      &&  d.__render__(d.__data__)
+      // console.timeStamp('draw-start-'+ (++i))
+      // console.group('draw', i)
+
+          fn
+      && (data                  || !attr(d, 'data'))
+      && (applyhtml(root, html) || !attr(d, 'html'))
+      && (applycss(root, css)   || !attr(d, 'css'))
+      &&  fn.call(root, data)
+
+      // log(performance.now() - start)
+      // console.groupEnd()
+      // console.timeStamp('draw-end-'+ (i))
+
+      d.observer &&  Object.unobserve(d.state, d.observer)
+      d.state    && (Object.observe  (d.state, d.observer = later(d)))
+
     } catch (err) {
-      // debugger
       console.error(err)
     }
+
     return d
   }
 
-  function bind(d){
-    var name = d.dataset.resource || d.tagName.toLowerCase()
-      , data = attr(d, 'data')
-      , idJS = name + '.js'
-      , idDB = data ? data + '.data' : ''
-
-    d.__render__ = resources[idJS] && resources[idJS].body
-    d.__data__   = resources[idDB] && resources[idDB].body
+  function later(d) {
+    return function(changes){
+      ripple(d)
+    }
   }
 
-  function fetch(name){
-    log('fetch', name)
-    socket.emit('request', { name: name })
+  function registerElement(res) {
+    try {
+      var proto = Object.create(HTMLElement.prototype)
+        , opts = { prototype: proto }
+        , extend = res.headers['extends']
+
+      extend && (opts.extends = extend)
+      proto.attachedCallback = 
+      proto.attributeChangedCallback =
+        ripple
+      document.registerElement(res.name, opts)
+    } catch (e){}
   }
 
   socket.on('response', register)
 
-  function register(res) {
+  function register(res) { 
     var listeners = response(res.name) || []
       , opts = { type: 'response', listeners: listeners }
 
@@ -103,26 +138,22 @@
 
     resources[res.name] = res 
     localStorage.ripple = freeze(resources)
-    isData(res) && activate(res.name)
+    
+    isJS(res)   && registerElement(res)
+    isData(res) && activateData(res.name)
+    isCSS(res)  && activateCSS(res.name)
+    isHTML(res) && activateHTML(res.name)
+    
     listeners.map(call)
   }
 
-  socket.on('draw', activateAll)
+  // socket.on('draw', activateAll)
   var offline = parse(localStorage.ripple)
 
   values(offline)
     .forEach(register)
 
-  activateAll()
-
-  // function replace(name) {
-  //   return function(source){
-  //     return function(key){
-  //       console.log('name', name, key, resources[name][key], source[key])
-  //       resources[name].body[key] = source[key]
-  //     }
-  //   }
-  // }
+  // activateAll()
 
   function call(d, i, a) {
     (d.once ? a.splice(i, 1)[0].fn : d.fn)()
@@ -139,7 +170,7 @@
       resources[name].body = changes[0].object
       log('observed changes in', name)
       changes.forEach(process(name))
-      activateAll()
+      // activateAll()
     }
   }
 
@@ -165,56 +196,26 @@
     }
   }
 
-  function expand(type) {
-    return type == 'js' 
-      ? 'application/javascript'
-      : type == 'data' 
-      ? 'application/data'
-      : 'text/html'
+  function isJS(res){
+    return res.headers['content-type'] == 'application/javascript'
+    // return isString(resource.body) 
+    //     && !resource.body.indexOf('function')
   }
 
-  function compress(type) {
-    return type == 'application/javascript'
-      ? 'js'
-      : type == 'application/data' 
-      ? 'data'
-      : 'html'
+  function isData(res){
+    return res.headers['content-type'] == 'application/data'
+    // return isObject(resource.body)
   }
 
-  function id(res) {
-    return res.name + '.' + res.headers['content-type']
+  function isHTML(res){
+    return res.headers['content-type'] == 'text/html'
+    // return isString(resource.body)
   }
 
-  function isJS(resource){
-    return isString(resource.body) && !resource.body.indexOf('function')
-    // return candidate == 'application/javascript'
-  }
-
-  function isData(resource){
-    return typeof resource.body == 'object'
-        || typeof resource.body == 'array'
-    // return candidate == 'application/data'
-  }
-
-  function isHTML(candidate){
-    return candidate == 'text/html'
-  }
-
-
-  // function type(name) {
-  //   return resources[name][0] == '<'
-  //     ? 'text/html'
-  //     : 'application/javascript'
-  // }
-
-  // function isJS(name) {
-  //   return type(name) == 'application/javascript'
-  // }
-
-  function interpret(resource) {
-    return resource[0] == '<'
-      ? html(resource)
-      : fn(resource)
+  function isCSS(res){
+    return res.headers['content-type'] == 'text/css'
+    // return isString(resource.body)
+    //     && resource.name.contains('.css')
   }
 }()
 
@@ -231,10 +232,6 @@ function array(d){
 
 function fn(resource){
   return (new Function("return " + resource))()
-}
-
-function html(resource){
-  return resource
 }
 
 function matches(k, v){
@@ -294,8 +291,12 @@ function parse(d){
   return d && JSON.parse(d)
 }
 
-function attr(d, name) {
-  return d.attributes.getNamedItem(name)
+function attr(d, name, value) {
+  d = d.node ? d.node() : d
+  // value && name == 'value' && (d.value = value)
+
+  return arguments.length > 2 ? d.setAttribute(name, value)
+       : d.attributes.getNamedItem(name)
       && d.attributes.getNamedItem(name).value
 }
 
@@ -315,4 +316,52 @@ function last(d) {
 
 function l(d){
   return d.toLowerCase()
+}
+
+function applycss(d, css) {
+  if (!css) return false
+  var style = d.querySelector('style') || document.createElement('style')
+  style.innerHTML = css
+  d.insertBefore(style, d.firstChild)
+  return true
+}
+
+function applyhtml(d, html) {
+  if (!html) return false
+  var div = document.createElement('div')
+  div.innerHTML = html
+  d.innerHTML = div.firstChild.innerHTML
+  return true
+}
+
+function isNull(d) {
+  return d === null
+}
+
+function inherit(d) {
+  return [d]
+}
+
+function shift(d) {
+  return Array.prototype.shift.apply(d)
+} 
+function slice(d) {
+  return Array.prototype.slice.apply(d, (shift(arguments), arguments))
+} 
+function pop(d) {
+  return Array.prototype.pop.apply(d)
+} 
+
+function once(g, type, data, before) {
+  var el = g
+    .selectAll(type)
+    .data(data || [0])
+
+  el.out = el.exit()
+    .remove() 
+
+  el.in = el.enter()
+    .insert('xhtml:'+type, before)
+
+  return el
 }

@@ -7,6 +7,7 @@ module.exports = createRipple
 
 function createRipple(server, app, opts) {
   log('creating')
+  if (!server || !app) return ripple;
   var opts = opts || {}
     , socketSession = require("socket.io-session-middleware")
 
@@ -24,8 +25,34 @@ function createRipple(server, app, opts) {
 // API
 // ----------------------------------------------------------------------------
 function ripple(name){ 
-  if (!resources[name]) return console.error('[ripple] No such "'+name+'" resource exists'), []
-  return resources[name].body
+  return resources[name]
+    ? resources[name].body
+    : (console.error('[ripple] No such "'+name+'" resource exists'), [])
+}
+
+ripple.use = function(d) {
+  var arr = d.resources()
+
+  Object
+    .keys(d.resources())
+    .map(values(arr))
+    .map(middleware)
+
+  return ripple
+}
+
+function middleware(res) {
+  ripple.resource(res.name, res.body, res.headers)
+}
+
+function values(arr) {
+  return function(key){
+    return arr[key]
+  }
+}
+
+ripple.resources = function() {
+  return resources
 }
 
 ripple.db = function(config){
@@ -34,16 +61,21 @@ ripple.db = function(config){
 }
 
 ripple.resource = function(name, body, headers){
-  isData(headers, name) && store.apply(this, arguments)
-  isHTML(headers, name) && html.apply(this, arguments)
-  isJS  (headers, name) && js.apply(this, arguments)
-  return ripple
+  return isData.apply(this, arguments) ? store.apply(this, arguments)
+       : isCSS.apply(this, arguments)  ? css.apply(this, arguments)
+       : isHTML.apply(this, arguments) ? html.apply(this, arguments)
+       : isJS.apply(this, arguments)   ? js.apply(this, arguments)
+       : ripple
 }
 
 ripple.emit = emit
 
 function js(name, fn, headers){
-  var headers = headers || { 'content-type': 'application/javascript' }
+  var headers = headers || {}
+    , headers = { 
+        'content-type': 'application/javascript' 
+      , 'extends': headers['extends']
+      }
 
   resources[name] = { 
     name: name
@@ -66,11 +98,23 @@ function html(name, html, headers){
   return ripple
 }
 
+function css(name, css, headers){
+  var headers = headers || { 'content-type': 'text/css' }
+
+  resources[name] = { 
+    name: name
+  , body: Object.observe([css], meta(name))[0]
+  , headers: headers 
+  }
+  
+  return ripple
+}
+
 function store(name, body, headers) {
   var headers = headers || {}
     , headers = { 
         'content-type': 'application/data'
-      , 'content-location': headers['table'] || name.split('.')[0] 
+      , 'content-location': headers['table'] || name
       , 'private': headers['private']
       , 'proxy-to': headers['to']
       , 'proxy-from': headers['from']
@@ -121,7 +165,7 @@ function connected(socket){
 
   function request(req){
     log('request', req)
-    return !resources[req.name] || resources[req.name].headers.private
+    return (!resources[req.name] || resources[req.name].headers.private)
       ? log('private or no resource for', req)
       : emit(socket)(req.name)
       , socket.emit('draw')
@@ -163,7 +207,7 @@ function connected(socket){
 function emit(socket) {
   return function (name) {
     var r = resources[name]
-    return !r || r.headers.private
+    return (!r || r.headers.private)
       ? log('private or no resource for', name)
       : logSending(name)
       , socket == io
@@ -171,7 +215,7 @@ function emit(socket) {
       : sendTo(socket)
 
     function sendTo(s) {
-      s.emit('response', to(r, s), type(r) )
+      s.emit('response', to(r, s))
     }
   }
 }
@@ -182,7 +226,16 @@ function type(r) {
 
 function to(resource, socket){
   var fn = resource.headers['proxy-to'] || identity
-  return { name: resource.name, body: fn(resource.body, socket) }
+    , headers = { 'content-type': resource.headers['content-type'] }
+    , extend = resource.headers['extends']
+
+  extend && (headers['extends'] = extend)
+
+  return { 
+    name: resource.name
+  , body: fn(resource.body, socket) 
+  , headers: headers
+  }
 }
 
 function logSending(name) {
@@ -290,37 +343,28 @@ function acceptsHTML(req){
   return req.headers.accept && !!~req.headers.accept.indexOf('html')
 }
 
-function isData(headers, name){
-  return headers && (headers['content-type'] == 'application/data') 
-    || name.contains('.data')
+function isData(name, body, headers){
+  return (headers && (headers['content-type'] == 'application/data') )
+      || (typeof body == 'object')
 }
 
-function isJS(headers, name){
-  return (typeof headers !== 'undefined') 
-    && headers['content-type'] == 'application/javascript'
-    || name.contains('.js')
+function isJS(name, body, headers){
+  return (headers && headers['content-type'] == 'application/javascript')
+      || (typeof body == 'function')
 }
 
-function isHTML(headers, name){
-  return (typeof headers !== 'undefined') 
-    && headers['content-type'] == 'text/html'
-    || name.contains('.html')
+function isCSS(name, body, headers){
+  return headers && headers['content-type'] == 'text/css'
+      || (typeof body == 'string' && name.contains('.css'))
+}
+
+function isHTML(name, body, headers){
+  return headers && headers['content-type'] == 'text/html'
+      || (typeof body == 'string')
 }
 
 function client(req, res){
   res.sendfile(__dirname + '/client.js')
-}
-
-function id(req) {
-  return req.name + '.' + compress(req.headers['content-type'])
-}
-
-function compress(type) {
-  return type == 'application/javascript'
-    ? 'js'
-    : type == 'application/data' 
-    ? 'data'
-    : 'html'
 }
 
 function objectify(rows) {

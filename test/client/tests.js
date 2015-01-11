@@ -3,7 +3,7 @@ var assert = chai.assert
   , i = 0
   
 describe('Ripple Client', function(){
-  
+  // add tests for diff ripple usage
   before(function(done){
     io().once('draw', done)
   })
