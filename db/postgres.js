@@ -1,5 +1,5 @@
 module.exports = postgres
-var con
+var con, log = console.log.bind(console, '[ripple]')
 
 // ----------------------------------------------------------------------------
 // API

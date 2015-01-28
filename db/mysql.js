@@ -1,5 +1,5 @@
 module.exports = mysql
-var con
+var con, log = console.log.bind(console, '[ripple]')
 
 // ----------------------------------------------------------------------------
 // API

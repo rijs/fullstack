@@ -1,4 +1,4 @@
-var io, db, resources = {}
+var io, db, resources = {}, log = console.log.bind(console, '[ripple]')
 
 // ----------------------------------------------------------------------------
 // INIT
@@ -9,12 +9,11 @@ function createRipple(server, app, opts) {
   log('creating')
   if (!server || !app) return ripple;
   var opts = opts || {}
-    , socketSession = require("socket.io-session-middleware")
 
   db = require('./db')()
   io = require('socket.io')(server)
   if (!opts.noClient) app.use(append)
-  if (opts.session) io.use(socketSession(opts.session))
+  if (opts.session) io.use(auth(opts.session))
   app.use('/ripple', client)
 
   io.on('connection', connected)
@@ -31,11 +30,9 @@ function ripple(name){
 }
 
 ripple.use = function(d) {
-  var arr = d.resources()
-
   Object
     .keys(d.resources())
-    .map(values(arr))
+    .map(values(d.resources()))
     .map(middleware)
 
   return ripple
@@ -61,11 +58,13 @@ ripple.db = function(config){
 }
 
 ripple.resource = function(name, body, headers){
-  return isData.apply(this, arguments) ? store.apply(this, arguments)
-       : isCSS.apply(this, arguments)  ? css.apply(this, arguments)
-       : isHTML.apply(this, arguments) ? html.apply(this, arguments)
-       : isJS.apply(this, arguments)   ? js.apply(this, arguments)
-       : ripple
+    isData.apply(this, arguments) ? store.apply(this, arguments)
+  : isCSS.apply(this, arguments)  ? css.apply(this, arguments)
+  : isHTML.apply(this, arguments) ? html.apply(this, arguments)
+  : isJS.apply(this, arguments)   ? js.apply(this, arguments)
+  : ''
+
+  return ripple
 }
 
 ripple.emit = emit
@@ -111,20 +110,27 @@ function css(name, css, headers){
 }
 
 function store(name, body, headers) {
+  var o = name
+
+  typeof name   == 'object'
+    && (name    = name.name)
+    && (body    = name.body)
+    && (headers = name.headers)
+
   var headers = headers || {}
     , headers = { 
         'content-type': 'application/data'
-      , 'content-location': headers['table'] || name
+      , 'content-location': headers['content-location'] || headers['table'] || name
       , 'private': headers['private']
-      , 'proxy-to': headers['to']
-      , 'proxy-from': headers['from']
+      , 'proxy-to': headers['proxy-to'] || headers['to']
+      , 'proxy-from': headers['proxy-from'] || headers['from']
       }
     , table = headers['content-location']
 
   log('getting', table)
   
-  ;(!body || (isArray(body) && !body.length))
-    ? db.all(table).then(register)
+  return (~table && (!body || (isArray(body) && !body.length)))
+    ? [db.all(table).then(register), o]
     : register(body)
 
   function register(rows) {
@@ -138,8 +144,6 @@ function store(name, body, headers) {
     , observer: observer
     }
   }
-
-  return ripple
 }
 
 ripple.draw = function() {
@@ -149,31 +153,35 @@ ripple.draw = function() {
 function draw(socket) {
   Object 
     .keys(resources)
-    .filter(notPrivate)
+    .map(values(resources))
+    .filter(not(header('private')))
+    .map(key('name'))
     .map(emit(socket))
   socket.emit('draw')
 }
 
-function connected(socket){
-  
+function connected(socket){ 
+  console.log('connected', socket.id)
   draw(socket)
 
   socket.on('request', request)
+  socket.on('draw'   , draw.bind(null, socket))
   socket.on('remove' , handle(remove))
   socket.on('update' , handle(update))
   socket.on('push'   , handle(push))
 
-  function request(req){
-    log('request', req)
-    return (!resources[req.name] || resources[req.name].headers.private)
-      ? log('private or no resource for', req)
-      : emit(socket)(req.name)
+  function request(name){
+    log('request', name)
+    return (!resources[name] || resources[name].headers.private)
+      ? log('private or no resource for request', name)
+      : emit(socket)(name)
       , socket.emit('draw')
   }
 
   function handle(next) {
     return function(req) {
       log('client', next.name, req.name, req.key)
+      if (!resources[req.name]) return log('no resource', req.name);
 
       var name  = req.name
         , key   = req.key
@@ -182,7 +190,7 @@ function connected(socket){
         , body  = resources[name].body
         , type  = next.name
 
-      if (!fn || fn(key, value, body, name, type, socket))
+      if (!fn || fn.call(socket, key, value, body, name, type, next))
         next(key, value, body)
     }
   }
@@ -207,15 +215,18 @@ function connected(socket){
 function emit(socket) {
   return function (name) {
     var r = resources[name]
+
     return (!r || r.headers.private)
       ? log('private or no resource for', name)
-      : logSending(name)
-      , socket == io
-      ? io.of('/').sockets.forEach(sendTo)
+      : log('sending', name)
+      , typeof socket == 'string'
+      ? io.of('/').sockets.filter(by('sessionID', socket)).map(sendTo)
+      : socket == io
+      ? io.of('/').sockets.map(sendTo)
       : sendTo(socket)
 
     function sendTo(s) {
-      s.emit('response', to(r, s))
+      return s.emit('response', to(r, s)), s
     }
   }
 }
@@ -228,23 +239,14 @@ function to(resource, socket){
   var fn = resource.headers['proxy-to'] || identity
     , headers = { 'content-type': resource.headers['content-type'] }
     , extend = resource.headers['extends']
-
+  
   extend && (headers['extends'] = extend)
 
   return { 
     name: resource.name
-  , body: fn(resource.body, socket) 
+  , body: fn.call(socket, resource.body) 
   , headers: headers
   }
-}
-
-function logSending(name) {
-  log('sending', name)
-  return name
-}
-
-function notPrivate(name) {
-  return !resources[name].headers.private
 }
 
 function meta(name) {
@@ -281,7 +283,17 @@ function crud(name, data, type) {
   f(t, data).then(function(id){
     emit(io)(name)
     r.map(call(id))    
+
+    Object
+      .keys(resources)
+      .map(values(resources))
+      .filter(header('content-location', t))
+      .filter(not(by('name', name)))
+      .map(store)
+      .map(async(key('name')))
+      .map(then(emit(io)))
   })
+
 }
 
 function call(param) {
@@ -289,7 +301,6 @@ function call(param) {
     (d.once ? a.splice(i, 1).pop().fn : d.fn)(param)
   }
 }
-
 
 function response(name) {
   var r = resources[name]
@@ -336,6 +347,20 @@ function append(req, res, next){
   next()
 }
 
+function auth(config) {
+  return function(socket, next){
+    var req = {
+      "headers": {
+        "cookie": socket.request.headers.cookie,
+      },
+    }
+
+    require('cookie-parser')(config.secret)(req, null, function() {})
+    var name = config.key
+    socket.sessionID = req.signedCookies[name] || req.cookies[name]
+    next()
+  }
+}
 // ----------------------------------------------------------------------------
 // HELPERS
 // ----------------------------------------------------------------------------
@@ -364,7 +389,7 @@ function isHTML(name, body, headers){
 }
 
 function client(req, res){
-  res.sendfile(__dirname + '/client.js')
+  res.sendFile(__dirname + '/client.js')
 }
 
 function objectify(rows) {
@@ -394,6 +419,46 @@ function table(name) {
   return resources[name]['headers']['content-location']
 }
 
+function by(k, v){
+  return function(d){
+    return !d[k] || !v ? false 
+      : d[k].toLowerCase && v.toLowerCase ? (d[k].toLowerCase() == v.toLowerCase())
+      : d[k] == v
+  }
+}
+
+function async(fn){
+  return function(o){
+    return [o[0], fn(o[1])]
+  }
+}
+
+function key(key) {
+  return function(o){
+    return o[key]
+  }
+}
+
+function then(fn){
+  return function(o){
+    return o[0].then(fn.bind(null, o[1])), o[1]
+  }
+}
+
+function header(header, value) {
+  return function(d){
+    return !value 
+      ? d['headers'][header]
+      : d['headers'][header] == value
+  }
+}
+
+function not(fn){
+  return function(){
+    return !fn.apply(this, arguments)
+  }
+}
+
 function promise() {
   var resolve
     , reject
@@ -407,7 +472,9 @@ function promise() {
   return p
 }
 
-global.log = console.log.bind(console, '[ripple]')
-global.promise = promise
 global.isObject = isObject
 global.isString = isString
+global.parse = JSON.parse
+global.str = JSON.stringify
+global.promise = promise
+global.by = by

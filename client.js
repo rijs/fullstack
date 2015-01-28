@@ -1,9 +1,10 @@
 !function(){ 
   var resources = {}
     , socket    = io()
-    , log       = Function() // console.log.bind(console, '[ripple]')
+    , log       = console.log.bind(console, '[ripple]')
   
   window.ripple = ripple  
+  window.socket = socket  
 
   function ripple(thing){
     return !arguments.length               ? activateAll()
@@ -12,7 +13,7 @@
      : this.node                           ? invoke(this.node())
      : thing[0] instanceof MutationRecord  ? invoke(thing[0].target.parentNode)
      : isString(thing) && resources[thing] ? resources[thing].body
-     : (log('[ripple] No such "'+thing+'" resource exists'), [])
+     : register({ name: thing })
   }
 
   function emitterify(body, opts) {
@@ -135,23 +136,34 @@
 
   function register(res) { 
     var listeners = response(res.name) || []
-      , opts = { type: 'response', listeners: listeners }
+      , opts      = { type: 'response', listeners: listeners }
+
+    res.headers = res.headers || { 'content-type': 'application/data' }
+    res.body    = res.body || []
 
     isJS(res) && (res.body = fn(res.body))
-    isData(res) && Array.observe(emitterify(res.body, opts), meta(res.name))
+    isData(res) 
+      && Array.observe(emitterify(res.body, opts), meta(res.name))
+      && res.body.forEach
+      && res.body.forEach(function(d){
+           Object.observe(emitterify(d, opts), ometa(res.name))
+         })
 
     resources[res.name] = res 
     localStorage.ripple = freeze(resources)
-    
+
     isJS(res)   && registerElement(res)
     isData(res) && activateData(res.name)
     isCSS(res)  && activateCSS(res.name)
     isHTML(res) && activateHTML(res.name)
     
     listeners.map(call)
+
+    return res.body
   }
 
   // socket.on('draw', activateAll)
+
   var offline = parse(localStorage.ripple)
 
   values(offline)
@@ -168,13 +180,23 @@
     return (r && r.body && r.body.on && r.body.on.response) || []
   }
 
+  // short-circuit shortcut for two-level observation
+  function ometa(name) {
+    return function(changes) {
+      changes.forEach(function(change){
+        if (!change.type == 'update') return;
+        var i = ripple(name).indexOf(change.object)
+        ripple(name)[i] = clone(change.object)
+      })
+    }
+  }
+
   function meta(name) {
     log('watching', name)
     return function (changes) {
       resources[name].body = changes[0].object
       log('observed changes in', name)
       changes.forEach(process(name))
-      // activateAll()
     }
   }
 
@@ -342,24 +364,36 @@ function isNull(d) {
   return d === null
 }
 
-function inherit(d) {
-  return [d]
+function inherit(len) {
+  return function(d) {
+    return new Array(len+1).join('0').split('').map(identity(d))
+  }
+}
+
+function identity(d) {
+  return function(){
+    return d
+  }
 }
 
 function shift(d) {
   return Array.prototype.shift.apply(d)
 } 
+
 function slice(d) {
   return Array.prototype.slice.apply(d, (shift(arguments), arguments))
 } 
+
 function pop(d) {
   return Array.prototype.pop.apply(d)
 } 
 
-function once(g, type, data, before) {
+function once(g, type, data, before, key) {
+  var g = g.tagName ? d3.select(g) : g
+
   var el = g
     .selectAll(type)
-    .data(data || [0])
+    .data(data || [0], key)
 
   el.out = el.exit()
     .remove() 
