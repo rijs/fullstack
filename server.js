@@ -161,7 +161,7 @@ function draw(socket) {
 }
 
 function connected(socket){ 
-  console.log('connected', socket.id)
+  log('connected', socket.id)
   draw(socket)
 
   socket.on('request', request)
@@ -472,9 +472,14 @@ function promise() {
   return p
 }
 
+function array(){
+  return []
+}
+
 global.isObject = isObject
 global.isString = isString
 global.parse = JSON.parse
 global.str = JSON.stringify
 global.promise = promise
 global.by = by
+global.array = array

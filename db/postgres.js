@@ -37,9 +37,9 @@ postgres.update = function(table, data){
 }
 
 postgres.push = function(table, data){
-  console.log('push', arguments)
   var sql = sqlc(table, data)
-  var p = promise()
+    , p = promise()
+  log('push', sql)
 
   con.query(sql, function(err, result, fields) {
     if (err) return log('push', table, 'failed', err)
@@ -67,7 +67,6 @@ postgres.remove = function(table, data){
 // HELPERS
 // ----------------------------------------------------------------------------
 function sqlc(name, body) {
-  console.log('body', body)
   if (!isObject(body)) return;
   var template = 'INSERT INTO {table} ({keys}) VALUES ({values});'
   template = template.replace('{table}', name)
@@ -118,9 +117,6 @@ function skip(d) {
 
 function value(arr) {
   return function(key){
-    console.log('key', key)
-    console.log('arr[key]', arr[key])
-    console.log('escaped', escape(arr[key]))
     return escape(arr[key])
   }
 }
@@ -133,6 +129,6 @@ function kvpair(arr) {
 
 function escape(d){
   return isString(d)
-    ? con.escapeLiteral(arr[key])
+    ? con.escapeLiteral(d)
     : d
 }
