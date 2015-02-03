@@ -88,19 +88,22 @@ Ripple and [Compoxure](https://medium.com/@clifcunn/nodeconf-eu-29dd3ed500ec) ar
 * [ ] [Parameterise Resources](https://github.com/pemrouz/ripple/issues/6)
 * [ ] [ORM Database Adapters](https://github.com/pemrouz/ripple/issues/4)
 * [x] [Offline Storage Support](https://github.com/pemrouz/ripple/issues/5)
-* [ ] Web Components: Custom Elements and Shadow Dom
+* [x] [Web Components: Custom Elements and Shadow Dom](https://github.com/pemrouz/ripple/issues/9)
 * [ ] Extend Examples Repo
 * [ ] Add Conventional Folder Shortcuts
 * [ ] Create Components Repo
 * [ ] Objective-C (iOS) Client
 * [ ] Android Client
-* [ ] MutationObservers Change Detection
+* [x] [MutationObservers Change Detection](https://github.com/pemrouz/ripple/issues/13)
 * [x] Unit Tests
 * [ ] Encapsulates Ripple Nodes
 * [ ] Immutable Data & Time Travel
 * [ ] Server-Side Rendering as Middleware
 * [ ] Cache Resources in Redis
 * [ ] Service Workers: Background Sync and Push
+* [ ] [Conflict Resolution: Operational Transforms](https://github.com/pemrouz/ripple/issues/10)
+* [ ] [Ripple Scope: Global & Session](https://github.com/pemrouz/ripple/issues/11)
+* [ ] [Cache Headers](https://github.com/pemrouz/ripple/issues/12)
 
 ## Tests
 
