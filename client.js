@@ -144,7 +144,7 @@
     isJS(res) && (res.body = fn(res.body))
     isData(res) 
       && Array.observe(emitterify(res.body, opts), meta(res.name))
-      && res.body.forEach
+      && isObject(res.body[0])
       && res.body.forEach(function(d){
            Object.observe(emitterify(d, opts), ometa(res.name))
          })
