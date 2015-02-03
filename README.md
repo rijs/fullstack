@@ -102,7 +102,8 @@ Ripple and [Compoxure](https://medium.com/@clifcunn/nodeconf-eu-29dd3ed500ec) ar
 * [ ] Cache Resources in Redis
 * [ ] Service Workers: Background Sync and Push
 * [ ] [Conflict Resolution: Operational Transforms](https://github.com/pemrouz/ripple/issues/10)
-* 
+* [ ] [Ripple Scope: Global & Session](https://github.com/pemrouz/ripple/issues/11)
+
 ## Tests
 
 ```
