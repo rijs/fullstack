@@ -94,7 +94,7 @@ Ripple and [Compoxure](https://medium.com/@clifcunn/nodeconf-eu-29dd3ed500ec) ar
 * [ ] Create Components Repo
 * [ ] Objective-C (iOS) Client
 * [ ] Android Client
-* [ ] MutationObservers Change Detection
+* [x] [MutationObservers Change Detection](https://github.com/pemrouz/ripple/issues/13)
 * [x] Unit Tests
 * [ ] Encapsulates Ripple Nodes
 * [ ] Immutable Data & Time Travel
