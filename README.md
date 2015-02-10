@@ -67,7 +67,7 @@ The Ripple pattern evolved naturally from developing web apps that were recursiv
 
 ### Ripple vs Flux
 
-Ripple shares key architectural concepts with Flux, such as the single dispatcher, data-flow programming, and views updating when the associated data changes, etc. However, **Ripple is an extension to the Flux paradigm**, in that the dispatcher will not update only the data/views on the current page, but on all other clients too. Ripple introduces much less proprietary concepts (everything is a resource) and the API aims to embrace standards rather than invent new ones.
+Ripple shares key architectural concepts with Flux, such as the single dispatcher, data-flow programming (unidirectional), and views updating when the associated data changes, etc. However, **Ripple is an extension to the Flux paradigm**, in that the dispatcher will not update only the data/views on the current page, but on all other clients too. Ripple introduces much less proprietary concepts (everything is a resource) and the API aims to embrace standards rather than invent new ones.
 
 ### Ripple vs Meteor
 
