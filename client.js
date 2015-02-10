@@ -1,6 +1,6 @@
 !function(){ 
   var resources = {}
-    , socket    = io()
+    , socket    = window.io ? io() : { on: noop, emit: noop }
     , log       = console.log.bind(console, '[ripple]')
   
   window.ripple = ripple  
@@ -8,17 +8,17 @@
 
   function ripple(thing){
     return !arguments.length               ? activateAll()
-     : this.tagName                        ? invoke(this)
-     : thing.tagName                       ? invoke(thing)
+     : this.nodeName                       ? invoke(this)
+     : thing.nodeName                      ? invoke(thing)
      : this.node                           ? invoke(this.node())
      : thing[0] instanceof MutationRecord  ? invoke(thing[0].target.parentNode)
      : isString(thing) && resources[thing] ? resources[thing].body
-     : register({ name: thing })
+     : register(isObject(thing) ? thing : { name: thing })
   }
 
   function emitterify(body, opts) {
-    return body.on = on
-         , body.once = once
+    return def(body, 'on', on)
+         , def(body, 'once', once)
          , opts && (body.on[opts.type] = opts.listeners)
          , body
 
@@ -186,7 +186,10 @@
       changes.forEach(function(change){
         if (!change.type == 'update') return;
         var i = ripple(name).indexOf(change.object)
-        ripple(name)[i] = clone(change.object)
+          , listeners = response(name) || []
+          , opts      = { type: 'response', listeners: listeners }
+
+        ripple(name)[i] = Object.observe(emitterify(clone(change.object), opts), ometa(name))
       })
     }
   }
@@ -197,6 +200,7 @@
       resources[name].body = changes[0].object
       log('observed changes in', name)
       changes.forEach(process(name))
+      activateData(name)
     }
   }
 
@@ -266,6 +270,10 @@ function matches(k, v){
       ? d[k].toLowerCase() == v.toLowerCase()
       : d[k] == v
   }
+}
+
+function by(){
+  return matches.apply(this, arguments)
 }
 
 function exists(v){
@@ -388,11 +396,33 @@ function pop(d) {
   return Array.prototype.pop.apply(d)
 } 
 
-function once(g, type, data, before, key) {
-  var g = g.tagName ? d3.select(g) : g
+function noop(){
+}
+
+function sel(){
+  return d3.select.apply(this, arguments)
+}
+
+function def(o, p, v){
+  Object.defineProperty(o, p, { value: v })
+}
+
+function unique(key){
+  var matched = {}
+  return function(d){
+    return matched[d[key]]
+      ? false
+      : matched[d[key]] = true
+  }
+}
+
+function once(g, selector, data, before, key) {
+  var g = g.nodeName ? d3.select(g) : g
+    , type    = selector.split('.')[0]
+    , classed = selector.split('.').slice(1).join(' ')
 
   var el = g
-    .selectAll(type)
+    .selectAll(selector)
     .data(data || [0], key)
 
   el.out = el.exit()
@@ -400,6 +430,7 @@ function once(g, type, data, before, key) {
 
   el.in = el.enter()
     .insert('xhtml:'+type, before)
+    .classed(classed, 1)
 
   return el
 }
