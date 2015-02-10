@@ -97,7 +97,7 @@ Ripple and [Compoxure](https://medium.com/@clifcunn/nodeconf-eu-29dd3ed500ec) ar
 * [x] [MutationObservers Change Detection](https://github.com/pemrouz/ripple/issues/13)
 * [x] Unit Tests
 * [ ] Encapsulates Ripple Nodes
-* [ ] Immutable Data & Time Travel
+* [ ] [Immutable Data & Time Travel](https://github.com/pemrouz/ripple/issues/14)
 * [ ] Server-Side Rendering as Middleware
 * [ ] Cache Resources in Redis
 * [ ] Service Workers: Background Sync and Push
