@@ -8,12 +8,22 @@
 
   function ripple(thing){
     return !arguments.length               ? activateAll()
+     : arguments.length == 2               ? version.apply(this, arguments)
      : this.nodeName                       ? invoke(this)
      : thing.nodeName                      ? invoke(thing)
      : this.node                           ? invoke(this.node())
      : thing[0] instanceof MutationRecord  ? invoke(thing[0].target.parentNode)
      : isString(thing) && resources[thing] ? resources[thing].body
      : register(isObject(thing) ? thing : { name: thing })
+  }
+
+  function version(name, version) {
+    register({ 
+      name: name
+    , headers: { 'content-type': 'application/data' }
+    , diffs: resources[name].diffs
+    , body: clone(resources[name].diffs[version])
+    })
   }
 
   function emitterify(body, opts) {
@@ -138,8 +148,9 @@
     var listeners = response(res.name) || []
       , opts      = { type: 'response', listeners: listeners }
 
-    res.headers = res.headers || { 'content-type': 'application/data' }
-    res.body    = res.body || []
+    res.headers  = res.headers || { 'content-type': 'application/data' }
+    res.body     = res.body || []
+    res.diffs    = res.diffs || [clone(res.body)]
 
     isJS(res) && (res.body = fn(res.body))
     isData(res) 
@@ -197,6 +208,7 @@
   function meta(name) {
     log('watching', name)
     return function (changes) {
+      resources[name].diffs.push(clone(changes[0].object))
       resources[name].body = changes[0].object
       log('observed changes in', name)
       changes.forEach(process(name))
@@ -335,7 +347,9 @@ function attr(d, name, value) {
 }
 
 function clone(d) {
-  return JSON.parse(JSON.stringify(d))
+  return !isFunction(d) 
+       ? JSON.parse(JSON.stringify(d))
+       : d
 }
 
 function remove(k, v) {
