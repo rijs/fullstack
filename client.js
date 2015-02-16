@@ -1,53 +1,45 @@
 !function(){ 
-  var resources = {}
+  var resources = { versions: [] }
     , socket    = window.io ? io() : { on: noop, emit: noop }
     , log       = console.log.bind(console, '[ripple]')
-  
+    
   window.ripple = ripple  
-  window.socket = socket  
+  ripple.socket = socket
 
-  function ripple(thing){
-    return !arguments.length               ? activateAll()
-     : arguments.length == 2               ? version.apply(this, arguments)
-     : this.nodeName                       ? invoke(this)
-     : thing.nodeName                      ? invoke(thing)
-     : this.node                           ? invoke(this.node())
-     : thing[0] instanceof MutationRecord  ? invoke(thing[0].target.parentNode)
-     : isString(thing) && resources[thing] ? resources[thing].body
+  function ripple(thing, v){
+    return !arguments.length                ? activateAll()
+     : thing[0] instanceof MutationRecord   ? invoke(thing[0].target.parentNode)
+     : arguments.length == 2 && isNumber(v) ? rollback({ name: thing, index: v })
+     : arguments.length == 2 && isObject(v) ? register({ name: thing, body: v })
+     : this.nodeName                        ? invoke(this)
+     : thing.nodeName                       ? invoke(thing)
+     : this.node                            ? invoke(this.node())
+     : isNumber(thing)                      ? travel(thing)
+     : isString(thing) && resources[thing]  ? resources[thing].body
      : register(isObject(thing) ? thing : { name: thing })
   }
 
-  function version(name, version) {
+  function rollback(o) {
+    if (!resources[o.name].versions) console.error(o.name, 'does not have a history')
+
     register({ 
-      name: name
-    , headers: { 'content-type': 'application/data' }
-    , diffs: resources[name].diffs
-    , body: clone(resources[name].diffs[version])
+      name: o.name
+    , headers: { 'content-type': 'application/data', 'version': o.index }
+    , body: resources[o.name].versions[o.index].toJS()
     })
-  }
 
-  function emitterify(body, opts) {
-    return def(body, 'on', on)
-         , def(body, 'once', once)
-         , opts && (body.on[opts.type] = opts.listeners)
-         , body
-
-    function on(type, callback, opts) {
-      opts = opts || {}
-      opts.fn = callback
-      this.on[type] = this.on[type] || []
-      this.on[type].push(opts)
-      return this
-    }
-
-    function once(type, callback){
-      this.on.call(this, type, callback, { once: true })
-      return this
-    }
+    return ripple(o.name)
   }
 
   function activateAll(){
-    all(':unresolved')
+    // TODO: :resolved?
+    var selector = values(resources)
+          .filter(header('content-type', 'application/javascript'))
+          .map(key('name'))
+          .map(prepend('body /deep/ '))
+          .join(',')
+
+    all(selector)
       .map(invoke)
   }
 
@@ -93,7 +85,7 @@
       , html = attr(d, 'template')
       , css  = attr(d, 'css')
       , fn   = resources[name] && resources[name].body
-      , data = resources[data] && resources[data].body
+      , data = resources[data] && resources[data].body || d.__data__
       , html = resources[html] && resources[html].body
       , css  = resources[css ] && resources[css ].body
       , start = performance.now()
@@ -142,53 +134,92 @@
     } catch (e){}
   }
 
+  function intepret(res) {
+    return isFunction(res.body) ? (res.headers['content-type'] = 'application/javascript')
+         : isObject(res.body)   ? (res.headers['content-type'] = 'application/data')
+         : false
+  }
+
+  // socket.on('draw', activateAll)
+
+  group('localStorage cache', function(){
+    var offline = parse(localStorage.ripple)
+
+    values(offline)
+      .forEach(register)
+  })
+
+  // activateAll()
+
+  function group(label, fn) {
+    console.groupCollapsed('[ripple] ', label)
+    fn()
+    console.groupEnd('[ripple] ', label)
+  }
+
+  function call(d, i, a) {
+    (d.once ? a.splice(i, 1)[0].fn : d.fn)()
+  }
+
+  function listeners(name) {
+    var r = resources[name]
+    return (r && r.body && r.body.on && r.body.on.response) || []
+  }
+
+  function versions(name) {
+    return (resources[name] && resources[name].versions) || []
+  }
+
   socket.on('response', register)
 
   function register(res) { 
-    var listeners = response(res.name) || []
-      , opts      = { type: 'response', listeners: listeners }
-
+    log('registering', res.name)
     res.headers  = res.headers || { 'content-type': 'application/data' }
     res.body     = res.body || []
-    res.diffs    = res.diffs || [clone(res.body)]
+    var rollback = res.headers.hasOwnProperty('version')
+    intepret(res)   
+    
+    isJS(res) 
+      && (res.body = fn(res.body))
 
-    isJS(res) && (res.body = fn(res.body))
-    isData(res) 
-      && Array.observe(emitterify(res.body, opts), meta(res.name))
-      && isObject(res.body[0])
-      && res.body.forEach(function(d){
-           Object.observe(emitterify(d, opts), ometa(res.name))
-         })
+    if (isData(res)){
+      res.versions = res.versions || versions(res.name)
+      !rollback && res.versions.push(m(res.body))
+      watch(res)
+    }
 
     resources[res.name] = res 
-    localStorage.ripple = freeze(resources)
+    localStorage.ripple = freeze(resources) 
 
     isJS(res)   && registerElement(res)
     isData(res) && activateData(res.name)
     isCSS(res)  && activateCSS(res.name)
     isHTML(res) && activateHTML(res.name)
     
-    listeners.map(call)
+    listeners(res.name).map(call)
+    isData(res) && !rollback && history()
 
     return res.body
   }
 
-  // socket.on('draw', activateAll)
+  function watch(res) {
+    var opts = { type: 'response', listeners: listeners(res.name) }
+    
+    !res.observer 
+     && Array.observe(
+          res.body = emitterify(res.body, opts)
+        , res.observer = meta(res.name)
+        )
 
-  var offline = parse(localStorage.ripple)
+    isObject(last(res.body))
+     && res.body.forEach(observe)
 
-  values(offline)
-    .forEach(register)
-
-  // activateAll()
-
-  function call(d, i, a) {
-    (d.once ? a.splice(i, 1)[0].fn : d.fn)()
-  }
-
-  function response(name) {
-    var r = resources[name]
-    return (r && r.body && r.body.on && r.body.on.response) || []
+    function observe(d) {
+      if (d.observer) return;
+      var fn = ometa(res.name)
+      def(d, 'observer', fn)
+      Object.observe(d, fn)
+    }
   }
 
   // short-circuit shortcut for two-level observation
@@ -197,10 +228,7 @@
       changes.forEach(function(change){
         if (!change.type == 'update') return;
         var i = ripple(name).indexOf(change.object)
-          , listeners = response(name) || []
-          , opts      = { type: 'response', listeners: listeners }
-
-        ripple(name)[i] = Object.observe(emitterify(clone(change.object), opts), ometa(name))
+        ripple(name)[i] = clone(change.object)
       })
     }
   }
@@ -208,34 +236,98 @@
   function meta(name) {
     log('watching', name)
     return function (changes) {
-      resources[name].diffs.push(clone(changes[0].object))
-      resources[name].body = changes[0].object
-      log('observed changes in', name)
+      log('observed changes in', name, changes)
+      watch(resources[name])
       changes.forEach(process(name))
       activateData(name)
     }
   }
 
+  function emitterify(body, opts) {
+    return def(body, 'on', on)
+         , def(body, 'once', once)
+         , opts && (body.on[opts.type] = opts.listeners)
+         , body
+
+    function on(type, callback, opts) {
+      opts = opts || {}
+      opts.fn = callback
+      this.on[type] = this.on[type] || []
+      this.on[type].push(opts)
+      return this
+    }
+
+    function once(type, callback){
+      this.on.call(this, type, callback, { once: true })
+      return this
+    }
+  }
+
   function process(name) {
     return function(change) {
-      var type = change.type
+      var type    = change.type
         , removed = type == 'delete' ? change.oldValue : change.removed && change.removed[0]
-        , data = change.object
-        , key  = change.name || change.index
-        , value = data[key]
+        , data    = change.object
+        , key     = change.name || change.index
+        , value   = data[key]
         , details = {
-            name : name
-          , key  : key
-          , value: removed || value 
+            name  : name
+          , key   : key
+          , value : removed || value 
+          , type  : type == 'update'             ? 'update'
+                  : type == 'delete'             ? 'remove'
+                  : type == 'splice' &&  removed ? 'remove'
+                  : type == 'splice' && !removed ? 'push'  
+                  : type == 'add'                ? 'push'  
+                  : false
           }
 
-      return type == 'update'             ? socket.emit('update', details)
-           : type == 'delete'             ? socket.emit('remove', details)
-           : type == 'splice' &&  removed ? socket.emit('remove', details)
-           : type == 'splice' && !removed ? socket.emit('push'  , details)
-           : type == 'add'                ? socket.emit('push'  , details)
-           : false
+      socket.emit('change', record(details))
     }
+
+  }
+
+  function record(details) {
+    var resource = resources[details.name]
+      , versions = resource.versions
+      , previous = last(versions)
+      , type     = details.type
+      , key      = details.key
+      , value    = details.value
+      , latest   = type == 'update' ? previous.set(key, value)
+                 : type == 'push'   ? previous.set(key, value)
+                 : type == 'remove' ? previous.remove(key, value)
+                 : false 
+
+    versions.push(latest), history()
+    return details
+  }
+
+  function history() {
+    resources
+      .versions
+      .push(
+        values(resources)
+          .filter(header('content-type', 'application/data'))
+          .map(index)
+      )
+    
+    function index(r) {
+      delete r.headers.version
+      return { name: r.name, index: r.versions.length-1 }
+    }
+  }
+
+  function travel(time) {
+    if (time < 0 || time > (resources.versions.length-1))
+      return console.error(time, 'time does not exist')
+
+    resources
+      .versions
+      [time]
+      .forEach(rollback)
+
+    ripple()
   }
 
   function isJS(res){
@@ -273,13 +365,15 @@ function array(d){
 }
 
 function fn(resource){
-  return (new Function("return " + resource))()
+  return isFunction(resource) 
+      ? resource
+      : (new Function("return " + resource))()
 }
 
 function matches(k, v){
   return function(d){
-    return d[k].toLowerCase && v.toLowerCase
-      ? d[k].toLowerCase() == v.toLowerCase()
+    return d[k] && v && d[k].toLowerCase && v.toLowerCase 
+      ? d[k].toLowerCase() === v.toLowerCase()
       : d[k] == v
   }
 }
@@ -294,8 +388,16 @@ function exists(v){
   }
 }
 
+function match(){
+  return exists.apply(this, arguments)
+}
+
 function isString(d) {
   return typeof d == 'string'
+}
+
+function isNumber(d) {
+  return typeof d == 'number'
 }
 
 function isObject(d) {
@@ -304,6 +406,10 @@ function isObject(d) {
 
 function isFunction(d) {
   return typeof d == 'function'
+}
+
+function isArray(d) {
+  return d instanceof Array
 }
 
 function values(o) {
@@ -318,12 +424,27 @@ function base(o) {
   }
 }
 
-function freeze(r){
-  var stripped = parse(str(r))
+function key(k) {
+  return function(o){
+    return o[k]
+  }
+}
 
-  Object.keys(r)
-    .map(function(name){ return r[name] })
-    .filter(function(res){ return isFunction(res.body) })
+function not(fn){
+  return function(){
+    return !fn.apply(this, arguments)
+  }
+}
+
+function freeze(r){
+  // TODO: This is slow for 100k+. Batch freeze calls.
+  var stripped = clone(r)
+  delete stripped.versions
+
+  values(r)
+    .filter(header('content-type'))
+    .map(function(res){ delete stripped[res.name].versions; return res })
+    .filter(header('content-type', 'application/javascript'))
     .map(function(res){ return stripped[res.name].body = res.body.toString() })
 
   return str(stripped)
@@ -348,13 +469,15 @@ function attr(d, name, value) {
 
 function clone(d) {
   return !isFunction(d) 
-       ? JSON.parse(JSON.stringify(d))
+       ? parse(str(d))
        : d
 }
 
 function remove(k, v) {
   return function(d, i, a) {
-    (d[k] == v) && a.splice(i,1)
+      !k && !v ? (d)         && a.splice(i,1)
+    :       !v ? (d == k)    && a.splice(i,1)
+    :            (d[k] == v) && a.splice(i,1)
   }
 }
 
@@ -364,6 +487,12 @@ function last(d) {
 
 function l(d){
   return d.toLowerCase()
+}
+
+function m(d) {
+  return isArray(d) ? Immutable.List(d)
+       : isObject(d) ? Immutable.Map(d)
+       : console.error(d, 'is not an array or object')
 }
 
 function applycss(d, css) {
@@ -388,14 +517,22 @@ function isNull(d) {
 
 function inherit(len) {
   return function(d) {
-    return new Array(len+1).join('0').split('').map(identity(d))
+    return new Array((len||1)+1).join('0').split('').map(identity(d))
   }
+}
+
+function self(d) {
+  return d
 }
 
 function identity(d) {
   return function(){
     return d
   }
+}
+
+function index(d, i) {
+  return i
 }
 
 function shift(d) {
@@ -417,6 +554,10 @@ function sel(){
   return d3.select.apply(this, arguments)
 }
 
+function datum(node){
+  return d3.select(node).datum()
+}
+
 function def(o, p, v){
   Object.defineProperty(o, p, { value: v })
 }
@@ -430,8 +571,23 @@ function unique(key){
   }
 }
 
+function header(header, value) {
+  return function(d){
+    return !d['headers']         ? false
+         : !d['headers'][header] ? false
+         : !value                ? d['headers'][header]
+                                 : d['headers'][header] == value
+  }
+}
+
+function prepend(v) {
+  return function(d){
+    return v+d
+  }
+}
+
 function once(g, selector, data, before, key) {
-  var g = g.nodeName ? d3.select(g) : g
+  var g       = g.node ? g : d3.select(g)
     , type    = selector.split('.')[0]
     , classed = selector.split('.').slice(1).join(' ')
 
