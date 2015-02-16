@@ -15,6 +15,7 @@ function createRipple(server, app, opts) {
   if (!opts.noClient) app.use(append)
   if (opts.session) io.use(auth(opts.session))
   app.use('/ripple', client)
+  app.use('/immutable.min.js', immutable)
 
   io.on('connection', connected)
   return ripple
@@ -162,13 +163,17 @@ function draw(socket) {
 
 function connected(socket){ 
   log('connected', socket.id)
+  var types = {
+        push: push
+      , remove: remove
+      , update: update 
+      }
+
   draw(socket)
 
   socket.on('request', request)
   socket.on('draw'   , draw.bind(null, socket))
-  socket.on('remove' , handle(remove))
-  socket.on('update' , handle(update))
-  socket.on('push'   , handle(push))
+  socket.on('change' , change)
 
   function request(name){
     log('request', name)
@@ -178,21 +183,20 @@ function connected(socket){
       , socket.emit('draw')
   }
 
-  function handle(next) {
-    return function(req) {
-      log('client', next.name, req.name, req.key)
-      if (!resources[req.name]) return log('no resource', req.name);
+  function change(req) {
+    log('client', req.type, req.name, req.key)
+    if (!resources[req.name]) return log('no resource', req.name);
 
-      var name  = req.name
-        , key   = req.key
-        , value = req.value
-        , fn    = resources[name].headers['proxy-from']
-        , body  = resources[name].body
-        , type  = next.name
+    var name  = req.name
+      , key   = req.key
+      , value = req.value
+      , type  = req.type
+      , fn    = resources[name].headers['proxy-from']
+      , body  = resources[name].body
+      , next  = types[req.type]
 
-      if (!fn || fn.call(socket, key, value, body, name, type, next))
-        next(key, value, body)
-    }
+    if (!fn || fn.call(socket, key, value, body, name, type, next))
+      next(key, value, body)
   }
 
   function push(key, value, body) {
@@ -337,6 +341,7 @@ function append(req, res, next){
 
   res.end = function() {
     if (acceptsHTML(this.req)) {
+      res.write('<script src="/immutable.min.js" defer></script>')
       res.write('<script src="/socket.io/socket.io.js" defer></script>')
       res.write('<script src="/ripple" defer></script>')
     }
@@ -390,6 +395,10 @@ function isHTML(name, body, headers){
 
 function client(req, res){
   res.sendFile(__dirname + '/client.js')
+}
+
+function immutable(req, res){
+  res.sendFile(__dirname + '/node_modules/immutable/dist/immutable.min.js')
 }
 
 function objectify(rows) {
