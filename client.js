@@ -4,7 +4,6 @@
     , log       = console.log.bind(console, '[ripple]')
     
   window.ripple = ripple  
-  ripple.socket = socket
 
   function ripple(thing, v){
     return !arguments.length                ? activateAll()
