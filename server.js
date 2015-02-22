@@ -113,26 +113,25 @@ function css(name, css, headers){
 function store(name, body, headers) {
   var o = name
 
-  typeof name   == 'object'
-    && (name    = name.name)
-    && (body    = name.body)
-    && (headers = name.headers)
+  if (typeof name   == 'object') {
+    name    = o.name
+    body    = o.body
+    headers = o.headers
+  }
 
   var headers = headers || {}
     , headers = { 
-        'content-type': 'application/data'
+        'content-type'    : 'application/data'
       , 'content-location': headers['content-location'] || headers['table'] || name
-      , 'private': headers['private']
-      , 'proxy-to': headers['proxy-to'] || headers['to']
-      , 'proxy-from': headers['proxy-from'] || headers['from']
+      , 'private'         : headers['private']
+      , 'proxy-to'        : headers['proxy-to'] || headers['to']
+      , 'proxy-from'      : headers['proxy-from'] || headers['from']
       }
     , table = headers['content-location']
 
   log('getting', table)
   
-  return (~table && (!body || (isArray(body) && !body.length)))
-    ? [db.all(table).then(register), o]
-    : register(body)
+  return [db.all(table, body).then(register), o]
 
   function register(rows) {
     var observer
@@ -221,13 +220,12 @@ function emit(socket) {
     var r = resources[name]
 
     return (!r || r.headers.private)
-      ? log('private or no resource for', name)
-      : log('sending', name)
-      , typeof socket == 'string'
-      ? io.of('/').sockets.filter(by('sessionID', socket)).map(sendTo)
-      : socket == io
-      ? io.of('/').sockets.map(sendTo)
-      : sendTo(socket)
+      ?  log('private or no resource for', name)
+      : (log('sending', name), typeof socket == 'string')
+      ?  io.of('/').sockets.filter(by('sessionID', socket)).map(sendTo)
+      :  socket == io
+      ?  io.of('/').sockets.map(sendTo)
+      :  sendTo(socket)
 
     function sendTo(s) {
       return s.emit('response', to(r, s)), s
@@ -298,6 +296,15 @@ function crud(name, data, type) {
       .map(then(emit(io)))
   })
 
+}
+
+function mapLog(i) {
+  return function(d){
+    var e = JSON.parse(JSON.stringify(d))
+    delete e.body
+    if (d[1]) delete d[1].body
+    return console.log(i, e), d
+  }
 }
 
 function call(param) {
@@ -436,6 +443,12 @@ function by(k, v){
   }
 }
 
+function gt(k, v){
+  return function(d){
+    return d[k] > v
+  }
+}
+
 function async(fn){
   return function(o){
     return [o[0], fn(o[1])]
@@ -491,4 +504,5 @@ global.parse = JSON.parse
 global.str = JSON.stringify
 global.promise = promise
 global.by = by
+global.gt = gt
 global.array = array
