@@ -1,5 +1,5 @@
 module.exports = mysql
-var con, log = console.log.bind(console, '[ripple]')
+var con, log = console.log.bind(console, '[ripple/mysql]')
 
 // ----------------------------------------------------------------------------
 // API
@@ -9,12 +9,29 @@ function mysql(config){
   return mysql
 }
 
-mysql.all = function(table){
+mysql.all = function(table, body){
   var p = promise()
 
-  con.query('SELECT * FROM ' + table, function(e, rows) {
+  con.query('SHOW TABLES LIKE "' + table + '"', function(e, rows) {
     if (e) return log('ERROR', table, e)
-    log('got', table, rows.length)
+    if (!rows.length) return log('table does not exist', table), p.resolve(body)
+
+    con.query('SELECT * FROM ' + table, function(e, rows) {
+      if (e) return log('ERROR', table, e)
+      log('got', table, rows.length)
+      p.resolve(rows)
+    })
+  })
+
+  return p
+}
+
+mysql.tables = function(){
+  var p = promise()
+
+  con.query('SHOW TABLES', function(e, rows) {
+    if (e) return log('ERROR', e)
+    log('tables', rows.length)
     p.resolve(rows)
   })
 
