@@ -15,8 +15,8 @@ module.exports = function adaptor(config){
 
 function stub(){ return stub }
 
-stub.all = function(){
-  return promise([])
+stub.all = function(table, body){
+  return promise(body)
 }
 
 stub.noop = 

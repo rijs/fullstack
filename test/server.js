@@ -2,7 +2,6 @@ var assert  = require('assert')
   , express = require('express')
   , http    = require('http')
   , sinon   = require('sinon')
-  , rip     = require('../server')
   , app
   , server
   , ripple
@@ -12,14 +11,14 @@ var assert  = require('assert')
 describe('Ripple Server', function(){
 
   beforeEach(function(done){
-    app = server = ripple = null    
+    app = server = ripple = null  
     app = express()
     server = http.createServer(app)
-    ripple = rip(server, app)
-    
+    ripple = require('../server')(server, app)
+
     ripple
       .resource('some.data', [1,2,3])
-
+        
     done()
   })
 
@@ -33,23 +32,23 @@ describe('Ripple Server', function(){
   })
 
   it('should update a resource', function(done){
-    ripple('some.data').on('response', function(){ done() })
-
+    ripple('some.data').once('response', function(){ done() })
     ripple('some.data')[0] = { id: 5, val: 5 }
+
     assert.deepEqual({ id: 5, val: 5 }, ripple('some.data')[0])
     assert.equal(2, ripple('some.data')[1])
     assert.equal(3, ripple('some.data')[2])
   })
 
   it('should add to a resource', function(done){
-    ripple('some.data').on('response', function(){ done() })
+    ripple('some.data').once('response', function(){ done() })
 
     ripple('some.data').push({ id: 7, value: 7 })
     assert.equal(4, ripple('some.data').length)
   })
 
   it('should delete from a resource', function(done){
-    ripple('some.data').on('response', function(){ done() })
+    ripple('some.data').once('response', function(){ done() })
 
     ripple('some.data').pop()
     assert.equal(2, ripple('some.data').length)

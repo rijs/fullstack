@@ -43,7 +43,7 @@
   }
 
   function activateData(name) {
-    all('body /deep/ [data="'+name+'"]:not([inert])')
+    all('body /deep/ [data~="'+name+'"]:not([inert])')
       .map(invoke)
   }
 
@@ -53,7 +53,7 @@
   }
 
   function activateHTML(name) {
-    all('body /deep/ [html="'+name+'"]:not([inert])')
+    all('body /deep/ [template="'+name+'"]:not([inert])')
       .map(invoke)
   }
 
@@ -63,6 +63,21 @@
 
   ripple._resources = function(){
     return resources
+  }
+
+  function resource(name) {
+    return resources[name] && resources[name].body
+  }
+
+  function resourcify(d) {
+    var o = {}
+      , names = d.split(' ')
+ 
+    return   names.length == 0 ? undefined
+         :   names.length == 1 ? resource(first(names))
+         : ( names.map(function(d){ o[d] = resource(d) })
+           , values(o).some(empty) ? undefined : o 
+           )
   }
 
   var i = 0;
@@ -80,13 +95,13 @@
 
     var root = d.shadowRoot || d.createShadowRoot()
       , name = attr(d, 'is') || d.tagName.toLowerCase()
-      , data = attr(d, 'data')
+      , data = attr(d, 'data') || ''
       , html = attr(d, 'template')
       , css  = attr(d, 'css')
-      , fn   = resources[name] && resources[name].body
-      , data = resources[data] && resources[data].body || d.__data__
-      , html = resources[html] && resources[html].body
-      , css  = resources[css ] && resources[css ].body
+      , data = resourcify(data) || d.__data__
+      , fn   = resource(name)
+      , html = resource(html)
+      , css  = resource(css )
       , start = performance.now()
 
     try {
@@ -95,7 +110,7 @@
 
           fn
       && (data                  || !attr(d, 'data'))
-      && (applyhtml(root, html) || !attr(d, 'html'))
+      && (applyhtml(root, html) || !attr(d, 'template'))
       && (applycss(root, css)   || !attr(d, 'css'))
       &&  fn.call(root, data)
 
@@ -210,10 +225,11 @@
         , res.observer = meta(res.name)
         )
 
-    isObject(last(res.body))
-     && res.body.forEach(observe)
+    isArray(res.body)
+      && res.body.forEach(observe)
 
     function observe(d) {
+      if (!isObject(d)) return;
       if (d.observer) return;
       var fn = ometa(res.name)
       def(d, 'observer', fn)
@@ -516,18 +532,22 @@ function isNull(d) {
 
 function inherit(len) {
   return function(d) {
-    return new Array((len||1)+1).join('0').split('').map(identity(d))
+    return new Array((len||1)+1).join('0').split('').map(curry(identity, d))
   }
 }
 
-function self(d) {
-  return d
+function first(d) {
+  return d[0]
 }
 
 function identity(d) {
+  return d
+}
+
+function curry(fn, d) {
   return function(){
-    return d
-  }
+    return fn(d)
+  }  
 }
 
 function index(d, i) {
@@ -583,6 +603,10 @@ function prepend(v) {
   return function(d){
     return v+d
   }
+}
+
+function empty(d) {
+  return !d || !d.length
 }
 
 function once(g, selector, data, before, key) {

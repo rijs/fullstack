@@ -1,5 +1,9 @@
 var io, db, resources = {}, log = console.log.bind(console, '[ripple]')
 
+ripple._resources = function(){
+  return resources
+}
+
 // ----------------------------------------------------------------------------
 // INIT
 // ----------------------------------------------------------------------------
@@ -119,7 +123,8 @@ function store(name, body, headers) {
     headers = o.headers
   }
 
-  var headers = headers || {}
+  var body = body || []
+    , headers = headers || {}
     , headers = { 
         'content-type'    : 'application/data'
       , 'content-location': headers['content-location'] || headers['table'] || name
@@ -129,13 +134,14 @@ function store(name, body, headers) {
       }
     , table = headers['content-location']
 
-  log('getting', table)
+  log('getting', table, name)
   
-  return [db.all(table, body).then(register), o]
+  return register(body)
+       , [db.all(table, body).then(register), o]
 
   function register(rows) {
     var observer
-      , opts = { type: 'response', listeners: [] }
+      , opts = { type: 'response', listeners: response(name) }
 
     resources[name] = { 
       name: name
@@ -260,11 +266,11 @@ function meta(name) {
 
 function process(name) {
   return function(change){
-    var type = change.type
+    var type    = change.type
       , removed = change.removed && change.removed[0]
-      , data = change.object
-      , key = change.name || change.index
-      , value = data[key]
+      , data    = change.object
+      , key     = change.name || change.index
+      , value   = data[key]
 
     return !isArray(data)               ? crud(name)
          : type == 'update'             ? crud(name, value  , 'update')
@@ -319,8 +325,8 @@ function response(name) {
 }
 
 function emitterify(body, opts) {
-  return body.on = on
-       , body.once = once
+  return def(body, 'on', on)
+       , def(body, 'once', once)
        , opts && (body.on[opts.type] = opts.listeners)
        , body
 
@@ -496,6 +502,10 @@ function promise() {
 
 function array(){
   return []
+}
+
+function def(o, p, v){
+  Object.defineProperty(o, p, { value: v })
 }
 
 global.isObject = isObject
