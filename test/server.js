@@ -14,17 +14,14 @@ describe('Ripple Server', function(){
     app = server = ripple = null  
     app = express()
     server = http.createServer(app)
-    ripple = require('../server')(server, app)
-
-    ripple
-      .resource('some.data', [1,2,3])
-        
+    ripple = require('../')(server, app)
+    ripple('some.data', [1,2,3])
     done()
   })
 
   it('should have standard and shortcut functions', function(){  
     assert.equal('function', typeof ripple.db)  
-    assert.equal('function', typeof ripple.resource)  
+    assert.equal('function', typeof ripple)  
   })
 
   it('should register a resource', function(){  
@@ -54,4 +51,21 @@ describe('Ripple Server', function(){
     assert.equal(2, ripple('some.data').length)
   })
 
+  it('should create two different ripple nodes', function(){
+    var ripple1 = require('../')()
+      , ripple2 = require('../')()
+    
+    assert.notDeepEqual(ripple1, ripple2)
+
+  })
+
+  it('should import resources from other nodes via .use', function(){
+    var ripple1 = require('../')()
+      , ripple2 = require('../')()
+
+    ripple2('meh', { raa: 'hello' })
+    ripple1.use(ripple2)
+
+    assert.equal(ripple1('meh').raa, 'hello')
+  })
 })

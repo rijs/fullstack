@@ -2,36 +2,33 @@ var assert  = require('assert')
   , express = require('express')
   , http    = require('http')
   , sinon   = require('sinon')
-  , mysql   = require('mysql')
+  , serve   = require('serve-static')
   , app     = express()
   , server  = http.createServer(app)
   , io      = require('socket.io')()
-  , ripple  = require('../server')(server, app, 1)
-
-var query = sinon.stub().callsArgWith(1, 0, [1,2,3])
-  , escape = function(d){ return d }
-
-mysql.createPool = sinon.stub().returns({ 
-  query: query
-, escape: escape
-})
+  , opts    = { noClient: true } 
+  , ripple  = require('../')(server, app, opts) 
 
 io.on('connection', function(socket) {
   socket.on('reset', function(i){
     console.log('RESET', i)
-    ripple.db()
-      .resource('some.data')
-      .resource('object.data', { a:0 , b:1, c:2 })
-      .resource('array.data' , [{i:0}, {i:1},{i:2}])
-      .resource('proxy.data' , [{i:0}, {i:1},{i:2}], { to: to, from: from })
-      .draw()
+    ripple('some'           , [])
+    ripple('object'       , { a:0 , b:1, c:2 })
+    ripple('array'        , [{i:0}, {i:1},{i:2}])
+    ripple({ name: 'proxy', body: [{i:0}, {i:1},{i:2}], headers: { to: to, from: from }})
+    ripple('component-1'  , component)
+    ripple('component-2'  , component)
+      // .db('mysql://user:pass@remote:port/dbname')
   })
 })
 
 server.listen(5000)
 io.listen(8080)
 
-app.use(express.static(__dirname+'/client'))
+app.use(serve(__dirname + '/../node_modules/'))
+app.use(serve(__dirname + '/client'))
+
+function component(data) {  }
 
 function from(key, val, body) {
   if (key != 'length') return;

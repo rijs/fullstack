@@ -1,3 +1,5 @@
+import { promise } from '../utils'
+
 module.exports = postgres
 var con, log = console.log.bind(console, '[ripple]')
 

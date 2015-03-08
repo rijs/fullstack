@@ -1,15 +1,17 @@
-module.exports = mysql
+import { promise } from '../utils'
+
 var con, log = console.log.bind(console, '[ripple/mysql]')
 
 // ----------------------------------------------------------------------------
 // API
 // ----------------------------------------------------------------------------
-function mysql(config){
+export default function mysql(config){
   con = require('mysql').createPool(config)
   return mysql
 }
 
 mysql.all = function(table, body){
+  log('getting', table)
   var p = promise()
 
   con.query('SHOW TABLES LIKE "' + table + '"', function(e, rows) {

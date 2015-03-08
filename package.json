@@ -1,7 +1,7 @@
 {
   "name": "ripple",
   "version": "0.0.0",
-  "main": "server.js",
+  "main": "dist/main.js",
   "author": "pemrouz",
   "description": "Ripple is a reactive, resource-oriented, native-focused, realtime app architecture built on top of express and socket.io. The philosophy is that all changes ripple across the network to all other connected servers, clients and databases synchronising them in realtime where possible",
   "engines": {
@@ -12,22 +12,35 @@
     "url": "git://github.com/pemrouz/ripple.git"
   },
   "scripts": {
+    "build": "babel src -d dist && browserify -i ./dist/sync.js -i ./dist/db/postgres.js -i ./dist/db/mysql.js dist/main.js -o dist/client.js && uglifyjs dist/client.js -c drop_console,dead_code -d debug=false -o dist/client.min.js",
     "test-server": "mocha test/server -w --reporter spec --harmony",
-    "test-client": "nodemon --harmony test/client"
+    "test-client": "node --harmony test/client"
+  },
+  "browser": {
+    "path": false,
+    "socket.io": false,
+    "on-headers": false,
+    "cookie-parser": false,
+    "object-assign": false
   },
   "devDependencies": {
+    "babel": "^4.6.3",
+    "browserify": "^9.0.3",
     "chai": "~1.9.1",
     "express": "^4.11.1",
     "mocha": "^1.21.4",
-    "sinon": "~1.10.2"
+    "serve-static": "^1.9.1",
+    "sinon": "~1.10.2",
+    "uglify-js": "^2.4.16"
   },
   "dependencies": {
-    "apn": "*",
     "cookie-parser": "^1.3.3",
     "immutable": "^3.6.2",
     "mysql": "*",
+    "object-assign": "^2.0.0",
     "on-headers": "*",
     "pg": "^4.0.0",
+    "rhumb": "git://github.com/sammyt/rhumb",
     "socket.io": "^1.2.1"
   }
 }
