@@ -34,6 +34,8 @@ var cache = _interopRequire(require("./cache"));
 
 var draw = _interopRequire(require("./draw"));
 
+var rhumb = _interopRequire(require("rhumb"));
+
 var sync = _interopRequire(_sync);
 
 var db = _interopRequire(require("./db"));
@@ -45,7 +47,8 @@ function createRipple(server) {
   log("creating");
 
   var resources = {},
-      socket = sio(server);[["versions", []], ["length", 0], ["time", 0]].map(function (_ref) {
+      socket = sio(server),
+      routes = rhumb.create();[["versions", []], ["length", 0], ["time", 0]].map(function (_ref) {
     var _ref2 = _slicedToArray(_ref, 2);
 
     var key = _ref2[0];
@@ -58,6 +61,9 @@ function createRipple(server) {
   };
   ripple._socket = function () {
     return socket;
+  };
+  ripple._routes = function () {
+    return routes;
   };
   ripple._register = register(ripple);
   ripple.resource = chain(ripple._register, ripple);

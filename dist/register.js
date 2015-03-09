@@ -22,7 +22,8 @@ var client = _utils.client;
 
 module.exports = function (ripple) {
   var resources = ripple._resources(),
-      socket = ripple._socket();
+      socket = ripple._socket(),
+      routes = ripple._routes();
 
   // -------------------------------------------
   // Gets or sets a resource
@@ -32,8 +33,22 @@ module.exports = function (ripple) {
   // ripple('name', {}) - creates & returns resource, with specified name and body
   // ripple({ ... })    - creates & returns resource, with specified name, body and headers
   return function (name, body, headers) {
-    return is.str(name) && !body && resources[name] ? resources[name].body : is.str(name) && !body && !resources[name] ? register({ name: name }) : is.str(name) && body ? register({ name: name, body: body, headers: headers }) : is.obj(name) ? register(name) : err("Couldn't find or create resource", name);
+    return is.route(name) ? route({ name: name, body: body, headers: headers }) : is.str(name) && !body && resources[name] ? resources[name].body : is.str(name) && !body && !resources[name] ? register({ name: name }) : is.str(name) && body ? register({ name: name, body: body, headers: headers }) : is.obj(name) ? register(name) : err("Couldn't find or create resource", name);
   };
+
+  function route(res) {
+    var name = res.name;
+    var body = res.body;
+    var headers = res.headers;
+
+    if (headers) {
+      return (resources[name] = interpret(res), routes.add(name, parameterise(name)));
+    }var match = routes.match(name);
+    var res = resources[match.name];
+    var draw = ripple.draw;
+
+    return body ? (res.headers.set(match.params, res.body, body), draw(name)) : res.headers.get(match.params, res.body);
+  }
 
   function register() {
     var _ref = arguments[0] === undefined ? {} : arguments[0];
@@ -49,15 +64,13 @@ module.exports = function (ripple) {
     var parsed;
 
     interpret(res);
-    log("registering", res.name);
-    // is.route(name) && !resources[name] && rhumb.add(res.name, parameterise(res.name))
+    log("registering", name);
 
-    !(res.name in resources) && resources.length++;
-    parsed = is.data(res) ? data(res)[0] : promise(resources[res.name] = res);
+    !resources[name] && resources.length++;
+    parsed = is.data(res) ? data(res)[0] : promise(resources[name] = res);
     parsed.then(function () {
-      client ? draw(res) : emit()(res.name);
+      client ? draw(res) : emit()(name);
       cache();
-      log("registered", res.name);
     });
 
     return res.body;

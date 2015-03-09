@@ -472,22 +472,10 @@ export function sio(opts) {
                    : { on: noop, emit: noop }
 }
 
-export function parameterise(route) {
-  var name = route.split('/')[1]
+export function parameterise(name) {
   return function(params){
-    return { name: name, params: params }
+    return { name, params }
   }
-}
-
-export function resourcify(resources, d) {
-  var o = {}
-    , names = d.split(' ')
-
-  return   names.length == 0 ? undefined
-       :   names.length == 1 ? body(resources, first(names))
-       : ( names.map(function(d){ o[d] = body(resources, d) })
-         , values(o).some(empty) ? undefined : o 
-         )
 }
 
 export function interpret(res) {
@@ -523,10 +511,14 @@ export function interpret(res) {
       , 'proxy-from'      : res.headers['proxy-from'] || res.headers['from']
       , 'version'         : res.headers['version']
       , 'max-versions'    : isNumber(header('max-versions')(res)) ? header('max-versions')(res) : Infinity
+      , 'get'             : res.headers['get']
+      , 'set'             : res.headers['set']
       })
   
   // remove any undefined headers
   clean(res.headers)
+
+  return res
 }
 
 export function clean(o) {

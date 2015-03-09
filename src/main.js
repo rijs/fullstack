@@ -4,6 +4,7 @@ import register from './register'
 import version from './version'
 import cache from './cache'
 import draw from './draw'
+import rhumb from 'rhumb'
 import sync from './sync'
 import db from './db'
 
@@ -12,6 +13,7 @@ export default function createRipple(server, app = { use: noop }, opts = { clien
 
   var resources = { }
     , socket = sio(server)
+    , routes = rhumb.create()
 
   ;[ 
     [ 'versions', [] ] 
@@ -21,6 +23,7 @@ export default function createRipple(server, app = { use: noop }, opts = { clien
 
   ripple._resources = () => resources
   ripple._socket    = () => socket
+  ripple._routes    = () => routes
   ripple._register  = register(ripple)
   ripple.resource   = chain(ripple._register, ripple)
   ripple.cache      = cache(ripple)

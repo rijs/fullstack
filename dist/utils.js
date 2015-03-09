@@ -81,7 +81,6 @@ exports.use = use;
 exports.chain = chain;
 exports.sio = sio;
 exports.parameterise = parameterise;
-exports.resourcify = resourcify;
 exports.interpret = interpret;
 exports.clean = clean;
 exports.keys = keys;
@@ -534,20 +533,10 @@ function sio(opts) {
   return !client ? require("socket.io")(opts) : window.io ? window.io() : { on: noop, emit: noop };
 }
 
-function parameterise(route) {
-  var name = route.split("/")[1];
+function parameterise(name) {
   return function (params) {
     return { name: name, params: params };
   };
-}
-
-function resourcify(resources, d) {
-  var o = {},
-      names = d.split(" ");
-
-  return names.length == 0 ? undefined : names.length == 1 ? body(resources, first(names)) : (names.map(function (d) {
-    o[d] = body(resources, d);
-  }), values(o).some(empty) ? undefined : o);
 }
 
 function interpret(res) {
@@ -572,11 +561,15 @@ function interpret(res) {
     "proxy-to": res.headers["proxy-to"] || res.headers.to,
     "proxy-from": res.headers["proxy-from"] || res.headers.from,
     version: res.headers.version,
-    "max-versions": isNumber(header("max-versions")(res)) ? header("max-versions")(res) : Infinity
+    "max-versions": isNumber(header("max-versions")(res)) ? header("max-versions")(res) : Infinity,
+    get: res.headers.get,
+    set: res.headers.set
   });
 
   // remove any undefined headers
   clean(res.headers);
+
+  return res;
 }
 
 function clean(o) {

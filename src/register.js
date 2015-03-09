@@ -3,6 +3,7 @@ import { is, err, clone, promise, emitterify, table, interpret, log, parameteris
 export default function(ripple){
   var resources = ripple._resources()
     , socket = ripple._socket()
+    , routes = ripple._routes()
     
   // -------------------------------------------
   // Gets or sets a resource
@@ -12,11 +13,28 @@ export default function(ripple){
   // ripple('name', {}) - creates & returns resource, with specified name and body
   // ripple({ ... })    - creates & returns resource, with specified name, body and headers
   return function (name, body, headers){
-    return is.str(name) && !body &&  resources[name] ? resources[name].body
+    return is.route(name)                            ? route({ name, body, headers })
+         : is.str(name) && !body &&  resources[name] ? resources[name].body
          : is.str(name) && !body && !resources[name] ? register({ name })
          : is.str(name) &&  body                     ? register({ name, body, headers })
          : is.obj(name)                              ? register(name)
          : err('Couldn\'t find or create resource', name)
+  }
+
+  function route(res) {
+    var { name, body, headers } = res
+
+    if (headers) 
+      return (resources[name] = interpret(res))
+           , routes.add(name, parameterise(name))
+
+    var match = routes.match(name)
+      , res   = resources[match.name]
+      , { draw }  = ripple
+
+    return body 
+         ? (res.headers.set(match.params, res.body, body), draw(name))
+         : (res.headers.get(match.params, res.body))
   }
 
   function register({name, body, headers = {}} = {}) { 
@@ -25,15 +43,13 @@ export default function(ripple){
       , parsed
 
     interpret(res)   
-    log('registering', res.name)
-    // is.route(name) && !resources[name] && rhumb.add(res.name, parameterise(res.name))
+    log('registering', name)
 
-    !(res.name in resources) && resources.length++
-    parsed = is.data(res) ? data(res)[0] : promise(resources[res.name] = res)
+    !resources[name] && resources.length++
+    parsed = is.data(res) ? data(res)[0] : promise(resources[name] = res)
     parsed.then(() => {
-      client ? draw(res) : emit()(res.name)
+      client ? draw(res) : emit()(name)
       cache()
-      log('registered', res.name)
     })
 
     return res.body

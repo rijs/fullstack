@@ -40,6 +40,7 @@ export default function(ripple){
   // render all elements that depend on the resource
   function resource(thing){
     var res = is.str(thing) ? resources[thing] : thing
+    if (!res) return data(thing)
     is.js(res)   && js(res)
     is.data(res) && data(res.name)
     is.css(res)  && css(res.name)
@@ -103,10 +104,10 @@ export default function(ripple){
       , data = attr(d, 'data') || ''
       , html = attr(d, 'template')
       , css  = attr(d, 'css')
-      , data = resourcify(resources, data) || d.__data__
-      , fn   = body(resources, name)
-      , html = body(resources, html)
-      , css  = body(resources, css )
+      , data = resourcify(data) //|| d.__data__
+      , fn   = body(name)
+      , html = body(html)
+      , css  = body(css )
 
     try {
           fn
@@ -122,5 +123,22 @@ export default function(ripple){
     }
 
     return d
+  }
+
+  function body(name) {
+    return !name          ? undefined
+         : is.route(name) ? ripple(name)
+         : (resources[name] && resources[name].body)
+  }
+
+  function resourcify(d) {
+    var o = {}
+      , names = d.split(' ')
+
+    return   names.length == 0 ? undefined
+         :   names.length == 1 ? body(first(names))
+         : ( names.map(function(d){ o[d] = body(d) })
+           , values(o).some(empty) ? undefined : o 
+           )
   }
 }

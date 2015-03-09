@@ -120,7 +120,9 @@ module.exports = function (ripple) {
   // render all elements that depend on the resource
   function resource(thing) {
     var res = is.str(thing) ? resources[thing] : thing;
-    is.js(res) && js(res);
+    if (!res) {
+      return data(thing);
+    }is.js(res) && js(res);
     is.data(res) && data(res.name);
     is.css(res) && css(res.name);
     is.html(res) && html(res.name);
@@ -190,10 +192,11 @@ module.exports = function (ripple) {
           data = attr(d, "data") || "",
           html = attr(d, "template"),
           css = attr(d, "css"),
-          data = resourcify(resources, data) || d.__data__,
-          fn = body(resources, name),
-          html = body(resources, html),
-          css = body(resources, css);
+          data = resourcify(data) //|| d.__data__
+      ,
+          fn = body(name),
+          html = body(html),
+          css = body(css);
 
       try {
         fn && (data || !attr(d, "data")) && (applyhtml(root, html) || !attr(d, "template")) && (applycss(root, css) || !attr(d, "css")) && fn.call(root, data);
@@ -206,6 +209,19 @@ module.exports = function (ripple) {
 
       return d;
     }
+  }
+
+  function body(name) {
+    return !name ? undefined : is.route(name) ? ripple(name) : resources[name] && resources[name].body;
+  }
+
+  function resourcify(d) {
+    var o = {},
+        names = d.split(" ");
+
+    return names.length == 0 ? undefined : names.length == 1 ? body(first(names)) : (names.map(function (d) {
+      o[d] = body(d);
+    }), values(o).some(empty) ? undefined : o);
   }
 };
 },{"./utils":6}],4:[function(require,module,exports){
@@ -245,6 +261,8 @@ var cache = _interopRequire(require("./cache"));
 
 var draw = _interopRequire(require("./draw"));
 
+var rhumb = _interopRequire(require("rhumb"));
+
 var sync = _interopRequire(_sync);
 
 var db = _interopRequire(require("./db"));
@@ -256,7 +274,8 @@ function createRipple(server) {
   log("creating");
 
   var resources = {},
-      socket = sio(server);[["versions", []], ["length", 0], ["time", 0]].map(function (_ref) {
+      socket = sio(server),
+      routes = rhumb.create();[["versions", []], ["length", 0], ["time", 0]].map(function (_ref) {
     var _ref2 = _slicedToArray(_ref, 2);
 
     var key = _ref2[0];
@@ -269,6 +288,9 @@ function createRipple(server) {
   };
   ripple._socket = function () {
     return socket;
+  };
+  ripple._routes = function () {
+    return routes;
   };
   ripple._register = register(ripple);
   ripple.resource = chain(ripple._register, ripple);
@@ -295,7 +317,7 @@ if (client) {
   is.str(expose) && utils.apply(undefined, _toConsumableArray(expose.split(" ").filter(Boolean)));
   client && (window.ripple = createRipple());
 }
-},{"./cache":1,"./db":2,"./draw":3,"./register":5,"./sync":8,"./utils":6,"./version":7}],5:[function(require,module,exports){
+},{"./cache":1,"./db":2,"./draw":3,"./register":5,"./sync":8,"./utils":6,"./version":7,"rhumb":11}],5:[function(require,module,exports){
 "use strict";
 
 var _utils = require("./utils");
@@ -320,7 +342,8 @@ var client = _utils.client;
 
 module.exports = function (ripple) {
   var resources = ripple._resources(),
-      socket = ripple._socket();
+      socket = ripple._socket(),
+      routes = ripple._routes();
 
   // -------------------------------------------
   // Gets or sets a resource
@@ -330,8 +353,22 @@ module.exports = function (ripple) {
   // ripple('name', {}) - creates & returns resource, with specified name and body
   // ripple({ ... })    - creates & returns resource, with specified name, body and headers
   return function (name, body, headers) {
-    return is.str(name) && !body && resources[name] ? resources[name].body : is.str(name) && !body && !resources[name] ? register({ name: name }) : is.str(name) && body ? register({ name: name, body: body, headers: headers }) : is.obj(name) ? register(name) : err("Couldn't find or create resource", name);
+    return is.route(name) ? route({ name: name, body: body, headers: headers }) : is.str(name) && !body && resources[name] ? resources[name].body : is.str(name) && !body && !resources[name] ? register({ name: name }) : is.str(name) && body ? register({ name: name, body: body, headers: headers }) : is.obj(name) ? register(name) : err("Couldn't find or create resource", name);
   };
+
+  function route(res) {
+    var name = res.name;
+    var body = res.body;
+    var headers = res.headers;
+
+    if (headers) {
+      return (resources[name] = interpret(res), routes.add(name, parameterise(name)));
+    }var match = routes.match(name);
+    var res = resources[match.name];
+    var draw = ripple.draw;
+
+    return body ? (res.headers.set(match.params, res.body, body), draw(name)) : res.headers.get(match.params, res.body);
+  }
 
   function register() {
     var _ref = arguments[0] === undefined ? {} : arguments[0];
@@ -347,15 +384,13 @@ module.exports = function (ripple) {
     var parsed;
 
     interpret(res);
-    log("registering", res.name);
-    // is.route(name) && !resources[name] && rhumb.add(res.name, parameterise(res.name))
+    log("registering", name);
 
-    !(res.name in resources) && resources.length++;
-    parsed = is.data(res) ? data(res)[0] : promise(resources[res.name] = res);
+    !resources[name] && resources.length++;
+    parsed = is.data(res) ? data(res)[0] : promise(resources[name] = res);
     parsed.then(function () {
-      client ? draw(res) : emit()(res.name);
+      client ? draw(res) : emit()(name);
       cache();
-      log("registered", res.name);
     });
 
     return res.body;
@@ -554,7 +589,6 @@ exports.use = use;
 exports.chain = chain;
 exports.sio = sio;
 exports.parameterise = parameterise;
-exports.resourcify = resourcify;
 exports.interpret = interpret;
 exports.clean = clean;
 exports.keys = keys;
@@ -1007,20 +1041,10 @@ function sio(opts) {
   return !client ? require("socket.io")(opts) : window.io ? window.io() : { on: noop, emit: noop };
 }
 
-function parameterise(route) {
-  var name = route.split("/")[1];
+function parameterise(name) {
   return function (params) {
     return { name: name, params: params };
   };
-}
-
-function resourcify(resources, d) {
-  var o = {},
-      names = d.split(" ");
-
-  return names.length == 0 ? undefined : names.length == 1 ? body(resources, first(names)) : (names.map(function (d) {
-    o[d] = body(resources, d);
-  }), values(o).some(empty) ? undefined : o);
 }
 
 function interpret(res) {
@@ -1045,11 +1069,15 @@ function interpret(res) {
     "proxy-to": res.headers["proxy-to"] || res.headers.to,
     "proxy-from": res.headers["proxy-from"] || res.headers.from,
     version: res.headers.version,
-    "max-versions": isNumber(header("max-versions")(res)) ? header("max-versions")(res) : Infinity
+    "max-versions": isNumber(header("max-versions")(res)) ? header("max-versions")(res) : Infinity,
+    get: res.headers.get,
+    set: res.headers.set
   });
 
   // remove any undefined headers
   clean(res.headers);
+
+  return res;
 }
 
 function clean(o) {
@@ -1258,5 +1286,265 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 process.umask = function() { return 0; };
+
+},{}],11:[function(require,module,exports){
+module.exports = require('./src/rhumb')
+},{"./src/rhumb":12}],12:[function(require,module,exports){
+function findIn(parts, tree){
+  var params = {}
+
+  var find = function(remaining, node){
+    
+    var part = remaining.shift()
+
+    if(!part) return node.leaf || false;
+
+    if(node.fixed && part in node.fixed){
+      return find(remaining, node.fixed[part])
+    }
+
+    if(node.partial){
+      var tests = node.partial.tests
+        , found = tests.some(function(partial){
+            if(partial.ptn.test(part)){
+              var match = part.match(partial.ptn)
+              partial.vars.forEach(function(d, i){
+                params[d] = match[i+1]
+              })
+              node = partial
+              return true
+            }
+          })
+          
+      if(found){
+        return find(remaining, node)
+      }
+    }
+
+    if(node.var){
+      params[node.var.name] = part
+      return find(remaining, node.var)
+    }
+    return false
+  }
+
+  var found = find(parts, tree, params)
+  
+  if(found){
+    return {
+      fn : found
+    , params : params
+    }
+  }
+  return false
+}
+
+function isArr(inst){
+  return inst instanceof Array
+}
+
+function create (){
+  var router = {}
+    , tree   = {}  
+
+  function updateTree(parts, node, fn){
+    var part = parts.shift()
+      , more = !!parts.length
+      , peek
+
+    
+    if(isArr(part)){
+      node.leaf = fn
+      updateTree(part, node, fn)
+      return
+    }
+
+    if(!part){ return }
+
+    if(part.type == "fixed"){
+      node["fixed"] || (node["fixed"] = {});
+          
+      peek = node.fixed[part.input] || (node.fixed[part.input] = {})
+    }
+    else if(part.type == "var"){
+      if(node.var) {
+        if(node.var.name == part.input) {
+          peek = node.var
+        } else {
+          throw new Error("Ambiguity")
+        }
+      } else {
+        peek = node.var = { name : part.input }
+      }
+    }
+    else if(part.type = "partial"){
+      if(node.partial){
+        if(node.partial.names[part.name]) {
+          throw new Error("Ambiguity")
+        }
+      }
+      node.partial || (node.partial = { names : {}, tests : [] })
+
+      peek = {}
+      peek.ptn = part.input
+      peek.vars = part.vars
+
+      node.partial.names[part.name] = peek
+      node.partial.tests.push(peek)  
+    }
+    if(!more){
+      peek.leaf = fn
+    } else {
+      updateTree(parts, peek, fn)
+    }
+  }
+
+  router.add = function(ptn, callback){
+      updateTree(parse(ptn), tree, callback)
+  }
+
+  router.match = function(path){
+      var parts = path.split("/").filter(falsy)
+        , match  = findIn(parts, tree)
+
+      if(match){
+        return match.fn.apply(match.fn, [match.params])
+      }
+  }    
+  return router
+}
+
+function falsy(d){
+  return !!d
+}
+
+
+function parse(ptn){
+  var variable  = /^{(\w+)}$/
+    , partial   = /([\w'-]+)?{([\w-]+)}([\w'-]+)?/
+    , bracks    = /^[)]+/
+
+  if(ptn.trim() == "/"){
+    return [{type:"fixed", input: ""}]
+  }
+
+  function parseVar(part){
+    var match = part.match(variable)
+    return {
+      type: "var"
+    , input: match[1]
+    }
+  }
+
+  function parseFixed(part){
+    return {
+      type: "fixed"
+    , input: part
+    }
+  }
+
+  function parsePartial(part){
+    var match = part.match(partial)
+      , ptn = ""
+      , len = part.length
+      , i = 0
+
+    while(i < len && match){
+      i += match[0].length
+
+      if(match[1]){
+        ptn += match[1]
+      }
+
+      ptn += "([\\w-]+)"
+
+      if(match[3]){
+        ptn += match[3]
+      }
+
+      match = part.substr(i).match(partial)
+    }
+
+    var vars = []
+      , name = part.replace(
+      /{([\w-]+)}/g
+    , function(p, d){
+        vars.push(d)
+        return "{var}"
+      }
+    )
+    
+    return {
+      type: "partial"
+    , input: new RegExp(ptn)
+    , name: name
+    , vars: vars
+    }
+  }
+
+  function parsePtn(ptn){
+    return ptn.split("/")
+      .filter(falsy)
+      .map(function(d){
+        if(variable.test(d)){
+          return parseVar(d)
+        }
+        if(partial.test(d)){
+          return parsePartial(d)
+        }
+        return parseFixed(d)
+      })
+  }
+
+  function parseOptional(ptn){
+    
+    var out =  ""
+      , list = []
+
+    var i = 0
+      , len = ptn.length
+      , curr
+      , onePart = true
+
+    while(onePart && i < len){
+      curr = ptn[i]
+      switch(curr){
+        case ")":
+        case "(":
+          onePart = false
+          break;
+
+        default:
+          out += curr
+          break;
+      }
+      i++
+    }
+
+    if(!onePart){
+      var next = parseOptional(ptn.substr(i + 1))
+      if(next.length){
+        list.push(
+          next
+        )  
+      }
+    }
+
+    return parsePtn(out).concat(list)
+  }
+
+  if(ptn.indexOf("(") == -1){
+    return parsePtn(ptn)
+  }
+  
+  return parseOptional(ptn)
+}
+
+var rhumb = create()
+rhumb.create = create
+rhumb._parse = parse
+rhumb._findInTree = findIn
+
+module.exports = rhumb
 
 },{}]},{},[4]);

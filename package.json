@@ -40,7 +40,7 @@
     "object-assign": "^2.0.0",
     "on-headers": "*",
     "pg": "^4.0.0",
-    "rhumb": "git://github.com/sammyt/rhumb",
+    "rhumb": "git://github.com/sammyt/rhumb#restructure",
     "socket.io": "^1.2.1"
   }
 }
