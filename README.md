@@ -1,6 +1,6 @@
 # Ripple
 
-Ripple is a reactive, resource-oriented, native-focused, realtime app architecture built on top of express and socket.io. The philosophy is that _all_ changes ripple across the network to all other connected servers, clients and databases synchronising them in realtime where possible.
+Ripple is a reactive, resource-oriented, native-focused, realtime app architecture. The philosophy is that _all_ changes ripple across the network to all other connected servers, clients and databases synchronising them in realtime where possible.
 
 ## Quick Start
 
