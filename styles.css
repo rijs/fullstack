@@ -1,0 +1,112 @@
+@import url(http://fonts.googleapis.com/css?family=Roboto:500,100,300,700,400);
+
+*, *::before, *::after {
+  box-sizing: border-box; }
+
+html, body {
+  background: #e7edf2;
+  text-align: center;
+  font-family: Roboto, verdana;
+  font-weight: 300;
+  margin: 0;
+  color: #333;
+  padding: 0; 
+  margin-bottom: 20px; }
+
+.block { display: block }
+
+header {
+  margin-bottom: 40px;
+  color: #fff; 
+  background: #171d25;
+  text-align: center;
+  padding: 50px;}
+
+  header h1 {
+    padding-left: 10px;
+    border-bottom: 1px dashed #144c66;    
+    display:inline;
+    padding-bottom: 15px;
+    box-shadow: 0px 14px 20px -14px rgba(19,182,244,0.2);
+    font-size: 50px;
+    letter-spacing: 30px; }
+
+  header h2 {
+    padding-top: 20px;
+    font-weight: 100;
+    font-size: 25px; }
+
+.light {
+  color: #13b6f4; }
+
+.logo {
+  margin: 0 auto 30px;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  display: block;
+  border-radius: 20px;
+  position: relative;
+  border: 2px solid rgba(255,255,255,0.6); }
+
+.logo::before {
+  content: '';
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  display: inline-block;
+  border-radius: 20px;
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  border: 3px solid rgba(255,255,255,0.8); }
+
+.logo::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  background: white;
+  display: inline-block;
+  border-radius: 20px;
+  position: absolute;
+  top: 11px;
+  left: 11px;
+  border: 0px solid rgba(255,255,255,1); }
+
+section {
+  text-align: left;
+  border: 1px solid #cfd4d8; 
+  background: #fff;
+  width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  position: relative;
+  border-radius: 5px; }
+
+  section h1 {
+    font-weight: 300;
+    text-align: left;
+    margin: 0;  }
+
+  section::after {
+    content: '';
+    clear:both;
+    display: block; }
+
+  section .left, section .right {
+    background: red;
+    width: 50%; }
+
+  section .left { float: left }
+  section .right { float: right; }
+
+  section .left::after { 
+    content: ''; 
+    display: block; 
+    height: 100%; 
+    width: 1px;
+    position: absolute;
+    left: 50%;
+    top: 0;
+    background: #cfd4d8; }
+  
