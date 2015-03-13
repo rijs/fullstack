@@ -99,6 +99,7 @@ Ripple and [Compoxure](https://medium.com/@clifcunn/nodeconf-eu-29dd3ed500ec) ar
 * [ ] Encapsulates Ripple Nodes
 * [ ] [Immutable Data & Time Travel](https://github.com/pemrouz/ripple/issues/14)
 * [ ] Server-Side Rendering as Middleware
+* [ ] Expose REST API of Resoures as Middleware
 * [ ] Cache Resources in Redis
 * [ ] Service Workers: Background Sync and Push
 * [ ] [Conflict Resolution: Operational Transforms](https://github.com/pemrouz/ripple/issues/10)
