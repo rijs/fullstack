@@ -81,7 +81,7 @@ Ripple and [Compoxure](https://medium.com/@clifcunn/nodeconf-eu-29dd3ed500ec) ar
 
 Ripple and Basket both using localStorage for storing and loading from. Basket does this on a script-level however, whereas Ripple does this on a resource-level. Basket uses localStorage as an alternative to the browser cache, whereas Ripple uses it for the initial page render and then re-renders relevant parts when there is new information available sent from the server.
 
-## Ripple vs Polymer 
+### Ripple vs Polymer 
 
 Ripple and Polymer both embrace Web Components for composing applications, but beyond auto-generating Shadow DOM roots for upgraded Custom Elements, Ripple does not provide anywhere near the same level of sugar as Polymer on top of Web Components.
 
