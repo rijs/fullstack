@@ -63,7 +63,7 @@ You can also grab this demo by doing a `git clone` on the [vanilla example from 
 
 ## Rationale
 
-The Ripple pattern evolved naturally from developing web apps that were recursively composed of [idempotent components](http://ag.svbtle.com/on-d3-components) (i.e. components as simple transformation functions of data - `html = f(data)`). Reinvoking the function with new data would always produce the latest representation of that component, so rather than each component setting up it's own plumbing, listening to data change events to receive/dispatch data, the concern of _streaming data to components_ can be effectively abstracted out. This makes realtime components the default behaviour, not an afterthought. Most alternatives in this area also did not make any attempt to be a lightweight library, embracing standards and native behaviour but went down the road of being a heavyweight framework, inventing concepts and large API surfaces. Applying RESTful principles in the client - the concept of organising applications from _resources and their different representations_ - is also a key part of the philosophy, which currently seems relatively unexplored in other JavaScript projects.
+The Ripple pattern evolved naturally from developing web apps as "game-loops" that were recursively composed of [idempotent components](http://ag.svbtle.com/on-d3-components) (i.e. components as simple transformation functions of data - `html = f(data)`). Reinvoking the function with new data would always produce the latest representation of that component, so rather than each component setting up it's own plumbing, listening to data change events to receive/dispatch data, the concern of _streaming data to components_ can be effectively abstracted out. This makes realtime components the default behaviour, not an afterthought. Most alternatives in this area also did not make any attempt to be a lightweight library, embracing standards and native behaviour but went down the road of being a heavyweight framework, inventing concepts and large API surfaces. Applying RESTful principles in the client - the concept of organising applications from _resources and their different representations_ - is also a key part of the philosophy, which currently seems relatively unexplored in other JavaScript projects.
 
 ### Ripple vs Flux
 
@@ -77,11 +77,20 @@ Ripple and Meteor share some key benefits, such as reactive programming, hot cod
 
 Ripple and [Compoxure](https://medium.com/@clifcunn/nodeconf-eu-29dd3ed500ec) are very similar in decomposing applications in terms of independent resources. Like Compoxure, Ripple can call out for resources from separate micro-services, avoiding the monolith criticism (1), it can pre-render views avoiding the SEO-incompatibility criticism (2) and it's doesn't lock you in to using a particular hybrid-approach like React or rendr (i.e. you could call a Java service to generate the resource) (3). The key difference is that whereas Compoxure is only concerned with the first render and requires manually wiring up event listeners and AJAX calls for updates, **resources in Ripple are long-lived and continue to send/receive updates after the first render**. Ripple does not currently cache resources in Redis (but that's on the roadmap).
 
+### Ripple vs Basket.js
+
+Ripple and Basket both using localStorage for storing and loading from. Basket does this on a script-level however, whereas Ripple does this on a resource-level. Basket uses localStorage as an alternative to the browser cache, whereas Ripple uses it for the initial page render and then re-renders relevant parts when there is new information available sent from the server.
+
+## Ripple vs Polymer 
+
+Ripple and Polymer both embrace Web Components for composing applications, but beyond auto-generating Shadow DOM roots for upgraded Custom Elements, Ripple does not provide anywhere near the same level of sugar as Polymer on top of Web Components.
+
 ## Design Goals
 * Maximise realtime interactivity (making it the default pattern rather than afterthought)
 * Minimise app development friction (convention over configuration)
-* Keep it agnostic (small, high power-to-weight ratio API surface)
+* Keep it agnostic (small, easy to integrate different stacks with, high power-to-weight ratio API surface)
 * Keep everything native (e.g. Object.observe, Plain Old Javascript Objects)
+
 
 ## Roadmap
 * [x] Complete CRUD operations
@@ -105,6 +114,10 @@ Ripple and [Compoxure](https://medium.com/@clifcunn/nodeconf-eu-29dd3ed500ec) ar
 * [ ] [Conflict Resolution: Operational Transforms](https://github.com/pemrouz/ripple/issues/10)
 * [ ] [Ripple Scope: Global & Session](https://github.com/pemrouz/ripple/issues/11)
 * [ ] [Cache Headers](https://github.com/pemrouz/ripple/issues/12)
+* [ ] Extended Time Travel Debugging (middleware)
+* [ ] Microservices: Cross-Boundary Resources
+* [ ] Polyfill for Older Browsers
+* [ ] Version History Bookmarklet
 
 ## Tests
 
@@ -115,6 +128,8 @@ explorer http://localhost:3000
 ```
 
 ## API
+
+Note: The below might be slightly out of date. For the latest API, [see the home page](pemrouz.github.io/ripple).
 
 #### __ripple__(_name_)
 
