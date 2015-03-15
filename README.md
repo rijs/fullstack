@@ -118,6 +118,7 @@ Ripple and Polymer both embrace Web Components for composing applications, but b
 * [ ] Microservices: Cross-Boundary Resources
 * [ ] Polyfill for Older Browsers
 * [ ] Version History Bookmarklet
+* [ ] Expose Resources as RESTful Endpoints
 
 ## Tests
 
