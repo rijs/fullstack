@@ -1,4 +1,4 @@
-import { is, chain, def, log, noop, client, use, sio, attr } from './utils'
+import { is, chain, def, log, noop, client, use, sio, attr, expressify } from './utils'
 import { auth, append, serve } from './sync'
 import register from './register'
 import version from './version'
@@ -7,10 +7,11 @@ import draw from './draw'
 import sync from './sync'
 import db from './db'
 
-export default function createRipple(server, app = { use: noop }, opts = { client: true }) {
+export default function createRipple(server, opts = { client: true }) {
   log('creating')
 
   var resources = { }
+    , app = expressify(server)
     , socket = sio(server)
 
   ;[ 
@@ -32,12 +33,12 @@ export default function createRipple(server, app = { use: noop }, opts = { clien
   
   setTimeout(ripple.cache.load, 0)
 
-  client ? socket.on('response', ripple._register)
+  client ?  socket.on('response', ripple._register)
          : (socket.on('connection', sync(ripple).connected)  
          , app.use('/ripple.js', serve.client)
          , app.use('/immutable.min.js', serve.immutable)
-         , opts.client && app.use(append)
          , opts.session && socket.use(auth(opts.session))
+         , opts.client && app.use(append)
          )
 
   return ripple
@@ -48,5 +49,7 @@ export default function createRipple(server, app = { use: noop }, opts = { clien
 if (client) {
   var expose = attr(document.currentScript, 'utils')
   is.str(expose) && utils(...expose.split(' ').filter(Boolean))
-  client && (window.ripple = createRipple())
+  client 
+    && (window.createRipple = createRipple)
+    && (window.ripple = createRipple())
 }

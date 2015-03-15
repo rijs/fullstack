@@ -19,6 +19,7 @@ var client = _utils.client;
 var use = _utils.use;
 var sio = _utils.sio;
 var attr = _utils.attr;
+var expressify = _utils.expressify;
 
 var _sync = require("./sync");
 
@@ -39,12 +40,12 @@ var sync = _interopRequire(_sync);
 var db = _interopRequire(require("./db"));
 
 function createRipple(server) {
-  var app = arguments[1] === undefined ? { use: noop } : arguments[1];
-  var opts = arguments[2] === undefined ? { client: true } : arguments[2];
+  var opts = arguments[1] === undefined ? { client: true } : arguments[1];
 
   log("creating");
 
   var resources = {},
+      app = expressify(server),
       socket = sio(server);[["versions", []], ["length", 0], ["time", 0]].map(function (_ref) {
     var _ref2 = _slicedToArray(_ref, 2);
 
@@ -70,7 +71,7 @@ function createRipple(server) {
 
   setTimeout(ripple.cache.load, 0);
 
-  client ? socket.on("response", ripple._register) : (socket.on("connection", sync(ripple).connected), app.use("/ripple.js", serve.client), app.use("/immutable.min.js", serve.immutable), opts.client && app.use(append), opts.session && socket.use(auth(opts.session)));
+  client ? socket.on("response", ripple._register) : (socket.on("connection", sync(ripple).connected), app.use("/ripple.js", serve.client), app.use("/immutable.min.js", serve.immutable), opts.session && socket.use(auth(opts.session)), opts.client && app.use(append));
 
   return ripple;
 
@@ -82,5 +83,5 @@ function createRipple(server) {
 if (client) {
   var expose = attr(document.currentScript, "utils");
   is.str(expose) && utils.apply(undefined, _toConsumableArray(expose.split(" ").filter(Boolean)));
-  client && (window.ripple = createRipple());
+  client && (window.createRipple = createRipple) && (window.ripple = createRipple());
 }

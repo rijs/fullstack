@@ -14,7 +14,8 @@ describe('Ripple Server', function(){
     app = server = ripple = null  
     app = express()
     server = http.createServer(app)
-    ripple = require('../')(server, app)
+    console.log('m', typeof server._events.request.use)
+    ripple = require('../')(server)
     ripple('some.data', [1,2,3])
     done()
   })

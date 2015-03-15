@@ -545,6 +545,10 @@ export function globalise(d) {
   owner[d] = exports[d]
 }
 
+export function expressify(d) {
+  return !client && d && d._events.request || { use: noop }
+}
+
 export var is = { 
   str        : isString
 , data       : isData

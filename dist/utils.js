@@ -86,6 +86,7 @@ exports.interpret = interpret;
 exports.clean = clean;
 exports.keys = keys;
 exports.globalise = globalise;
+exports.expressify = expressify;
 
 function all(selector) {
   return toArray(document.querySelectorAll(selector));
@@ -591,6 +592,10 @@ function keys(o) {
 
 function globalise(d) {
   owner[d] = exports[d];
+}
+
+function expressify(d) {
+  return !client && d && d._events.request || { use: noop };
 }
 
 var is = exports.is = {

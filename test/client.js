@@ -7,7 +7,7 @@ var assert  = require('assert')
   , server  = http.createServer(app)
   , io      = require('socket.io')()
   , opts    = { noClient: true } 
-  , ripple  = require('../')(server, app, opts) 
+  , ripple  = require('../')(server, opts) 
 
 io.on('connection', function(socket) {
   socket.on('reset', function(i){
