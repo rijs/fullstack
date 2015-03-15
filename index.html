@@ -2,35 +2,322 @@
 <script src="https://cdn.rawgit.com/facebook/immutable-js/master/dist/immutable.min.js"></script>
 <script src="https://cdn.rawgit.com/pemrouz/ripple/master/dist/client.min.js"></script>
 <header>
-  <div class="logo"></div>
+  <div class="logo">
+    <div class="ring-one"></div>
+    <div class="ring-two"></div>
+    <div class="ring-three"></div>
+  </div>
   <h1>RIPPLE</h1>
   <h2>Ripple is a <span class="light">nervous system</span> for modern web applications</h2>
+  <h3>A small, isomorphic, reactive, resource-oriented, native-focused, realtime library that propagates changes across the network to all other connected servers, clients and databases.</h3>
+  <iframe src="https://ghbtns.com/github-btn.html?user=pemrouz&repo=ripple&type=star&count=true" frameborder="0" scrolling="0" width="78px" height="20px"></iframe>
+  <a href="https://twitter.com/share" class="twitter-share-button" data-via="pemrouz" data-hashtags="Ripple">Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
 </header>
+<div class="medium">
+  <!-- SMALL | ISOMORPHIC | REACTIVE | STANDARDS | RESOURCES | REALTIME  -->
+  <code class="terminal">npm i pemrouz/ripple</code>
+</div>
 <section>
-  <h1>Reactive Data</h1>
+  <h1>Realtime Data Synchronisation</h1>
   <div class="left">
-    Ripple can register anything as a resource
-    
+    A Ripple node is just a collection of resources. You can register any JS type as a resource against a name. 
+    <br><br>If an array or object are registered, then any changes to that will be immediately propagated back to the node on the server, and subsequently to any other connected clients.
   </div>
   <div class="right">
-    <pre>  // tab 1
-  > ripple('tweets', tweets = [])
-  > tweets.push('lorem')
-  > tweets.push('ipsum')
-
-  // tab 2
-  ripple('tweets')
-  > ['lorem', 'ipsum']</pre>
-    
+    <div class="left">
+      <h4>Tab 1</h4>
+      <img src="img1.png" title="  // tab 1
+      > ripple('tweets', tweets = [])
+      > tweets.push('lorem')
+      > tweets.push('ipsum')" />
+    </div>
+    <div class="right">
+      <h4>Tab 2</h4>
+      <img src="img2.png" title="  // tab 2
+      ripple('tweets')
+      > ['lorem', 'ipsum']"/>    
+    </div>
   </div>
 </section>
 
-<!-- <code>
-ripple('name')
-ripple('name').on()
-&lt;my-component data="name"&gt;
-</code>
+<section>
+  <h1>Reactive Web Components</h1>
+  <div class="left">
+    If a function is registered, then it will be invoked on any matching Custom Elements, with the context variable as the Shadow DOM root and the arguments as any declared data. 
 
+    <br><br>If there are updates to the data, component or element, it will be <a href="https://github.com/pemrouz/ripple#reactive-data">refreshed automatically</a> by reinvoking it. This makes all components "realtime by default", rather than afterthought.
+
+    <br><br>Ripple is agnostic to how you structure your components internally (see <a href="https://github.com/pemrouz/ripple-examples/tree/master/minimal-vanilla">vanilla</a>, <a href="https://github.com/pemrouz/ripple-examples/tree/master/minimal-react">React</a> and <a href="https://github.com/pemrouz/ripple-examples/tree/master/minimal-d3">D3</a> examples).
+  </div>
+  <div class="right">
+    <div class="left">
+      <img src="img3.png" title="<twitter-feed data='tweets'>" class="center" />
+    </div>
+  </div>
+</section>
+
+<section>
+  <h1>Database Synchronisation</h1>
+  <div class="left">
+    If you choose to optionally connect a (server) node to a database, it will attempt to automatically populate data resources from the database. 
+    <br><br>It will also automatically update the database if there are later any changes to the resource.
+  </div>
+  <div class="right">
+    <div class="left">
+      <img src="img4.png" title="ripple.db('mysql://user:pass@host:port/dbname')" class="center" />
+    </div>
+  </div>
+</section>
+
+<section>
+  <h1>Fine-Grained Caching</h1>
+  <div class="left">
+    When a resource is registered or updated, changes will be cached into <code>localStorage</code>. <br><br>When the page is next refreshed, your app will render instantly using resources from <code>localStorage</code> and then be updated when the client connects to the server and streams the latest versions. <code>localStorage</code> can even be faster than the browser cache.
+  </div>
+  <div class="right">
+    <div class="left">
+      <img src="img5.png" class="center" />
+    </div>
+  </div>
+</section>
+
+<section>
+  <h1>Representations</h1>
+  <div class="left">
+    Sometimes you may need to <i>represent</i> resources differently on the client than on the server. This could be to hide sensitive data, reduce large datasets for performance, or just having a more convenient structure.
+    <br><br>
+    By default, there is a one-to-one mapping. But you can declaratively specify a transformation that will be applied whenever resources are sent <b>to</b> the client, or received <b>from</b> the client.
+    <br><br>
+    The different representations will still be updated when there are changes.
+  </div>
+  <div class="right">
+    <div class="left">
+      <img src="img6.png" class="center" />
+    </div>
+  </div>
+</section>
+
+<section>
+  <h1>Time Travel</h1>
+  <div class="left">
+    Each data resource internally has an efficient versioned history by default. The collection of resources representing your entire application state also has a history. You can rollback individual resources, or the entire application.
+    
+    <br><br>This is particularly useful to achieve powerful debugging, by being able to replay the actual steps a user went through when they experience a problem. It is also useful for applications focused around colloboration.
+  </div>
+  <div class="right">
+    <div class="left">
+      <img src="img7.png" class="center" />
+    </div>
+  </div>
+</section>
+
+<section>
+  <h1>Isomorphic Nodes  - Live Example</h1>
+  <div class="left">
+    Each Ripple node is self-contained. It can run: <br><br>
+
+    <li><b><a href="https://github.com/pemrouz/ripple-examples/tree/master/time-travel-todo">Client-only</a></b>: On a static page with no server. Useful for offline, testing and quick prototypes. </li><br>
+    <li><b><a href="https://github.com/pemrouz/d3-chosen/blob/master/index.js#L4-L15">Server-only</a></b>: Just on the server with no clients. Useful for testing and exporting bundles of resources over npm/node.</li><br>
+    <li><b><a href="https://github.com/pemrouz/ripple-examples/tree/master/heroku-postgres#heroku--postgres">Both connected</a></b>: Useful for real applications, where changes from one client will refresh components for all others.</li><br>
+
+    This static page includes Ripple, and the example on the right is a live script. Try opening your console and entering the following command to see both components automatically update: 
+    <br><br><code>ripple('tweets').push('hello world!')</code>
+
+  </div>
+  <div class="right">
+<pre title="<script src='https://cdn.rawgit.com/facebook/immutable-js/master/dist/immutable.min.js'></script>">&lt;script src="https://cdn.rawgit.com/pemrouz/ripple/master/dist/client.min.js"&gt;&lt;/script&gt;</pre>
+    <script class="block">
+  ripple('tweets', ['lorem', 'ipsum'])
   
+  ripple('twitter-feed', function(d){ 
+    this.innerHTML = '<li>' + d.join('<li>') })
+
+  ripple('twitter-count', function(d){ 
+    this.innerHTML = d.length })
+</script>
+<pre>
+&lt;twitter-feed data='tweets'&gt;
+&lt;twitter-count data='tweets'&gt;
 </pre>
-<twitter-feed data="tweets"></twitter-feed> -->
+    <twitter-feed data='tweets'></twitter-feed>
+    <twitter-count data='tweets'></twitter-count>
+  </div>
+</section>
+
+<div class="actions">
+  <a href="https://github.com/pemrouz/ripple#rationale">Read more about the rationale and how it compares with other solutions</a>
+</div>
+
+<div class="medium last">
+
+<section>
+  <h1><a href="https://github.com/pemrouz/ripple#roadmap">Feature Roadmap</a></h1>
+
+  <h3>New <a href="https://github.com/pemrouz/ripple/issues">ideas, contributions or support requests</a> welcome.</h3>
+
+  <li><h2>Service Workers: Background Sync and Push</h2>
+  Upgrade resources even when tab is not open!
+  </li>
+
+  <li><h2>Extended Time Travel Debugging (middleware)</h2>
+  Bundle application history on error, export to server, auto-replay functionality
+  </li>
+
+  <li><h2>Microservices</h2>
+  Make it trivial to consume resources across process/network boundaries
+  </li>
+
+  <li><h2>Parameterise Resources</h2>
+  Enable greater range of resource representations (<code>/tweets/latest/10</code> vs <code>tweets</code>)
+  </li>
+
+  <li><h2>Add Conventional Folder Shortcuts (middleware)</h2>
+  For applications with many resources, auto load all resources in <code>resources</code> folder
+  </li>
+
+  <li><h2>Polyfill</h2>
+  IE9+ support, polyfilling backwards using <a href="polyfill.io">polyfill.io</a>
+  </li>
+  
+  <li><h2>Version History Bookmarklet</h2>
+  Separate module for viewing version history &amp; rolling back as you hover over resources.
+  </li>
+
+  <li><h2>Objective-C (iOS) Client</h2>
+  Enable realtime changes to power native UI as well Push Notifications</li>
+  
+  <li><h2>Multiple Databases</h2>
+  Provide hooks for server-database changes to allow aligning resources to different databases</li>
+
+  <li><h2>Android Client</h2></li>
+
+  <li><h2>Extend ORM Database Adapters</h2></li>  
+
+  <li><h2>Create Components Repo</h2></li>
+  
+  <li><h2>Server-Side Rendering (middleware)</h2></li>
+  
+  <li><h2>Cache Resources in Redis</h2></li>
+  
+  <li><h2>Conflict Resolution: Operational Transforms</h2></li>
+  
+  <li><h2>HTTP Cache Headers Semantics</h2></li>
+</section>
+
+<section class="api">
+  <h1>API Reference</h1>
+
+  <h3>Check out more <a href="https://github.com/pemrouz/ripple-examples">complete examples</a> here.</h3>
+
+  <li><code>ripple('name')</code> 
+  <br>return the named resource, creating one if it doesn't exist</li>
+  <li><code>ripple('name', body)</code> 
+  <br>create or overwrite the named resource with the specified body</li>
+  <li><code>ripple('name', body, headers)</code> 
+  <br>create or overwrite the named resource with the specified body and extra metadata. </li>
+
+  <li><code>ripple.resource('name', <i>body</i>, <i>headers</i>)</code> 
+  <br>alias for <i>ripple</i> as above that allows <a href="https://github.com/pemrouz/ripple#rippleresourcename-body-opts">method chaining</a> for registering multiple resources</li>
+
+  <br /><br />
+
+  <li><code>ripple('name').on('response', function)</code>
+  <br>react to changes on the named resource</li>
+  <li><code>ripple('name').once('response', function)</code>
+  <br>react once to a change on the named resource</li>
+  
+  <br /><br />
+
+  <li><code>ripple.draw()</code>
+  <br>redraw all components on page</li>
+  <li><code>ripple.draw(element)</code>
+  <br>redraw specific element</li>
+  <li><code>ripple.draw.call(element)</code>
+  <br>redraw specific element</li>
+  <li><code>ripple.draw('name')</code>
+  <br>redraw elements that depend on resource</li>
+  <li><code>MutationObserver(ripple.draw)</code>
+  <br>redraws element being observed</li>
+
+  <br /><br />
+
+  <li><code>ripple.version('name')</code>
+  <br>retrieves the current version index for the named resource</li>
+  <li><code>ripple.version('name', i)</code>
+  <br>rollbacks the named resource to version <i>i</i> and returns it's value at that time</li>
+  <li><code>ripple.version()</code>
+  <br>retrieves the current historical index for the entire application</li>
+  <li><code>ripple.version(i)</code>
+  <br>rollbacks entire application state to version <i>i</i></li>
+
+  <br /><br />
+
+  <li><code>ripple.db('type://user:pass@host:port/dbname')</code>
+  <br>connects the node to the database, synchronishing any changes.</li>
+  <li><code>ripple.use(ripple2)</code>
+  <br>load the resources from another ripple node into this one</li>
+  
+  <br /><br />
+
+  <li>
+    <code>&lt;component-name is="component-name" data="name(s)" template="name" css="name" inert delay="ms" realtime&gt;</code>
+    <ul>
+      <li><i>component-name</i> &mdash; name of registered component resource</li>
+      <li><i>is</i> &mdash; name of registered component resource, extends another element</li>
+      <li><i>data</i> &mdash; name of registered data resource, multiple values separated by space</li>
+      <li><i>template</i> &mdash; apply a template before invoking the component function</li>
+      <li><i>css</i> &mdash; apply the css before invoking the component function</li>
+      <li><i>inert</i> &mdash; signals to ripple to not touch this element </li>
+      <li><i>delay</i> &mdash; time in ms to postpone rendering a component </li>
+      <li><i>realtime</i> &mdash; this component will have frequent updates - batch updates and render once every animation frame </li>
+    </ul>
+    <br><br>Examples: 
+    <ul class="clear">
+      <li><code>&lt;time is="relative-time"&gt;</code></li>
+      <li><code>&lt;fast-grid data="prices instruments" realtime&gt;</code></li>
+      <li><code>&lt;event-item data="events" id="519" template="event-item.html"&gt;</code></li>
+    </ul>
+  </li>
+  
+  <br /><br />
+
+  <li><code>[header] content-type</code>
+  <br>resource type is interpreted based on the body type - it is not necessary to explicitly set this value. <br>values: application/data (default) | application/javascript | text/html | text/css. <br><br>Example: <code>ripple('tweets', [], { 'content-type': 'application/data' })</code></li>
+  <br>
+  
+  <li><code>[header] content-location (alias: table)</code>
+  <br>specify which database table/collection to populate the resource with, and sync changes with
+  <br><br>Example: <code>ripple('users', [], { 'table': 'members' })</code></li>
+  <br>
+  
+  <li><code>[header] private</code>
+  <br>prevents this resource from every being emitted to other (client) nodes. default false.
+  <br><br>Example: <code>ripple('credit-cards', [], { private: true })</code></li>
+  <br>
+  
+  <li><code>[header] proxy-to (alias: to)</code>
+  <br>function applied to body before being sent to clients 
+  <br><br>Example: <code>ripple('users', [], { to: reduceToNumber })</code></li>
+  <br>
+  
+  <li><code>[header] proxy-from (alias: from)</code>
+  <br>function applied to changes received from client
+  <br><br>Example: <code>ripple('read-only-data', [], { from: ignoreChages })</code></li>
+  <br>
+  
+  <li><code>[header] max-versions</code>
+  <br>maximum number of versions to store for this resource. values: Infinity (default) | 0.
+  <br><br>Example: <code>ripple('frequently-updated-data', [], { 'max-versions': 0 })</code></li>
+  <br>
+  
+  <li><code>[header] extends </code>
+  <br>specifies which element this component extends
+  <br><br>Example: <code>ripple('color-picker', require('./picker'), { 'extends': 'input' })</code></li>
+  
+  
+</section>
+
+</div>
+
+<footer>Experimental project by <a href="https://twitter.com/pemrouz" class="light">@pemrouz</a></footer>
