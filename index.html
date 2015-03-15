@@ -219,7 +219,7 @@
   <li><code>ripple('name', body)</code> 
   <br>create or overwrite the named resource with the specified body</li>
   <li><code>ripple('name', body, headers)</code> 
-  <br>create or overwrite the named resource with the specified body and extra metadata. </li>
+  <br>create or overwrite the named resource with the specified body and extra metadata </li>
 
   <li><code>ripple.resource('name', <i>body</i>, <i>headers</i>)</code> 
   <br>alias for <i>ripple</i> as above that allows <a href="https://github.com/pemrouz/ripple#rippleresourcename-body-opts">method chaining</a> for registering multiple resources</li>
@@ -261,7 +261,15 @@
   <br>connects the node to the database, synchronishing any changes.</li>
   <li><code>ripple.use(ripple2)</code>
   <br>load the resources from another ripple node into this one</li>
-  
+  <li><code>window.createRipple</code>
+  <br>use this to create more nodes on client. window.ripple instantiated by default</li>
+  <li><code>require('ripple')(server, opts)</code>
+  <br>both parameters optional. <i>server</i> is the <i>http.Server</i> instance to connect to clients on. <i>opts</i>:
+  <ul>
+    <li><i>client</i> &mdash; append client library to html pages. default true</li>
+    <li><i>session</i> &mdash; session data to make available to proxy functions</li>
+  </ul></li>
+
   <br /><br />
 
   <li>
