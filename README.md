@@ -77,7 +77,7 @@ Ripple and Meteor share some key benefits, such as reactive programming, hot cod
 
 Ripple and [Compoxure](https://medium.com/@clifcunn/nodeconf-eu-29dd3ed500ec) are very similar in decomposing applications in terms of independent resources. Like Compoxure, Ripple can call out for resources from separate micro-services, avoiding the monolith criticism (1), it can pre-render views avoiding the SEO-incompatibility criticism (2) and it's doesn't lock you in to using a particular hybrid-approach like React or rendr (i.e. you could call a Java service to generate the resource) (3). The key difference is that whereas Compoxure is only concerned with the first render and requires manually wiring up event listeners and AJAX calls for updates, **resources in Ripple are long-lived and continue to send/receive updates after the first render**. Ripple does not currently cache resources in Redis (but that's on the roadmap).
 
-### Ripple vs Basket.js
+### Ripple vs Basket
 
 Ripple and Basket both using localStorage for storing and loading from. Basket does this on a script-level however, whereas Ripple does this on a resource-level. Basket uses localStorage as an alternative to the browser cache, whereas Ripple uses it for the initial page render and then re-renders relevant parts when there is new information available sent from the server.
 
