@@ -553,7 +553,7 @@ function resourcify(resources, d) {
 
 function interpret(res) {
   // interpret resource type
-  isString(res.body) && !header("content-type")(res) && (res.headers["content-type"] = "text/html") && res.name.contains(".css") && (res.headers["content-type"] = "text/css");
+  isString(res.body) && !header("content-type")(res) && (res.headers["content-type"] = "text/html") && ~res.name.indexOf(".css") && (res.headers["content-type"] = "text/css");
 
   isFunction(res.body) && !header("content-type")(res) && (res.headers["content-type"] = "application/javascript");
 

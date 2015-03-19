@@ -495,7 +495,7 @@ export function interpret(res) {
       isString(res.body) 
   && !header('content-type')(res)
   && (res.headers['content-type'] = 'text/html')
-  &&  res.name.contains('.css') 
+  && ~res.name.indexOf('.css') 
   && (res.headers['content-type'] = 'text/css')
 
       isFunction(res.body) 
