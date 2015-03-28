@@ -356,7 +356,6 @@ module.exports = function (ripple) {
     parsed.then(function () {
       client ? draw(res) : emit()(res.name);
       cache();
-      log("registered", res.name);
     });
 
     return res.body;
@@ -470,6 +469,8 @@ module.exports = function (ripple) {
     });
   }
 };
+
+// log('registered', res.name)
 },{"./utils":6}],6:[function(require,module,exports){
 (function (process,global){
 "use strict";
@@ -549,6 +550,7 @@ exports.call = call;
 
 // enhances resource bodies with on/once for imperative usage
 exports.emitterify = emitterify;
+exports.indexOf = indexOf;
 exports.listeners = listeners;
 exports.versions = versions;
 exports.use = use;
@@ -561,13 +563,15 @@ exports.clean = clean;
 exports.keys = keys;
 exports.globalise = globalise;
 exports.expressify = expressify;
+exports.fromParent = fromParent;
+exports.deidify = deidify;
 
 function all(selector) {
   return toArray(document.querySelectorAll(selector));
 }
 
-function raw(selector) {
-  return document.querySelector(selector);
+function raw(selector, context) {
+  return (context ? context : document).querySelector(selector);
 }
 
 function toArray(d) {
@@ -701,9 +705,11 @@ function parse(d) {
 
 function attr(d, name, value) {
   d = d.node ? d.node() : d;
-  // value && name == 'value' && (d.value = value)
-
-  return arguments.length > 2 ? d.setAttribute(name, value) : d.attributes.getNamedItem(name) && d.attributes.getNamedItem(name).value;
+  if (isString(d)) {
+    return function () {
+      return attr(this, d);
+    };
+  }return arguments.length > 2 ? d.setAttribute(name, value) : d.attributes.getNamedItem(name) && d.attributes.getNamedItem(name).value;
 }
 
 function clone(d) {
@@ -897,7 +903,7 @@ function has(o, k) {
 
 function once(g, selector, data, before, key) {
   var g = g.node ? g : d3.select(g),
-      type = selector.split(".")[0],
+      type = selector.split(".")[0] || "div",
       classed = selector.split(".").slice(1).join(" ");
 
   var el = g.selectAll(selector).data(data || [0], key);
@@ -977,6 +983,12 @@ function emitterify(body, opts) {
     this.on.call(this, type, callback, { once: true });
     return this;
   }
+}
+
+function indexOf(pattern) {
+  return function (d) {
+    return ~d.indexOf(pattern);
+  };
 }
 
 function listeners(resources, name) {
@@ -1070,6 +1082,14 @@ function globalise(d) {
 
 function expressify(d) {
   return !client && d && d._events.request || { use: noop };
+}
+
+function fromParent(d) {
+  return datum(this.parentNode)[d];
+}
+
+function deidify(name, value) {
+  return ripple(name).filter(by("id", value)).map(key("name")).pop();
 }
 
 var is = exports.is = {

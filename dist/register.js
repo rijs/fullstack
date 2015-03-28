@@ -57,7 +57,6 @@ module.exports = function (ripple) {
     parsed.then(function () {
       client ? draw(res) : emit()(res.name);
       cache();
-      log("registered", res.name);
     });
 
     return res.body;
@@ -171,3 +170,5 @@ module.exports = function (ripple) {
     });
   }
 };
+
+// log('registered', res.name)

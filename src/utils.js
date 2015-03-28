@@ -5,8 +5,8 @@ export function all(selector){
   return toArray(document.querySelectorAll(selector))
 }
 
-export function raw(selector){
-  return document.querySelector(selector)
+export function raw(selector, context){
+  return (context ? context : document).querySelector(selector)
 }
 
 export function toArray(d){
@@ -145,7 +145,7 @@ export function parse(d){
 
 export function attr(d, name, value) {
   d = d.node ? d.node() : d
-  // value && name == 'value' && (d.value = value)
+  if (isString(d)) return function(){ return attr(this, d) }
 
   return arguments.length > 2 ? d.setAttribute(name, value)
        : d.attributes.getNamedItem(name)
@@ -349,7 +349,7 @@ export function has(o, k) {
 
 export function once(g, selector, data, before, key) {
   var g       = g.node ? g : d3.select(g)
-    , type    = selector.split('.')[0]
+    , type    = selector.split('.')[0] || 'div'
     , classed = selector.split('.').slice(1).join(' ')
 
   var el = g
@@ -437,6 +437,12 @@ export function emitterify(body, opts) {
   function once(type, callback){
     this.on.call(this, type, callback, { once: true })
     return this
+  }
+}
+
+export function indexOf(pattern){
+  return function(d){
+    return ~d.indexOf(pattern)
   }
 }
 
@@ -547,6 +553,17 @@ export function globalise(d) {
 
 export function expressify(d) {
   return !client && d && d._events.request || { use: noop }
+}
+
+export function fromParent(d){
+  return datum(this.parentNode)[d]
+}
+
+export function deidify(name, value){
+  return ripple(name)
+    .filter(by('id', value))
+    .map(key('name'))
+    .pop()
 }
 
 export var is = { 

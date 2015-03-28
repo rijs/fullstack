@@ -33,7 +33,7 @@ export default function(ripple){
     parsed.then(() => {
       client ? draw(res) : emit()(res.name)
       cache()
-      log('registered', res.name)
+      // log('registered', res.name)
     })
 
     return res.body
