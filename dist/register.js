@@ -19,6 +19,7 @@ var call = _utils.call;
 var def = _utils.def;
 var versions = _utils.versions;
 var client = _utils.client;
+var first = _utils.first;
 
 module.exports = function (ripple) {
   var resources = ripple._resources(),
@@ -53,7 +54,7 @@ module.exports = function (ripple) {
     // is.route(name) && !resources[name] && rhumb.add(res.name, parameterise(res.name))
 
     !(res.name in resources) && resources.length++;
-    parsed = is.data(res) ? data(res)[0] : promise(resources[res.name] = res);
+    parsed = is.data(res) ? first(data(res)) : promise(resources[res.name] = res);
     parsed.then(function () {
       client ? draw(res) : emit()(res.name);
       cache();
@@ -71,6 +72,7 @@ module.exports = function (ripple) {
 
     res.versions = res.versions || versions(resources, res.name);
     client && !rollback && max && res.versions.push(immmutable(res.body));
+    resources[res.name] = watch(res);
 
     return [db().all(table, res.body).then(commit), res];
 
@@ -86,7 +88,7 @@ module.exports = function (ripple) {
   function watch(res) {
     var opts = { type: "response", listeners: listeners(resources, res.name) };
 
-    !res.observer && Array.observe(res.body = emitterify(res.body, opts), res.observer = meta(res.name));
+    !res.body.observer && Array.observe(res.body = emitterify(res.body, opts), def(res.body, "observer", meta(res.name)));
 
     is.arr(res.body) && res.body.forEach(observe);
 

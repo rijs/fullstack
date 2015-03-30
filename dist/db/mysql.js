@@ -64,7 +64,7 @@ mysql.push = function (table, data) {
   con.query(sql, function (err, rows, fields) {
     if (err) return log("push", table, "failed", err);
     log("push", table, "done");
-    p.resolve(rows.insertId);
+    p.resolve(data.id = rows.insertId);
   });
 
   return p;

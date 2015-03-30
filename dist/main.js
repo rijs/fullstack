@@ -71,7 +71,7 @@ function createRipple(server) {
 
   setTimeout(ripple.cache.load, 0);
 
-  client ? socket.on("response", ripple._register) : (socket.on("connection", sync(ripple).connected), app.use("/ripple.js", serve.client), app.use("/immutable.min.js", serve.immutable), opts.session && socket.use(auth(opts.session)), opts.client && app.use(append));
+  client ? socket.on("response", ripple._register) : (socket.on("connection", sync(ripple).connected), app.use("/ripple.js", serve.client), app.use("/immutable.min.js", serve.immutable), opts.session && socket.use(auth(opts.session)), opts.client && app.use(append), opts.utils && utils());
 
   return ripple;
 

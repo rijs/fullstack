@@ -14,9 +14,8 @@ describe('Ripple Server', function(){
     app = server = ripple = null  
     app = express()
     server = http.createServer(app)
-    console.log('m', typeof server._events.request.use)
     ripple = require('../')(server)
-    ripple('some.data', [1,2,3])
+    ripple('some', [1,2,3])
     done()
   })
 
@@ -26,30 +25,29 @@ describe('Ripple Server', function(){
   })
 
   it('should register a resource', function(){  
-    assert.equal(3, ripple('some.data').length)
+    assert.equal(3, ripple('some').length)
   })
 
   it('should update a resource', function(done){
-    ripple('some.data').once('response', function(){ done() })
-    ripple('some.data')[0] = { id: 5, val: 5 }
+    ripple('some').once('response', function(){ done() })
+    ripple('some')[0] = { id: 5, val: 5 }
 
-    assert.deepEqual({ id: 5, val: 5 }, ripple('some.data')[0])
-    assert.equal(2, ripple('some.data')[1])
-    assert.equal(3, ripple('some.data')[2])
+    assert.deepEqual({ id: 5, val: 5 }, ripple('some')[0])
+    assert.equal(2, ripple('some')[1])
+    assert.equal(3, ripple('some')[2])
   })
 
   it('should add to a resource', function(done){
-    ripple('some.data').once('response', function(){ done() })
-
-    ripple('some.data').push({ id: 7, value: 7 })
-    assert.equal(4, ripple('some.data').length)
+    ripple('some').once('response', function(){ done() })
+    ripple('some').push({ id: 7, value: 7 })
+    assert.equal(4, ripple('some').length)
   })
 
   it('should delete from a resource', function(done){
-    ripple('some.data').once('response', function(){ done() })
+    ripple('some').once('response', function(){ done() })
 
-    ripple('some.data').pop()
-    assert.equal(2, ripple('some.data').length)
+    ripple('some').pop()
+    assert.equal(2, ripple('some').length)
   })
 
   it('should create two different ripple nodes', function(){

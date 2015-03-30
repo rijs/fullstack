@@ -39,6 +39,7 @@ export default function createRipple(server, opts = { client: true }) {
          , app.use('/immutable.min.js', serve.immutable)
          , opts.session && socket.use(auth(opts.session))
          , opts.client && app.use(append)
+         , opts.utils && utils()
          )
 
   return ripple

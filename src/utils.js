@@ -80,6 +80,14 @@ export function spread(...keys) {
   }
 }
 
+export function mask(...keys) {
+  return function(o){
+    var masked = {}
+    keys.forEach(key => masked[key] = o[key])
+    return masked
+  }
+}
+
 export function isIn(set) {
   return function(d){
     return set.some(match(d))
@@ -253,6 +261,7 @@ export function datum(node){
 
 export function def(o, p, v, w){
   !has(o, p) && Object.defineProperty(o, p, { value: v, writable: w })
+  return o[p]
 }
 
 export function then(fn){
@@ -340,7 +349,7 @@ export function prepend(v) {
 }
 
 export function empty(d) {
-  return !d || !d.length
+  return !d || (isArray(d) && !d.length)
 }
 
 export function has(o, k) {
@@ -355,6 +364,8 @@ export function once(g, selector, data, before, key) {
   var el = g
     .selectAll(selector)
     .data(data || [0], key)
+
+  el.once = (...args) => once(el, ...args)
 
   el.out = el.exit()
     .remove() 
@@ -491,7 +502,7 @@ export function resourcify(resources, d) {
 
   return   names.length == 0 ? undefined
        :   names.length == 1 ? body(resources, first(names))
-       : ( names.map(function(d){ o[d] = body(resources, d) })
+       : ( names.map(d => o[d] = body(resources, d))
          , values(o).some(empty) ? undefined : o 
          )
 }

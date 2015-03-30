@@ -11,9 +11,12 @@ function pings(target, fn) {
   return function handler(){
     if (++count != target) return;
     io().off('response', handler)
-    fn.apply()
+    fn()
   }
 }
+
+// TODO:
+// (Security): Make sure db-connected private resource (async privacy) not leaked via premature sync access
 
 describe('Ripple Client', function(){
   before(function(done){

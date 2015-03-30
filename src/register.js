@@ -1,4 +1,4 @@
-import { is, err, clone, promise, emitterify, table, interpret, log, parameterise, header, has, immmutable, listeners, call, def, versions, client } from './utils'
+import { is, err, clone, promise, emitterify, table, interpret, log, parameterise, header, has, immmutable, listeners, call, def, versions, client, first } from './utils'
 
 export default function(ripple){
   var resources = ripple._resources()
@@ -29,7 +29,7 @@ export default function(ripple){
     // is.route(name) && !resources[name] && rhumb.add(res.name, parameterise(res.name))
 
     !(res.name in resources) && resources.length++
-    parsed = is.data(res) ? data(res)[0] : promise(resources[res.name] = res)
+    parsed = is.data(res) ? first(data(res)) : promise(resources[res.name] = res)
     parsed.then(() => {
       client ? draw(res) : emit()(res.name)
       cache()
@@ -47,6 +47,7 @@ export default function(ripple){
 
     res.versions = res.versions || versions(resources, res.name)
     client && !rollback && max && res.versions.push(immmutable(res.body))
+    resources[res.name] = watch(res)
 
     return [db().all(table, res.body).then(commit), res]
 
@@ -62,10 +63,10 @@ export default function(ripple){
   function watch(res) {
     var opts = { type: 'response', listeners: listeners(resources, res.name) }
     
-    !res.observer 
+    !res.body.observer 
      && Array.observe(
           res.body = emitterify(res.body, opts)
-        , res.observer = meta(res.name)
+        , def(res.body, 'observer', meta(res.name))
         )
 
     is.arr(res.body)

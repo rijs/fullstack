@@ -282,7 +282,7 @@ function createRipple(server) {
 
   setTimeout(ripple.cache.load, 0);
 
-  client ? socket.on("response", ripple._register) : (socket.on("connection", sync(ripple).connected), app.use("/ripple.js", serve.client), app.use("/immutable.min.js", serve.immutable), opts.session && socket.use(auth(opts.session)), opts.client && app.use(append));
+  client ? socket.on("response", ripple._register) : (socket.on("connection", sync(ripple).connected), app.use("/ripple.js", serve.client), app.use("/immutable.min.js", serve.immutable), opts.session && socket.use(auth(opts.session)), opts.client && app.use(append), opts.utils && utils());
 
   return ripple;
 
@@ -318,6 +318,7 @@ var call = _utils.call;
 var def = _utils.def;
 var versions = _utils.versions;
 var client = _utils.client;
+var first = _utils.first;
 
 module.exports = function (ripple) {
   var resources = ripple._resources(),
@@ -352,7 +353,7 @@ module.exports = function (ripple) {
     // is.route(name) && !resources[name] && rhumb.add(res.name, parameterise(res.name))
 
     !(res.name in resources) && resources.length++;
-    parsed = is.data(res) ? data(res)[0] : promise(resources[res.name] = res);
+    parsed = is.data(res) ? first(data(res)) : promise(resources[res.name] = res);
     parsed.then(function () {
       client ? draw(res) : emit()(res.name);
       cache();
@@ -370,6 +371,7 @@ module.exports = function (ripple) {
 
     res.versions = res.versions || versions(resources, res.name);
     client && !rollback && max && res.versions.push(immmutable(res.body));
+    resources[res.name] = watch(res);
 
     return [db().all(table, res.body).then(commit), res];
 
@@ -385,7 +387,7 @@ module.exports = function (ripple) {
   function watch(res) {
     var opts = { type: "response", listeners: listeners(resources, res.name) };
 
-    !res.observer && Array.observe(res.body = emitterify(res.body, opts), res.observer = meta(res.name));
+    !res.body.observer && Array.observe(res.body = emitterify(res.body, opts), def(res.body, "observer", meta(res.name)));
 
     is.arr(res.body) && res.body.forEach(observe);
 
@@ -491,6 +493,7 @@ exports.isFunction = isFunction;
 exports.isArray = isArray;
 exports.values = values;
 exports.spread = spread;
+exports.mask = mask;
 exports.isIn = isIn;
 exports.isDef = isDef;
 exports.gt = gt;
@@ -637,6 +640,20 @@ function spread() {
 
   return function (o) {
     return Object.keys(o).filter(isIn(keys)).map(base(o));
+  };
+}
+
+function mask() {
+  for (var _len = arguments.length, keys = Array(_len), _key = 0; _key < _len; _key++) {
+    keys[_key] = arguments[_key];
+  }
+
+  return function (o) {
+    var masked = {};
+    keys.forEach(function (key) {
+      return masked[key] = o[key];
+    });
+    return masked;
   };
 }
 
@@ -808,6 +825,7 @@ function datum(node) {
 
 function def(o, p, v, w) {
   !has(o, p) && Object.defineProperty(o, p, { value: v, writable: w });
+  return o[p];
 }
 
 function then(fn) {
@@ -894,7 +912,7 @@ function prepend(v) {
 }
 
 function empty(d) {
-  return !d || !d.length;
+  return !d || isArray(d) && !d.length;
 }
 
 function has(o, k) {
@@ -907,6 +925,14 @@ function once(g, selector, data, before, key) {
       classed = selector.split(".").slice(1).join(" ");
 
   var el = g.selectAll(selector).data(data || [0], key);
+
+  el.once = function () {
+    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    return once.apply(undefined, [el].concat(args));
+  };
 
   el.out = el.exit().remove();
 
@@ -1033,7 +1059,7 @@ function resourcify(resources, d) {
       names = d.split(" ");
 
   return names.length == 0 ? undefined : names.length == 1 ? body(resources, first(names)) : (names.map(function (d) {
-    o[d] = body(resources, d);
+    return o[d] = body(resources, d);
   }), values(o).some(empty) ? undefined : o);
 }
 
