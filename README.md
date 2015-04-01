@@ -17,8 +17,8 @@ var app    = require('express')()
   , ripple = require('ripple')(server)
 
 ripple
-  .resource('tweets.data', ['lorem', 'ipsum'])
-  .resource('twitter-feed.js', function(d){
+  .resource('tweets', ['lorem', 'ipsum'])
+  .resource('twitter-feed', function(d){
     this.style.color = 'green'
     this.innerHTML = '<li>' + d.join('</li><li>') + '</li>'
   })
