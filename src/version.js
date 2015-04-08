@@ -32,7 +32,7 @@ export default function(ripple){
     
     function index(r) {
       delete r.headers.version
-      return { name: r.name, index: r.versions.length-1 }
+      return { name: r.name, index: (r.versions || []).length-1 }
     }
   }
   
