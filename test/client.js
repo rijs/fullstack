@@ -30,7 +30,7 @@ app.use(serve(__dirname + '/client'))
 
 function component(data) {  }
 
-function from(key, val, body) {
+function from(val, body, key) {
   if (key != 'length') return;
   for (var i = 0; i < +val; i++) body[i] = { i: i }
 }
