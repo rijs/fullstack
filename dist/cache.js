@@ -10,6 +10,7 @@ var parse = _utils.parse;
 var values = _utils.values;
 var header = _utils.header;
 var not = _utils.not;
+var objectify = _utils.objectify;
 
 module.exports = function (ripple) {
   var resources = ripple._resources(),
@@ -32,7 +33,6 @@ module.exports = function (ripple) {
     }clearTimeout(pending);
     var count = resources.length;
     pending = setTimeout(function () {
-      console.log("count", count, resources.length);
       if (count == resources.length) {
         log("cached");
         var cachable = values(resources).filter(not(header("cache-control", "no-store")));

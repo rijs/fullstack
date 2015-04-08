@@ -562,7 +562,6 @@ function use(ripple) {
   };
 
   function cloneBody(d) {
-    console.log("cloning body", d.headers);
     isObject(d.body) && (d.body = clone(d.body));
     return d;
   }

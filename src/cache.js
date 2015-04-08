@@ -1,4 +1,4 @@
-import { client, freeze, log, group, parse, values, header, not } from './utils'
+import { client, freeze, log, group, parse, values, header, not, objectify } from './utils'
 
 export default function(ripple){
   var resources = ripple._resources()
@@ -21,7 +21,6 @@ export default function(ripple){
     clearTimeout(pending)
     var count = resources.length
     pending = setTimeout(function() {
-      console.log('count', count, resources.length)
       if (count == resources.length) {
         log('cached')
         var cachable = values(resources)
