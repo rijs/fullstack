@@ -14,8 +14,7 @@ export function toArray(d){
 }
 
 export function fn(resource){
-  return !client              ? '' + resource
-      :  isFunction(resource) ?      resource
+  return isFunction(resource) ?      resource
       : (new Function("return "    + resource))()
 }
 
@@ -144,7 +143,9 @@ export function freeze(r){
 }
 
 export function str(d){
-  return JSON.stringify(d)
+  return isNumber(d) 
+       ? String(d)
+       : JSON.stringify(d)
 }
 
 export function parse(d){
@@ -308,9 +309,9 @@ export function promiseNull(){
   return promise(null)
 }
 
-function objectify(rows) {
+export function objectify(rows, by='name') {
   var o = {}
-  return rows.forEach(function(d){ o[d.id] = d }), o
+  return rows.forEach(d => o[d[by]] = d ), o
 }
 
 export function unique(key){
@@ -469,10 +470,15 @@ export function versions(resources, name) {
 export function use(ripple) {
   return function(d){
     values(d._resources())
-      // .map(spread('name', 'body', 'headers'))
+      .map(cloneBody)
       .map(ripple)
 
     return ripple
+  }
+
+  function cloneBody(d){
+    isObject(d.body) && (d.body = clone(d.body))
+    return d
   }
 }
 
@@ -531,7 +537,7 @@ export function interpret(res) {
   && (res.body = fn(res.body))
 
   // type-specific detail
-      isData(res)        
+      isData(res)
   && (res.headers = { 
         'content-type'    : 'application/data'
       , 'content-location': res.headers['content-location'] || res.headers['table'] || res.name
@@ -539,6 +545,7 @@ export function interpret(res) {
       , 'proxy-to'        : res.headers['proxy-to'] || res.headers['to']
       , 'proxy-from'      : res.headers['proxy-from'] || res.headers['from']
       , 'version'         : res.headers['version']
+      , 'cache-control'   : isNull(res.headers['cache']) ? 'no-store' : res.headers['cache-control'] || res.headers['cache']
       , 'max-versions'    : isNumber(header('max-versions')(res)) ? header('max-versions')(res) : Infinity
       })
   
@@ -577,6 +584,20 @@ export function deidify(name, value){
     .pop()
 }
 
+export function colorfill(){
+  client && ['red', 'green', 'bold', 'grey'].forEach(color => {
+    Object.defineProperty(String.prototype, color, {
+      get: function () {
+        return this
+      }
+    })
+  })
+}
+
+export function file(name){
+  return require('fs').readFileSync('./'+name, { encoding:'utf8' })
+}
+
 export var is = { 
   str        : isString
 , data       : isData
@@ -601,6 +622,8 @@ export var to = {
 export var client = typeof window != 'undefined'
 export var owner = client ? window : global
 export var min = client ? typeof debug !== 'undefined' && !debug : process.env.NODE_ENV !== 'debug'
-export var log = min ? noop : console.log.bind(console, '[ripple]')
-export var err = min ? noop : console.error.bind(console, '[ripple]')
+
+colorfill()
+export var log = min ? noop : console.log.bind(console, '[ripple]'.grey)
+export var err = min ? noop : console.error.bind(console, '[ripple]'.red)
 owner.utils = (...d) => (d.length ? d : keys(exports)).forEach(globalise)

@@ -55,6 +55,7 @@ exports.promiseSecond = promiseSecond;
 exports.promiseSync = promiseSync;
 exports.promiseNoop = promiseNoop;
 exports.promiseNull = promiseNull;
+exports.objectify = objectify;
 exports.unique = unique;
 exports.later = later;
 exports.isRoute = isRoute;
@@ -91,6 +92,8 @@ exports.globalise = globalise;
 exports.expressify = expressify;
 exports.fromParent = fromParent;
 exports.deidify = deidify;
+exports.colorfill = colorfill;
+exports.file = file;
 
 function all(selector) {
   return toArray(document.querySelectorAll(selector));
@@ -105,7 +108,7 @@ function toArray(d) {
 }
 
 function fn(resource) {
-  return !client ? "" + resource : isFunction(resource) ? resource : new Function("return " + resource)();
+  return isFunction(resource) ? resource : new Function("return " + resource)();
 }
 
 function matches(k, v) {
@@ -236,7 +239,7 @@ function freeze(r) {
 }
 
 function str(d) {
-  return JSON.stringify(d);
+  return isNumber(d) ? String(d) : JSON.stringify(d);
 }
 
 function parse(d) {
@@ -398,9 +401,11 @@ function promiseNull() {
 }
 
 function objectify(rows) {
+  var by = arguments[1] === undefined ? "name" : arguments[1];
+
   var o = {};
   return (rows.forEach(function (d) {
-    o[d.id] = d;
+    return o[d[by]] = d;
   }), o);
 }
 
@@ -551,12 +556,16 @@ function versions(resources, name) {
 
 function use(ripple) {
   return function (d) {
-    values(d._resources())
-    // .map(spread('name', 'body', 'headers'))
-    .map(ripple);
+    values(d._resources()).map(cloneBody).map(ripple);
 
     return ripple;
   };
+
+  function cloneBody(d) {
+    console.log("cloning body", d.headers);
+    isObject(d.body) && (d.body = clone(d.body));
+    return d;
+  }
 }
 
 function chain(fn, value) {
@@ -608,6 +617,7 @@ function interpret(res) {
     "proxy-to": res.headers["proxy-to"] || res.headers.to,
     "proxy-from": res.headers["proxy-from"] || res.headers.from,
     version: res.headers.version,
+    "cache-control": isNull(res.headers.cache) ? "no-store" : res.headers["cache-control"] || res.headers.cache,
     "max-versions": isNumber(header("max-versions")(res)) ? header("max-versions")(res) : Infinity
   });
 
@@ -641,6 +651,20 @@ function deidify(name, value) {
   return ripple(name).filter(by("id", value)).map(key("name")).pop();
 }
 
+function colorfill() {
+  client && ["red", "green", "bold", "grey"].forEach(function (color) {
+    Object.defineProperty(String.prototype, color, {
+      get: function get() {
+        return this;
+      }
+    });
+  });
+}
+
+function file(name) {
+  return require("fs").readFileSync("./" + name, { encoding: "utf8" });
+}
+
 var is = exports.is = {
   str: isString,
   data: isData,
@@ -665,8 +689,10 @@ var to = exports.to = {
 var client = exports.client = typeof window != "undefined";
 var owner = exports.owner = client ? window : global;
 var min = exports.min = client ? typeof debug !== "undefined" && !debug : process.env.NODE_ENV !== "debug";
-var log = exports.log = min ? noop : console.log.bind(console, "[ripple]");
-var err = exports.err = min ? noop : console.error.bind(console, "[ripple]");
+
+colorfill();
+var log = exports.log = min ? noop : console.log.bind(console, "[ripple]".grey);
+var err = exports.err = min ? noop : console.error.bind(console, "[ripple]".red);
 owner.utils = function () {
   for (var _len = arguments.length, d = Array(_len), _key = 0; _key < _len; _key++) {
     d[_key] = arguments[_key];

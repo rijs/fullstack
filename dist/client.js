@@ -9,10 +9,12 @@ var log = _utils.log;
 var group = _utils.group;
 var parse = _utils.parse;
 var values = _utils.values;
+var header = _utils.header;
+var not = _utils.not;
 
 module.exports = function (ripple) {
   var resources = ripple._resources(),
-      pending = false;
+      pending;
 
   cache.load = function load() {
     client && group("loading cache", function () {
@@ -28,12 +30,14 @@ module.exports = function (ripple) {
     // TODO: Cache to Redis if on server
     if (!client) {
       return;
-    }var count = resources.length;
-    return !pending && (pending = true) && setTimeout(function () {
-      pending = false;
+    }clearTimeout(pending);
+    var count = resources.length;
+    pending = setTimeout(function () {
+      console.log("count", count, resources.length);
       if (count == resources.length) {
         log("cached");
-        localStorage.ripple = freeze(resources);
+        var cachable = values(resources).filter(not(header("cache-control", "no-store")));
+        localStorage.ripple = freeze(objectify(cachable));
       }
     }, 2000);
   }
@@ -219,6 +223,8 @@ var _toConsumableArray = function (arr) { if (Array.isArray(arr)) { for (var i =
 
 module.exports = createRipple;
 
+require("colors");
+
 var _utils = require("./utils");
 
 var is = _utils.is;
@@ -296,7 +302,7 @@ if (client) {
   is.str(expose) && utils.apply(undefined, _toConsumableArray(expose.split(" ").filter(Boolean)));
   client && (window.createRipple = createRipple) && (window.ripple = createRipple());
 }
-},{"./cache":1,"./db":2,"./draw":3,"./register":5,"./sync":8,"./utils":6,"./version":7}],5:[function(require,module,exports){
+},{"./cache":1,"./db":2,"./draw":3,"./register":5,"./sync":8,"./utils":6,"./version":7,"colors":9}],5:[function(require,module,exports){
 "use strict";
 
 var _utils = require("./utils");
@@ -532,6 +538,7 @@ exports.promiseSecond = promiseSecond;
 exports.promiseSync = promiseSync;
 exports.promiseNoop = promiseNoop;
 exports.promiseNull = promiseNull;
+exports.objectify = objectify;
 exports.unique = unique;
 exports.later = later;
 exports.isRoute = isRoute;
@@ -568,6 +575,8 @@ exports.globalise = globalise;
 exports.expressify = expressify;
 exports.fromParent = fromParent;
 exports.deidify = deidify;
+exports.colorfill = colorfill;
+exports.file = file;
 
 function all(selector) {
   return toArray(document.querySelectorAll(selector));
@@ -582,7 +591,7 @@ function toArray(d) {
 }
 
 function fn(resource) {
-  return !client ? "" + resource : isFunction(resource) ? resource : new Function("return " + resource)();
+  return isFunction(resource) ? resource : new Function("return " + resource)();
 }
 
 function matches(k, v) {
@@ -713,7 +722,7 @@ function freeze(r) {
 }
 
 function str(d) {
-  return JSON.stringify(d);
+  return isNumber(d) ? String(d) : JSON.stringify(d);
 }
 
 function parse(d) {
@@ -875,9 +884,11 @@ function promiseNull() {
 }
 
 function objectify(rows) {
+  var by = arguments[1] === undefined ? "name" : arguments[1];
+
   var o = {};
   return (rows.forEach(function (d) {
-    o[d.id] = d;
+    return o[d[by]] = d;
   }), o);
 }
 
@@ -1028,12 +1039,16 @@ function versions(resources, name) {
 
 function use(ripple) {
   return function (d) {
-    values(d._resources())
-    // .map(spread('name', 'body', 'headers'))
-    .map(ripple);
+    values(d._resources()).map(cloneBody).map(ripple);
 
     return ripple;
   };
+
+  function cloneBody(d) {
+    console.log("cloning body", d.headers);
+    isObject(d.body) && (d.body = clone(d.body));
+    return d;
+  }
 }
 
 function chain(fn, value) {
@@ -1085,6 +1100,7 @@ function interpret(res) {
     "proxy-to": res.headers["proxy-to"] || res.headers.to,
     "proxy-from": res.headers["proxy-from"] || res.headers.from,
     version: res.headers.version,
+    "cache-control": isNull(res.headers.cache) ? "no-store" : res.headers["cache-control"] || res.headers.cache,
     "max-versions": isNumber(header("max-versions")(res)) ? header("max-versions")(res) : Infinity
   });
 
@@ -1118,6 +1134,20 @@ function deidify(name, value) {
   return ripple(name).filter(by("id", value)).map(key("name")).pop();
 }
 
+function colorfill() {
+  client && ["red", "green", "bold", "grey"].forEach(function (color) {
+    Object.defineProperty(String.prototype, color, {
+      get: function get() {
+        return this;
+      }
+    });
+  });
+}
+
+function file(name) {
+  return require("fs").readFileSync("./" + name, { encoding: "utf8" });
+}
+
 var is = exports.is = {
   str: isString,
   data: isData,
@@ -1142,8 +1172,10 @@ var to = exports.to = {
 var client = exports.client = typeof window != "undefined";
 var owner = exports.owner = client ? window : global;
 var min = exports.min = client ? typeof debug !== "undefined" && !debug : process.env.NODE_ENV !== "debug";
-var log = exports.log = min ? noop : console.log.bind(console, "[ripple]");
-var err = exports.err = min ? noop : console.error.bind(console, "[ripple]");
+
+colorfill();
+var log = exports.log = min ? noop : console.log.bind(console, "[ripple]".grey);
+var err = exports.err = min ? noop : console.error.bind(console, "[ripple]".red);
 owner.utils = function () {
   for (var _len = arguments.length, d = Array(_len), _key = 0; _key < _len; _key++) {
     d[_key] = arguments[_key];
@@ -1155,7 +1187,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":10,"socket.io":9}],7:[function(require,module,exports){
+},{"_process":10,"fs":8,"socket.io":9}],7:[function(require,module,exports){
 "use strict";
 
 var _utils = require("./utils");

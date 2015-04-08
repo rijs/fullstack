@@ -1,4 +1,4 @@
-import { values, log, min, not, header, key, by, is, identity } from './utils'
+import { values, log, min, not, header, key, by, is, identity, str } from './utils'
 import path from 'path'
 
 export default function(ripple){
@@ -19,14 +19,26 @@ export default function(ripple){
 
       return (!r || r.headers.private)
         ?  log('private or no resource for', name)
-        : (log('sending', name), typeof s == 'string')
-        ?  socket.of('/').sockets.filter(by('sessionID', s)).map(sendTo)
+        :  typeof s == 'string'
+        ?  logr(socket.of('/').sockets.filter(by('sessionID', s)).map(sendTo))
         : (s == socket || !s)
-        ?  socket.of('/').sockets.map(sendTo)
-        :  sendTo(s)
+        ?  logr(socket.of('/').sockets.map(sendTo))
+        :  logr([sendTo(s)])
+
+      function logr(results){
+        log(
+          str(results.filter(Boolean).length).green.bold 
+        + '/' 
+        + str(socket.of('/').sockets.length).green
+        , 'sending'
+        , name
+        )
+      }
 
       function sendTo(s) {
-        return s.emit('response', to(r, s)), s
+        var msg = to(r, s)
+        msg.body && s.emit('response', msg)
+        return !!msg.body
       }
     }
   }
@@ -63,7 +75,7 @@ export default function(ripple){
         , body  = resources[name].body
         , next  = types[req.type]
 
-      if (!fn || fn.call(socket, key, value, body, name, type, next))
+      if (!fn || fn.call(socket, value, body, key, type, name, next))
         next(key, value, body)
     }
 
@@ -89,13 +101,16 @@ export default function(ripple){
       , headers  = { 'content-type': resource.headers['content-type'] }
       , extend   = resource.headers['extends']
       , versions = resource.headers['versions']
-    
-    extend && (headers['extends'] = extend)
+      , cache    = resource.headers['cache-control']
+      , body     = is.func(resource.body) ? '' + resource.body : resource.body
+
+     extend   && (headers['extends']  = extend)
+     cache    && (headers['cache']    = cache)
     !versions && (headers['versions'] = versions)
 
     return { 
       name: resource.name
-    , body: fn.call(socket, resource.body) 
+    , body: fn.call(socket, body)
     , headers: headers
     }
   }

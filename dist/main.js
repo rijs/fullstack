@@ -8,6 +8,8 @@ var _toConsumableArray = function (arr) { if (Array.isArray(arr)) { for (var i =
 
 module.exports = createRipple;
 
+require("colors");
+
 var _utils = require("./utils");
 
 var is = _utils.is;

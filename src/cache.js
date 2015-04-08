@@ -1,8 +1,8 @@
-import { client, freeze, log, group, parse, values } from './utils'
+import { client, freeze, log, group, parse, values, header, not } from './utils'
 
 export default function(ripple){
   var resources = ripple._resources()
-    , pending = false
+    , pending
 
   cache.load = function load(){
     client && group('loading cache', function(){
@@ -13,21 +13,22 @@ export default function(ripple){
   }
 
   return cache
-
+  
   // cache all resources in batches
   function cache() {
     // TODO: Cache to Redis if on server
     if (!client) return;
-
+    clearTimeout(pending)
     var count = resources.length
-    return !pending && (pending = true) && 
-      setTimeout(function() {
-        pending = false
-        if (count == resources.length) {
-          log('cached')
-          localStorage.ripple = freeze(resources) 
-        } 
-      }, 2000)
+    pending = setTimeout(function() {
+      console.log('count', count, resources.length)
+      if (count == resources.length) {
+        log('cached')
+        var cachable = values(resources)
+              .filter(not(header('cache-control', 'no-store')))
+        localStorage.ripple = freeze(objectify(cachable))
+      }
+    }, 2000)      
   } 
 
 }

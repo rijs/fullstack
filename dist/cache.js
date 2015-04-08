@@ -8,10 +8,12 @@ var log = _utils.log;
 var group = _utils.group;
 var parse = _utils.parse;
 var values = _utils.values;
+var header = _utils.header;
+var not = _utils.not;
 
 module.exports = function (ripple) {
   var resources = ripple._resources(),
-      pending = false;
+      pending;
 
   cache.load = function load() {
     client && group("loading cache", function () {
@@ -27,12 +29,14 @@ module.exports = function (ripple) {
     // TODO: Cache to Redis if on server
     if (!client) {
       return;
-    }var count = resources.length;
-    return !pending && (pending = true) && setTimeout(function () {
-      pending = false;
+    }clearTimeout(pending);
+    var count = resources.length;
+    pending = setTimeout(function () {
+      console.log("count", count, resources.length);
       if (count == resources.length) {
         log("cached");
-        localStorage.ripple = freeze(resources);
+        var cachable = values(resources).filter(not(header("cache-control", "no-store")));
+        localStorage.ripple = freeze(objectify(cachable));
       }
     }, 2000);
   }

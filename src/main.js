@@ -1,3 +1,4 @@
+import 'colors'
 import { is, chain, def, log, noop, client, use, sio, attr, expressify } from './utils'
 import { auth, append, serve } from './sync'
 import register from './register'
