@@ -45,7 +45,8 @@ export default function(ripple){
       , max      = header('max-versions')(res)
       , rollback = has(res.headers, 'version')
 
-    res.versions = res.versions || versions(resources, res.name)
+    client && (max = max && window.Immutable)
+    max && (res.versions = res.versions || versions(resources, res.name))
     client && !rollback && max && res.versions.push(immmutable(res.body))
     resources[res.name] = watch(res)
 
@@ -128,7 +129,9 @@ export default function(ripple){
                   : false
           }
 
-       client && max && (version.record(details), socket.emit('change', details))
+       client && (max = max && window.Immutable)
+       client && max && version.record(details)
+       client && socket.emit('change', details)
       !client && crud(skip ? { name } : details)
     }
   }

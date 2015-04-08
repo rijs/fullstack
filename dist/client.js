@@ -375,7 +375,8 @@ module.exports = function (ripple) {
     var max = header("max-versions")(res);
     var rollback = has(res.headers, "version");
 
-    res.versions = res.versions || versions(resources, res.name);
+    client && (max = max && window.Immutable);
+    max && (res.versions = res.versions || versions(resources, res.name));
     client && !rollback && max && res.versions.push(immmutable(res.body));
     resources[res.name] = watch(res);
 
@@ -451,7 +452,9 @@ module.exports = function (ripple) {
         type: type == "update" ? "update" : type == "delete" ? "remove" : type == "splice" && removed ? "remove" : type == "splice" && !removed ? "push" : type == "add" ? "push" : false
       };
 
-      client && max && (version.record(details), socket.emit("change", details));
+      client && (max = max && window.Immutable);
+      client && max && version.record(details);
+      client && socket.emit("change", details);
       !client && crud(skip ? { name: name } : details);
     };
   }
