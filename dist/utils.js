@@ -661,7 +661,7 @@ function colorfill() {
 }
 
 function file(name) {
-  return require("fs").readFileSync("./" + name, { encoding: "utf8" });
+  return require("fs").readFileSync(name, { encoding: "utf8" });
 }
 
 var is = exports.is = {
