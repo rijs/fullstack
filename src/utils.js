@@ -1,8 +1,8 @@
 // ----------------------------------------------------------------------------
 // HELPERS
 // ----------------------------------------------------------------------------
-export function all(selector){
-  return toArray(document.querySelectorAll(selector))
+export function all(selector, doc = document){
+  return toArray(doc.querySelectorAll(selector))
 }
 
 export function raw(selector, context){
@@ -490,7 +490,7 @@ export function chain(fn, value) {
 }
 
 export function sio(opts) {
-  return !client   ? require('socket.io')(opts) 
+  return !client   ? require('socket.io')(opts, { serveClient: false }) 
        : window.io ? window.io() 
                    : { on: noop, emit: noop }
 }
@@ -504,7 +504,7 @@ export function parameterise(route) {
 
 export function resourcify(resources, d) {
   var o = {}
-    , names = d.split(' ')
+    , names = d ? d.split(' ') : []
 
   return   names.length == 0 ? undefined
        :   names.length == 1 ? body(resources, first(names))

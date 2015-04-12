@@ -58,8 +58,8 @@ mysql.update = function (table, data) {
 };
 
 mysql.push = function (table, data) {
-  var sql = sqlc(table, data);
-  var p = promise();
+  var sql = sqlc(table, data),
+      p = promise();
 
   con.query(sql, function (err, rows, fields) {
     if (err) return log("push", table, "failed", err);

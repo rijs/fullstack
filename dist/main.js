@@ -73,7 +73,7 @@ function createRipple(server) {
 
   setTimeout(ripple.cache.load, 0);
 
-  client ? socket.on("response", ripple._register) : (socket.on("connection", sync(ripple).connected), app.use("/ripple.js", serve.client), app.use("/immutable.min.js", serve.immutable), opts.session && socket.use(auth(opts.session)), opts.client && app.use(append), opts.utils && utils());
+  client ? socket.on("response", ripple._register) : (socket.on("connection", sync(ripple).connected), app.use(serve.render), app.use("/ripple.js", serve.client), app.use("/immutable.min.js", serve.immutable), app.use("/socket.io.js", serve.socketio), opts.session && socket.use(auth(opts.session)), opts.client && app.use(append), opts.utils && utils());
 
   return ripple;
 
@@ -82,7 +82,7 @@ function createRipple(server) {
   }
 }
 
-if (client) {
+if (client && !window.noripple) {
   var expose = attr(document.currentScript, "utils");
   is.str(expose) && utils.apply(undefined, _toConsumableArray(expose.split(" ").filter(Boolean)));
   client && (window.createRipple = createRipple) && (window.ripple = createRipple());

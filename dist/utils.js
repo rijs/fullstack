@@ -96,7 +96,9 @@ exports.colorfill = colorfill;
 exports.file = file;
 
 function all(selector) {
-  return toArray(document.querySelectorAll(selector));
+  var doc = arguments[1] === undefined ? document : arguments[1];
+
+  return toArray(doc.querySelectorAll(selector));
 }
 
 function raw(selector, context) {
@@ -575,7 +577,7 @@ function chain(fn, value) {
 }
 
 function sio(opts) {
-  return !client ? require("socket.io")(opts) : window.io ? window.io() : { on: noop, emit: noop };
+  return !client ? require("socket.io")(opts, { serveClient: false }) : window.io ? window.io() : { on: noop, emit: noop };
 }
 
 function parameterise(route) {
@@ -587,7 +589,7 @@ function parameterise(route) {
 
 function resourcify(resources, d) {
   var o = {},
-      names = d.split(" ");
+      names = d ? d.split(" ") : [];
 
   return names.length == 0 ? undefined : names.length == 1 ? body(resources, first(names)) : (names.map(function (d) {
     return o[d] = body(resources, d);

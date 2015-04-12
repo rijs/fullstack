@@ -74,7 +74,8 @@ module.exports = function (ripple) {
     max && (res.versions = res.versions || versions(resources, res.name));
     client && !rollback && max && res.versions.push(immmutable(res.body));
     resources[res.name] = watch(res);
-
+    // console.log('res', res)
+    // break out table exists from all, test list.push, then create serv side rendering example
     return [db().all(table, res.body).then(commit), res];
 
     function commit(rows) {

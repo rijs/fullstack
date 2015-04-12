@@ -5,6 +5,7 @@ export default function(ripple){
     , pending
 
   cache.load = function load(){
+    if (!client || !window.localStorage) return;
     client && group('loading cache', function(){
       var offline = parse(localStorage.ripple)
       values(offline)
@@ -17,7 +18,7 @@ export default function(ripple){
   // cache all resources in batches
   function cache() {
     // TODO: Cache to Redis if on server
-    if (!client) return;
+    if (!client || !window.localStorage) return;
     clearTimeout(pending)
     var count = resources.length
     pending = setTimeout(function() {

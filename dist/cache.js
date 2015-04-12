@@ -17,7 +17,9 @@ module.exports = function (ripple) {
       pending;
 
   cache.load = function load() {
-    client && group("loading cache", function () {
+    if (!client || !window.localStorage) {
+      return;
+    }client && group("loading cache", function () {
       var offline = parse(localStorage.ripple);
       values(offline).forEach(ripple);
     });
@@ -28,7 +30,7 @@ module.exports = function (ripple) {
   // cache all resources in batches
   function cache() {
     // TODO: Cache to Redis if on server
-    if (!client) {
+    if (!client || !window.localStorage) {
       return;
     }clearTimeout(pending);
     var count = resources.length;

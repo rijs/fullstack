@@ -18,7 +18,9 @@ module.exports = function (ripple) {
       pending;
 
   cache.load = function load() {
-    client && group("loading cache", function () {
+    if (!client || !window.localStorage) {
+      return;
+    }client && group("loading cache", function () {
       var offline = parse(localStorage.ripple);
       values(offline).forEach(ripple);
     });
@@ -29,7 +31,7 @@ module.exports = function (ripple) {
   // cache all resources in batches
   function cache() {
     // TODO: Cache to Redis if on server
-    if (!client) {
+    if (!client || !window.localStorage) {
       return;
     }clearTimeout(pending);
     var count = resources.length;
@@ -288,7 +290,7 @@ function createRipple(server) {
 
   setTimeout(ripple.cache.load, 0);
 
-  client ? socket.on("response", ripple._register) : (socket.on("connection", sync(ripple).connected), app.use("/ripple.js", serve.client), app.use("/immutable.min.js", serve.immutable), opts.session && socket.use(auth(opts.session)), opts.client && app.use(append), opts.utils && utils());
+  client ? socket.on("response", ripple._register) : (socket.on("connection", sync(ripple).connected), app.use(serve.render), app.use("/ripple.js", serve.client), app.use("/immutable.min.js", serve.immutable), app.use("/socket.io.js", serve.socketio), opts.session && socket.use(auth(opts.session)), opts.client && app.use(append), opts.utils && utils());
 
   return ripple;
 
@@ -297,7 +299,7 @@ function createRipple(server) {
   }
 }
 
-if (client) {
+if (client && !window.noripple) {
   var expose = attr(document.currentScript, "utils");
   is.str(expose) && utils.apply(undefined, _toConsumableArray(expose.split(" ").filter(Boolean)));
   client && (window.createRipple = createRipple) && (window.ripple = createRipple());
@@ -379,7 +381,8 @@ module.exports = function (ripple) {
     max && (res.versions = res.versions || versions(resources, res.name));
     client && !rollback && max && res.versions.push(immmutable(res.body));
     resources[res.name] = watch(res);
-
+    // console.log('res', res)
+    // break out table exists from all, test list.push, then create serv side rendering example
     return [db().all(table, res.body).then(commit), res];
 
     function commit(rows) {
@@ -582,7 +585,9 @@ exports.colorfill = colorfill;
 exports.file = file;
 
 function all(selector) {
-  return toArray(document.querySelectorAll(selector));
+  var doc = arguments[1] === undefined ? document : arguments[1];
+
+  return toArray(doc.querySelectorAll(selector));
 }
 
 function raw(selector, context) {
@@ -1061,7 +1066,7 @@ function chain(fn, value) {
 }
 
 function sio(opts) {
-  return !client ? require("socket.io")(opts) : window.io ? window.io() : { on: noop, emit: noop };
+  return !client ? require("socket.io")(opts, { serveClient: false }) : window.io ? window.io() : { on: noop, emit: noop };
 }
 
 function parameterise(route) {
@@ -1073,7 +1078,7 @@ function parameterise(route) {
 
 function resourcify(resources, d) {
   var o = {},
-      names = d.split(" ");
+      names = d ? d.split(" ") : [];
 
   return names.length == 0 ? undefined : names.length == 1 ? body(resources, first(names)) : (names.map(function (d) {
     return o[d] = body(resources, d);
