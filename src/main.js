@@ -36,8 +36,10 @@ export default function createRipple(server, opts = { client: true }) {
 
   client ?  socket.on('response', ripple._register)
          : (socket.on('connection', sync(ripple).connected)  
+         , app.use(serve.render)
          , app.use('/ripple.js', serve.client)
          , app.use('/immutable.min.js', serve.immutable)
+         , app.use('/socket.io.js', serve.socketio)
          , opts.session && socket.use(auth(opts.session))
          , opts.client && app.use(append)
          , opts.utils && utils()
@@ -48,10 +50,10 @@ export default function createRipple(server, opts = { client: true }) {
   function ripple(){ return ripple._register.apply(this, arguments) }
 }
 
-if (client) {
+if (client && !window.noripple) {
   var expose = attr(document.currentScript, 'utils')
   is.str(expose) && utils(...expose.split(' ').filter(Boolean))
-  client 
+  client
     && (window.createRipple = createRipple)
     && (window.ripple = createRipple())
 }

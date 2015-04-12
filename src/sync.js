@@ -158,11 +158,89 @@ function serveClient(req, res){
   res.sendFile(path.resolve(__dirname, 'client.' + (min ? 'min.js' : 'js')))
 }
 
+function serveSocketIO(req, res){
+  res.sendFile(path.resolve(__dirname, '../node_modules/socket.io-client/socket.io.js'))
+}
+
 function serveImmutable(req, res){
   res.sendFile(path.resolve(__dirname, '../node_modules/immutable/dist/immutable.min.js'))
+}
+
+function serveRender(req, res, next){
+  process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0'
+
+  if (!req.accepts("html")) return;
+
+  var send = res.send
+    , jsdom = require('jsdom')
+    
+  require('on-headers')(res, function () {
+    this.removeHeader('Content-Length')
+  })
+
+  res.send = function(html) {
+    var self = this
+
+    jsdom.env({
+      html: html
+    , url: req.protocol + '://' + req.get('host')
+    , features: {
+        FetchExternalResources: ["script"]
+      , ProcessExternalResources: ["script"]
+      }
+    , created: function(e, window){
+        jsdom.getVirtualConsole(window).sendTo(console)
+        window.noripple = true
+      }
+    , done: function(e, window){
+        if (e) return err(e);
+        var txt =
+        `
+        !function prerender(){
+          var before = customElements()
+            .map(function(d){
+              var data = resourcify(resources, attr(d, 'data'))
+                , component = '' + body(resources, d.tagName.toLowerCase())
+              
+              try { fn(component).call(d, data) } catch (e) { console.error('prerender', e) }
+            })
+
+          log('prerendering', before.length)
+          before.length != customElements().length 
+            ? prerender()
+            : onPrerenderDone()
+        }()
+
+        function customElements(){
+          return all('*')
+            .filter(isCustomElement)
+        }
+
+        function isCustomElement(d){ 
+          return ~d.tagName.indexOf('-')
+        }
+        `
+
+        window.utils()
+        window.resources = ripple._resources()
+        var scriptEl = window.document.createElement("script")
+        scriptEl.innerHTML = txt
+        window.onPrerenderDone = function(){
+          window.document.body.removeChild(scriptEl)
+          send.call(self, window.document.documentElement.outerHTML)
+        }
+        window.document.body.appendChild(scriptEl)
+      }
+    })
+    
+  }
+
+  next()
 }
 
 export var serve = {
   client: serveClient
 , immutable: serveImmutable
+, socketio: serveSocketIO
+, render: serveRender
 }
