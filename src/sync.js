@@ -158,10 +158,6 @@ function serveClient(req, res){
   res.sendFile(path.resolve(__dirname, 'client.' + (min ? 'min.js' : 'js')))
 }
 
-function serveSocketIO(req, res){
-  res.sendFile(path.resolve(__dirname, '../node_modules/socket.io-client/socket.io.js'))
-}
-
 function serveImmutable(req, res){
   res.sendFile(path.resolve(__dirname, '../node_modules/immutable/dist/immutable.min.js'))
 }
@@ -241,6 +237,5 @@ function serveRender(req, res, next){
 export var serve = {
   client: serveClient
 , immutable: serveImmutable
-, socketio: serveSocketIO
 , render: serveRender
 }

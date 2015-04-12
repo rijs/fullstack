@@ -39,7 +39,6 @@ export default function createRipple(server, opts = { client: true }) {
          , app.use(serve.render)
          , app.use('/ripple.js', serve.client)
          , app.use('/immutable.min.js', serve.immutable)
-         , app.use('/socket.io.js', serve.socketio)
          , opts.session && socket.use(auth(opts.session))
          , opts.client && app.use(append)
          , opts.utils && utils()

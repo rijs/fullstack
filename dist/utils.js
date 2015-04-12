@@ -577,7 +577,7 @@ function chain(fn, value) {
 }
 
 function sio(opts) {
-  return !client ? require("socket.io")(opts, { serveClient: false }) : window.io ? window.io() : { on: noop, emit: noop };
+  return !client ? require("socket.io")(opts) : window.io ? window.io() : { on: noop, emit: noop };
 }
 
 function parameterise(route) {

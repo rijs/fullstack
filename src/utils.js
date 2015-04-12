@@ -490,7 +490,7 @@ export function chain(fn, value) {
 }
 
 export function sio(opts) {
-  return !client   ? require('socket.io')(opts, { serveClient: false }) 
+  return !client   ? require('socket.io')(opts) 
        : window.io ? window.io() 
                    : { on: noop, emit: noop }
 }
