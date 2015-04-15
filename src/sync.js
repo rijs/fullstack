@@ -165,7 +165,8 @@ function serveImmutable(req, res){
 function serveRender(req, res, next){
   process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0'
 
-  if (!req.accepts("html")) return;
+  if (!req.accepts("html")) return next()
+  if (req.xhr) return next()
 
   var send = res.send
     , jsdom = require('jsdom')
@@ -218,7 +219,16 @@ function serveRender(req, res, next){
         `
 
         window.utils()
-        window.resources = ripple._resources()
+        window.prerender = true
+        window.resources = objectify(
+          values(ripple._resources())
+            .map(function(res){ 
+              if (!isData(res)) return res
+              var fn = header('proxy-to')(res) || identity
+                , body = fn.call(req, res.body)
+              return { name: res.name, body: body, headers: res.headers }
+            }))
+
         var scriptEl = window.document.createElement("script")
         scriptEl.innerHTML = txt
         window.onPrerenderDone = function(){

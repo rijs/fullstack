@@ -545,6 +545,7 @@ exports.promiseSync = promiseSync;
 exports.promiseNoop = promiseNoop;
 exports.promiseNull = promiseNull;
 exports.objectify = objectify;
+exports.arrayify = arrayify;
 exports.unique = unique;
 exports.later = later;
 exports.isRoute = isRoute;
@@ -900,6 +901,16 @@ function objectify(rows) {
   }), o);
 }
 
+function arrayify(o) {
+  var by = arguments[1] === undefined ? "name" : arguments[1];
+
+  return keys(o).map(function (k) {
+    var t = { value: o[k] };
+    t[by] = k;
+    return t;
+  });
+}
+
 function unique(key) {
   var matched = {};
   return function (d) {
@@ -955,7 +966,7 @@ function once(g, selector, data, before, key) {
 
   el.out = el.exit().remove();
 
-  el["in"] = el.enter().insert("xhtml:" + type, before).classed(classed, 1);
+  el["in"] = el.enter().insert(type, before).classed(classed, 1);
 
   return el;
 }

@@ -156,7 +156,9 @@ function serveRender(req, res, next) {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
   if (!req.accepts("html")) {
-    return;
+    return next();
+  }if (req.xhr) {
+    return next();
   }var send = res.send,
       jsdom = require("jsdom");
 
@@ -184,7 +186,14 @@ function serveRender(req, res, next) {
         }var txt = "\n        !function prerender(){\n          var before = customElements()\n            .map(function(d){\n              var data = resourcify(resources, attr(d, 'data'))\n                , component = '' + body(resources, d.tagName.toLowerCase())\n              \n              try { fn(component).call(d, data) } catch (e) { console.error('prerender', e) }\n            })\n\n          log('prerendering', before.length)\n          before.length != customElements().length \n            ? prerender()\n            : onPrerenderDone()\n        }()\n\n        function customElements(){\n          return all('*')\n            .filter(isCustomElement)\n        }\n\n        function isCustomElement(d){ \n          return ~d.tagName.indexOf('-')\n        }\n        ";
 
         window.utils();
-        window.resources = ripple._resources();
+        window.prerender = true;
+        window.resources = objectify(values(ripple._resources()).map(function (res) {
+          if (!isData(res)) return res;
+          var fn = header("proxy-to")(res) || identity,
+              body = fn.call(req, res.body);
+          return { name: res.name, body: body, headers: res.headers };
+        }));
+
         var scriptEl = window.document.createElement("script");
         scriptEl.innerHTML = txt;
         window.onPrerenderDone = function () {

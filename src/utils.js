@@ -314,6 +314,15 @@ export function objectify(rows, by='name') {
   return rows.forEach(d => o[d[by]] = d ), o
 }
 
+export function arrayify(o, by='name') {
+  return keys(o)
+    .map(k => { 
+      var t = { value: o[k] } 
+      t[by] = k
+      return t
+    })
+}
+
 export function unique(key){
   var matched = {}
   return function(d){
@@ -361,7 +370,7 @@ export function once(g, selector, data, before, key) {
   var g       = g.node ? g : d3.select(g)
     , type    = selector.split('.')[0] || 'div'
     , classed = selector.split('.').slice(1).join(' ')
-
+    
   var el = g
     .selectAll(selector)
     .data(data || [0], key)
@@ -372,7 +381,7 @@ export function once(g, selector, data, before, key) {
     .remove() 
 
   el.in = el.enter()
-    .insert('xhtml:'+type, before)
+    .insert(type, before)
     .classed(classed, 1)
 
   return el
