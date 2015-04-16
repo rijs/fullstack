@@ -183,7 +183,7 @@ function serveRender(req, res, next) {
       done: function done(e, window) {
         if (e) {
           return err(e);
-        }var txt = "\n        !function prerender(){\n          var before = customElements()\n            .map(function(d){\n              var data = resourcify(resources, attr(d, 'data'))\n                , component = '' + body(resources, d.tagName.toLowerCase())\n              \n              try { fn(component).call(d, data) } catch (e) { console.error('prerender', e) }\n            })\n\n          log('prerendering', before.length)\n          before.length != customElements().length \n            ? prerender()\n            : onPrerenderDone()\n        }()\n\n        function customElements(){\n          return all('*')\n            .filter(isCustomElement)\n        }\n\n        function isCustomElement(d){ \n          return ~d.tagName.indexOf('-')\n        }\n        ";
+        }var txt = "\n        !function prerender(){\n          var before = customElements()\n            .map(function(d){\n              var data = resourcify(resources, attr(d, 'data'))\n                , component = '' + body(resources, d.tagName.toLowerCase())\n              \n              try { fn(component).call(d, data) } catch (e) { console.error('prerender', e, e.stack) }\n            })\n\n          log('prerendering', before.length)\n          before.length != customElements().length \n            ? prerender()\n            : onPrerenderDone()\n        }()\n\n        function customElements(){\n          return all('*')\n            .filter(isCustomElement)\n        }\n\n        function isCustomElement(d){ \n          return ~d.tagName.indexOf('-')\n        }\n        ";
 
         window.utils();
         window.prerender = true;

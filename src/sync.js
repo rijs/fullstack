@@ -199,7 +199,7 @@ function serveRender(req, res, next){
               var data = resourcify(resources, attr(d, 'data'))
                 , component = '' + body(resources, d.tagName.toLowerCase())
               
-              try { fn(component).call(d, data) } catch (e) { console.error('prerender', e) }
+              try { fn(component).call(d, data) } catch (e) { console.error('prerender', e, e.stack) }
             })
 
           log('prerendering', before.length)
