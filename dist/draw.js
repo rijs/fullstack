@@ -93,7 +93,9 @@ module.exports = function (ripple) {
       var d = _x;
       delay = inert = root = name = data = html = css = data = fn = html = css = undefined;
 
-      if (d.nodeName == "#text") {
+      if (!d.matches("body *, :host-context(body) *")) {
+        return;
+      }if (d.nodeName == "#text") {
         _x = d.parentNode;
         _again = true;
         continue _function;
@@ -120,14 +122,14 @@ module.exports = function (ripple) {
           html = body(resources, html),
           css = body(resources, css);
 
-      try {
-        fn && (data || !attr(d, "data")) && (applyhtml(root, html) || !attr(d, "template")) && (applycss(root, css) || !attr(d, "css")) && fn.call(root, data);
+      // try {
+      fn && (data || !attr(d, "data")) && (applyhtml(root, html) || !attr(d, "template")) && (applycss(root, css) || !attr(d, "css")) && fn.call(root, data);
 
-        d.observer && Object.unobserve(d.state, d.observer);
-        d.state && Object.observe(d.state, d.observer = later(ripple, d));
-      } catch (e) {
-        err(e);
-      }
+      d.observer && Object.unobserve(d.state, d.observer);
+      d.state && Object.observe(d.state, d.observer = later(ripple, d));
+      // } catch (e) {
+      //   err(e, e.stack)
+      // }
 
       return d;
     }

@@ -133,6 +133,7 @@ module.exports = function (ripple) {
   // normalize a change
   function normalize(name) {
     return function (change) {
+      // console.log('change', change)
       var version = ripple.version;
       var type = change.type;
       var removed = type == "delete" ? change.oldValue : change.removed && change.removed[0];
@@ -140,7 +141,7 @@ module.exports = function (ripple) {
       var key = change.name || change.index;
       var value = data[key];
       var max = header("max-versions")(resources[name]);
-      var skip = !is.arr(data);
+      var skip = type == "update" && str(value) == str(change.oldValue);
       var details = {
         name: name,
         key: key,
@@ -148,10 +149,16 @@ module.exports = function (ripple) {
         type: type == "update" ? "update" : type == "delete" ? "remove" : type == "splice" && removed ? "remove" : type == "splice" && !removed ? "push" : type == "add" ? "push" : false
       };
 
-      client && (max = max && window.Immutable);
-      client && max && version.record(details);
-      client && socket.emit("change", details);
-      !client && crud(skip ? { name: name } : details);
+      if (client) {
+        max = max && window.Immutable;
+        max && version.record(details);
+        socket.emit("change", details);
+      }
+
+      if (!client) {
+        if (skip) return log("skipping update");
+        crud(!is.arr(data) ? { name: name } : details);
+      }
     };
   }
 

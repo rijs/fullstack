@@ -174,7 +174,9 @@ module.exports = function (ripple) {
       var d = _x;
       delay = inert = root = name = data = html = css = data = fn = html = css = undefined;
 
-      if (d.nodeName == "#text") {
+      if (!d.matches("body *, :host-context(body) *")) {
+        return;
+      }if (d.nodeName == "#text") {
         _x = d.parentNode;
         _again = true;
         continue _function;
@@ -201,14 +203,14 @@ module.exports = function (ripple) {
           html = body(resources, html),
           css = body(resources, css);
 
-      try {
-        fn && (data || !attr(d, "data")) && (applyhtml(root, html) || !attr(d, "template")) && (applycss(root, css) || !attr(d, "css")) && fn.call(root, data);
+      // try {
+      fn && (data || !attr(d, "data")) && (applyhtml(root, html) || !attr(d, "template")) && (applycss(root, css) || !attr(d, "css")) && fn.call(root, data);
 
-        d.observer && Object.unobserve(d.state, d.observer);
-        d.state && Object.observe(d.state, d.observer = later(ripple, d));
-      } catch (e) {
-        err(e);
-      }
+      d.observer && Object.unobserve(d.state, d.observer);
+      d.state && Object.observe(d.state, d.observer = later(ripple, d));
+      // } catch (e) {
+      //   err(e, e.stack)
+      // }
 
       return d;
     }
@@ -290,7 +292,9 @@ function createRipple(server) {
 
   setTimeout(ripple.cache.load, 0);
 
-  client ? socket.on("response", ripple._register) : (socket.on("connection", sync(ripple).connected), app.use(serve.render), app.use("/ripple.js", serve.client), app.use("/immutable.min.js", serve.immutable), opts.session && socket.use(auth(opts.session)), opts.client && app.use(append), opts.utils && utils());
+  client ? socket.on("response", ripple._register) : (socket.on("connection", sync(ripple).connected),
+  // , app.use(serve.render)
+  app.use("/ripple.js", serve.client), app.use("/immutable.min.js", serve.immutable), opts.session && socket.use(auth(opts.session)), opts.client && app.use(append), opts.utils && utils());
 
   return ripple;
 
@@ -440,6 +444,7 @@ module.exports = function (ripple) {
   // normalize a change
   function normalize(name) {
     return function (change) {
+      // console.log('change', change)
       var version = ripple.version;
       var type = change.type;
       var removed = type == "delete" ? change.oldValue : change.removed && change.removed[0];
@@ -447,7 +452,7 @@ module.exports = function (ripple) {
       var key = change.name || change.index;
       var value = data[key];
       var max = header("max-versions")(resources[name]);
-      var skip = !is.arr(data);
+      var skip = type == "update" && str(value) == str(change.oldValue);
       var details = {
         name: name,
         key: key,
@@ -455,10 +460,16 @@ module.exports = function (ripple) {
         type: type == "update" ? "update" : type == "delete" ? "remove" : type == "splice" && removed ? "remove" : type == "splice" && !removed ? "push" : type == "add" ? "push" : false
       };
 
-      client && (max = max && window.Immutable);
-      client && max && version.record(details);
-      client && socket.emit("change", details);
-      !client && crud(skip ? { name: name } : details);
+      if (client) {
+        max = max && window.Immutable;
+        max && version.record(details);
+        socket.emit("change", details);
+      }
+
+      if (!client) {
+        if (skip) return log("skipping update");
+        crud(!is.arr(data) ? { name: name } : details);
+      }
     };
   }
 
@@ -494,14 +505,18 @@ module.exports = function (ripple) {
 // ----------------------------------------------------------------------------
 exports.all = all;
 exports.raw = raw;
+exports.falsy = falsy;
 exports.toArray = toArray;
 exports.fn = fn;
 exports.matches = matches;
+exports.deeply = deeply;
 exports.exists = exists;
 exports.isString = isString;
 exports.isNumber = isNumber;
 exports.isObject = isObject;
 exports.isFunction = isFunction;
+exports.isFalsy = isFalsy;
+exports.isTruthy = isTruthy;
 exports.isArray = isArray;
 exports.values = values;
 exports.spread = spread;
@@ -553,6 +568,10 @@ exports.header = header;
 exports.prepend = prepend;
 exports.empty = empty;
 exports.has = has;
+exports.transform = transform;
+exports.replace = replace;
+exports.split = split;
+exports.el = el;
 exports.once = once;
 exports.perf = perf;
 exports.group = group;
@@ -581,7 +600,10 @@ exports.keys = keys;
 exports.globalise = globalise;
 exports.expressify = expressify;
 exports.fromParent = fromParent;
+exports.fromObj = fromObj;
+exports.datify = datify;
 exports.deidify = deidify;
+exports.join = join;
 exports.colorfill = colorfill;
 exports.file = file;
 
@@ -595,6 +617,10 @@ function raw(selector, context) {
   return (context ? context : document).querySelector(selector);
 }
 
+function falsy() {
+  return false;
+}
+
 function toArray(d) {
   return Array.prototype.slice.call(d, 0);
 }
@@ -605,8 +631,38 @@ function fn(resource) {
 
 function matches(k, v) {
   return function (d) {
-    return d[k] && v && d[k].toLowerCase && v.toLowerCase ? d[k].toLowerCase() === v.toLowerCase() : d[k] == v;
+    return deeply(d, k) && v && deeply(d, k).toLowerCase && v.toLowerCase ? deeply(d, k).toLowerCase() === v.toLowerCase() : deeply(d, k) == v;
   };
+}
+
+function deeply(_x, _x2, _x3) {
+  var _arguments = arguments;
+  var _again = true;
+
+  _function: while (_again) {
+    _again = false;
+    var d = _x,
+        key = _x2,
+        value = _x3;
+    keys = set = undefined;
+
+    var keys = key.split("."),
+        set = _arguments.length > 2;
+
+    if (keys.length > 1) {
+      if (set) {
+        _arguments = [_x = d[keys.shift()], _x2 = keys.join("."), _x3 = value];
+        _again = true;
+        continue _function;
+      } else {
+        _arguments = [_x = d[keys.shift()], _x2 = keys.join(".")];
+        _again = true;
+        continue _function;
+      }
+    } else {
+      return set ? d[key] = value : d[key];
+    }
+  }
 }
 
 // export function by(k, v){
@@ -641,6 +697,14 @@ function isObject(d) {
 
 function isFunction(d) {
   return typeof d == "function";
+}
+
+function isFalsy(d) {
+  return !!d == false;
+}
+
+function isTruthy(d) {
+  return !!d == true;
 }
 
 function isArray(d) {
@@ -705,7 +769,7 @@ function base(o) {
 
 function key(k) {
   return function (o) {
-    return o[k];
+    return deeply(o, k);
   };
 }
 
@@ -949,12 +1013,51 @@ function has(o, k) {
   return o.hasOwnProperty(k);
 }
 
+function transform(key, fn) {
+  return function (d) {
+    return (deeply(d, key, fn(deeply(d, key))), d);
+  };
+}
+
+function replace(from, to) {
+  return function (d) {
+    return d.replace(from, to);
+  };
+}
+
+function split(delimiter) {
+  return function (d) {
+    return d.split(delimiter);
+  };
+}
+
+function el(selector) {
+  var attrs = selector.split("[").map(replace("]", "")).map(split("=")),
+      css = attrs.shift().shift().split("."),
+      tag = css.shift(),
+      elem = document.createElement(tag);
+
+  attrs.forEach(function (d) {
+    return attr(elem, d[0], d[1]);
+  });
+  css.forEach(function (d) {
+    return elem.classList.add(d);
+  });
+  elem.toString = function () {
+    return tag + css.map(prepend(".")).join();
+  };
+
+  return elem;
+}
+
 function once(g, selector, data, before, key) {
   var g = g.node ? g : d3.select(g),
-      type = selector.split(".")[0] || "div",
-      classed = selector.split(".").slice(1).join(" ");
+      classed = selector instanceof HTMLElement ? selector.className : selector.split(".").slice(1).join(" "),
+      type = selector instanceof HTMLElement ? function () {
+    return selector;
+  } : selector.split(".")[0] || "div";
 
-  var el = g.selectAll(selector).data(data || [0], key);
+  var el = g.selectAll(selector.toString()).data(data || [0], key);
 
   el.once = function () {
     for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
@@ -1093,7 +1196,7 @@ function resourcify(resources, d) {
 
   return names.length == 0 ? undefined : names.length == 1 ? body(resources, first(names)) : (names.map(function (d) {
     return o[d] = body(resources, d);
-  }), values(o).some(empty) ? undefined : o);
+  }), values(o).some(isFalsy) ? undefined : o);
 }
 
 function interpret(res) {
@@ -1148,8 +1251,28 @@ function fromParent(d) {
   return datum(this.parentNode)[d];
 }
 
+function fromObj(o) {
+  return function (k) {
+    return o[k];
+  };
+}
+
+function datify(format) {
+  return function (date) {
+    return (global.moment || global.mo)(date).format(format || iso);
+  };
+}
+
 function deidify(name, value) {
   return ripple(name).filter(by("id", value)).map(key("name")).pop();
+}
+
+function join(left, right) {
+  return function (d) {
+    d[left] = ripple(right).filter(by("id", clone(d[left]))).pop() || {};
+
+    return d;
+  };
 }
 
 function colorfill() {
@@ -1186,6 +1309,8 @@ var is = exports.is = {
 var to = exports.to = {
   arr: toArray
 };
+
+var iso = exports.iso = "YYYY-MM-DD";
 
 var client = exports.client = typeof window != "undefined";
 var owner = exports.owner = client ? window : global;

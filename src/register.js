@@ -49,8 +49,7 @@ export default function(ripple){
     max && (res.versions = res.versions || versions(resources, res.name))
     client && !rollback && max && res.versions.push(immmutable(res.body))
     resources[res.name] = watch(res)
-// console.log('res', res)
-// break out table exists from all, test list.push, then create serv side rendering example
+
     return [db().all(table, res.body).then(commit), res]
 
     function commit(rows) {
@@ -110,6 +109,7 @@ export default function(ripple){
   // normalize a change
   function normalize(name) {
     return function(change) {
+      // console.log('change', change)
       var { version } = ripple
         , type    = change.type
         , removed = type == 'delete' ? change.oldValue : change.removed && change.removed[0]
@@ -117,7 +117,7 @@ export default function(ripple){
         , key     = change.name || change.index
         , value   = data[key]
         , max     = header('max-versions')(resources[name]) 
-        , skip    = !is.arr(data)
+        , skip    = type == 'update' && (str(value) == str(change.oldValue))
         , details = {
             name  : name
           , key   : key
@@ -130,10 +130,17 @@ export default function(ripple){
                   : false
           }
 
-       client && (max = max && window.Immutable)
-       client && max && version.record(details)
-       client && socket.emit('change', details)
-      !client && crud(skip ? { name } : details)
+      if (client) {
+       max = max && window.Immutable
+       max && version.record(details)
+       socket.emit('change', details)
+      }
+
+      if (!client) {
+        if (skip) return log('skipping update')
+        crud(!is.arr(data) ? { name } : details)
+      }
+
     }
   }
 

@@ -9,21 +9,37 @@ export function raw(selector, context){
   return (context ? context : document).querySelector(selector)
 }
 
+export function falsy(){
+  return false
+}
+
 export function toArray(d){
   return Array.prototype.slice.call(d, 0)
 }
 
 export function fn(resource){
-  return isFunction(resource) ?      resource
-      : (new Function("return "    + resource))()
+  return isFunction(resource) 
+      ? resource
+      : (new Function("return " + resource))()
 }
 
 export function matches(k, v){
   return function(d){
-    return d[k] && v && d[k].toLowerCase && v.toLowerCase 
-      ? d[k].toLowerCase() === v.toLowerCase()
-      : d[k] == v
+    return deeply(d, k) && v && deeply(d, k).toLowerCase && v.toLowerCase 
+      ? deeply(d, k).toLowerCase() === v.toLowerCase()
+      : deeply(d, k) == v
   }
+}
+
+export function deeply(d, key, value){ 
+  var keys = key.split('.')
+    , set  = arguments.length > 2
+
+  return keys.length > 1 
+       ? (set ? deeply(d[keys.shift()], keys.join('.'), value) 
+              : deeply(d[keys.shift()], keys.join('.')))
+       : (set ? (d[key] = value)
+              :  d[key])
 }
 
 // export function by(k, v){
@@ -58,6 +74,14 @@ export function isObject(d) {
 
 export function isFunction(d) {
   return typeof d == 'function'
+}
+
+export function isFalsy(d) {
+  return !!d == false
+}
+
+export function isTruthy(d) {
+  return !!d == true
 }
 
 export function isArray(d) {
@@ -117,7 +141,7 @@ export function base(o) {
 
 export function key(k) {
   return function(o){
-    return o[k]
+    return deeply(o, k)
   }
 }
 
@@ -311,7 +335,7 @@ export function promiseNull(){
 
 export function objectify(rows, by='name') {
   var o = {}
-  return rows.forEach(d => o[d[by]] = d ), o
+  return rows.forEach(d => o[d[by]] = d), o
 }
 
 export function arrayify(o, by='name') {
@@ -366,13 +390,50 @@ export function has(o, k) {
   return o.hasOwnProperty(k)
 }
 
+export function transform(key, fn){
+  return function(d){
+    return deeply(d, key, fn(deeply(d, key))), d
+  }
+}
+
+export function replace(from, to){
+  return function(d){
+    return d.replace(from, to)
+  }
+}
+
+export function split(delimiter){
+  return function(d){
+    return d.split(delimiter)
+  }
+}
+
+export function el(selector){
+  var attrs = selector.split('[')
+        .map(replace(']', ''))
+        .map(split('='))
+    , css  = attrs.shift().shift().split('.')
+    , tag  = css.shift()
+    , elem = document.createElement(tag)
+
+  attrs.forEach(d => attr(elem, d[0], d[1]))
+  css.forEach(d => elem.classList.add(d))
+  elem.toString = () => tag + css.map(prepend('.')).join()
+
+  return elem
+}
+
 export function once(g, selector, data, before, key) {
   var g       = g.node ? g : d3.select(g)
-    , type    = selector.split('.')[0] || 'div'
-    , classed = selector.split('.').slice(1).join(' ')
+    , classed = selector instanceof HTMLElement
+                  ? selector.className
+                  : selector.split('.').slice(1).join(' ')
+    , type    = selector instanceof HTMLElement
+                  ? () => selector
+                  : selector.split('.')[0] || 'div'
     
   var el = g
-    .selectAll(selector)
+    .selectAll(selector.toString())
     .data(data || [0], key)
 
   el.once = (...args) => once(el, ...args)
@@ -518,7 +579,7 @@ export function resourcify(resources, d) {
   return   names.length == 0 ? undefined
        :   names.length == 1 ? body(resources, first(names))
        : ( names.map(d => o[d] = body(resources, d))
-         , values(o).some(empty) ? undefined : o 
+         , values(o).some(isFalsy) ? undefined : o 
          )
 }
 
@@ -586,11 +647,33 @@ export function fromParent(d){
   return datum(this.parentNode)[d]
 }
 
+export function fromObj(o){
+  return function(k){
+    return o[k]
+  }
+}
+
+export function datify(format){
+  return function(date){
+    return (global.moment || global.mo)(date).format(format || iso)
+  }
+}
+
 export function deidify(name, value){
   return ripple(name)
     .filter(by('id', value))
     .map(key('name'))
     .pop()
+}
+
+export function join(left, right){
+  return function(d){
+    d[left] = ripple(right)
+      .filter(by('id', clone(d[left])))
+      .pop() || {}
+
+    return d
+  }
 }
 
 export function colorfill(){
@@ -627,6 +710,8 @@ export var is = {
 export var to = { 
   arr        : toArray
 }
+
+export var iso = 'YYYY-MM-DD'
 
 export var client = typeof window != 'undefined'
 export var owner = client ? window : global

@@ -86,6 +86,7 @@ export default function(ripple){
 
   // main function to render a particular custom element with any data it needs
   function invoke(d){ 
+    if (!d.matches('body *, :host-context(body) *')) return;
     if (d.nodeName == '#text') return invoke(d.parentNode)
 
     var delay = attr(d, 'delay')
@@ -118,7 +119,7 @@ export default function(ripple){
       d.observer &&  Object.unobserve(d.state, d.observer)
       d.state    && (Object.observe  (d.state, d.observer = later(ripple, d)))
     } catch (e) {
-      err(e)
+      err(e, e.stack)
     }
 
     return d

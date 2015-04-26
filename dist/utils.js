@@ -5,14 +5,18 @@
 // ----------------------------------------------------------------------------
 exports.all = all;
 exports.raw = raw;
+exports.falsy = falsy;
 exports.toArray = toArray;
 exports.fn = fn;
 exports.matches = matches;
+exports.deeply = deeply;
 exports.exists = exists;
 exports.isString = isString;
 exports.isNumber = isNumber;
 exports.isObject = isObject;
 exports.isFunction = isFunction;
+exports.isFalsy = isFalsy;
+exports.isTruthy = isTruthy;
 exports.isArray = isArray;
 exports.values = values;
 exports.spread = spread;
@@ -64,6 +68,10 @@ exports.header = header;
 exports.prepend = prepend;
 exports.empty = empty;
 exports.has = has;
+exports.transform = transform;
+exports.replace = replace;
+exports.split = split;
+exports.el = el;
 exports.once = once;
 exports.perf = perf;
 exports.group = group;
@@ -92,7 +100,10 @@ exports.keys = keys;
 exports.globalise = globalise;
 exports.expressify = expressify;
 exports.fromParent = fromParent;
+exports.fromObj = fromObj;
+exports.datify = datify;
 exports.deidify = deidify;
+exports.join = join;
 exports.colorfill = colorfill;
 exports.file = file;
 
@@ -106,6 +117,10 @@ function raw(selector, context) {
   return (context ? context : document).querySelector(selector);
 }
 
+function falsy() {
+  return false;
+}
+
 function toArray(d) {
   return Array.prototype.slice.call(d, 0);
 }
@@ -116,8 +131,38 @@ function fn(resource) {
 
 function matches(k, v) {
   return function (d) {
-    return d[k] && v && d[k].toLowerCase && v.toLowerCase ? d[k].toLowerCase() === v.toLowerCase() : d[k] == v;
+    return deeply(d, k) && v && deeply(d, k).toLowerCase && v.toLowerCase ? deeply(d, k).toLowerCase() === v.toLowerCase() : deeply(d, k) == v;
   };
+}
+
+function deeply(_x, _x2, _x3) {
+  var _arguments = arguments;
+  var _again = true;
+
+  _function: while (_again) {
+    _again = false;
+    var d = _x,
+        key = _x2,
+        value = _x3;
+    keys = set = undefined;
+
+    var keys = key.split("."),
+        set = _arguments.length > 2;
+
+    if (keys.length > 1) {
+      if (set) {
+        _arguments = [_x = d[keys.shift()], _x2 = keys.join("."), _x3 = value];
+        _again = true;
+        continue _function;
+      } else {
+        _arguments = [_x = d[keys.shift()], _x2 = keys.join(".")];
+        _again = true;
+        continue _function;
+      }
+    } else {
+      return set ? d[key] = value : d[key];
+    }
+  }
 }
 
 // export function by(k, v){
@@ -152,6 +197,14 @@ function isObject(d) {
 
 function isFunction(d) {
   return typeof d == "function";
+}
+
+function isFalsy(d) {
+  return !!d == false;
+}
+
+function isTruthy(d) {
+  return !!d == true;
 }
 
 function isArray(d) {
@@ -216,7 +269,7 @@ function base(o) {
 
 function key(k) {
   return function (o) {
-    return o[k];
+    return deeply(o, k);
   };
 }
 
@@ -460,12 +513,51 @@ function has(o, k) {
   return o.hasOwnProperty(k);
 }
 
+function transform(key, fn) {
+  return function (d) {
+    return (deeply(d, key, fn(deeply(d, key))), d);
+  };
+}
+
+function replace(from, to) {
+  return function (d) {
+    return d.replace(from, to);
+  };
+}
+
+function split(delimiter) {
+  return function (d) {
+    return d.split(delimiter);
+  };
+}
+
+function el(selector) {
+  var attrs = selector.split("[").map(replace("]", "")).map(split("=")),
+      css = attrs.shift().shift().split("."),
+      tag = css.shift(),
+      elem = document.createElement(tag);
+
+  attrs.forEach(function (d) {
+    return attr(elem, d[0], d[1]);
+  });
+  css.forEach(function (d) {
+    return elem.classList.add(d);
+  });
+  elem.toString = function () {
+    return tag + css.map(prepend(".")).join();
+  };
+
+  return elem;
+}
+
 function once(g, selector, data, before, key) {
   var g = g.node ? g : d3.select(g),
-      type = selector.split(".")[0] || "div",
-      classed = selector.split(".").slice(1).join(" ");
+      classed = selector instanceof HTMLElement ? selector.className : selector.split(".").slice(1).join(" "),
+      type = selector instanceof HTMLElement ? function () {
+    return selector;
+  } : selector.split(".")[0] || "div";
 
-  var el = g.selectAll(selector).data(data || [0], key);
+  var el = g.selectAll(selector.toString()).data(data || [0], key);
 
   el.once = function () {
     for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
@@ -604,7 +696,7 @@ function resourcify(resources, d) {
 
   return names.length == 0 ? undefined : names.length == 1 ? body(resources, first(names)) : (names.map(function (d) {
     return o[d] = body(resources, d);
-  }), values(o).some(empty) ? undefined : o);
+  }), values(o).some(isFalsy) ? undefined : o);
 }
 
 function interpret(res) {
@@ -659,8 +751,28 @@ function fromParent(d) {
   return datum(this.parentNode)[d];
 }
 
+function fromObj(o) {
+  return function (k) {
+    return o[k];
+  };
+}
+
+function datify(format) {
+  return function (date) {
+    return (global.moment || global.mo)(date).format(format || iso);
+  };
+}
+
 function deidify(name, value) {
   return ripple(name).filter(by("id", value)).map(key("name")).pop();
+}
+
+function join(left, right) {
+  return function (d) {
+    d[left] = ripple(right).filter(by("id", clone(d[left]))).pop() || {};
+
+    return d;
+  };
 }
 
 function colorfill() {
@@ -697,6 +809,8 @@ var is = exports.is = {
 var to = exports.to = {
   arr: toArray
 };
+
+var iso = exports.iso = "YYYY-MM-DD";
 
 var client = exports.client = typeof window != "undefined";
 var owner = exports.owner = client ? window : global;

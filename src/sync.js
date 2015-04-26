@@ -218,7 +218,7 @@ function serveRender(req, res, next){
         }
         `
 
-        window.utils()
+        window.utils && window.utils()
         window.prerender = true
         window.resources = objectify(
           values(ripple._resources())
