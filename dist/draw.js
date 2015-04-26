@@ -122,14 +122,14 @@ module.exports = function (ripple) {
           html = body(resources, html),
           css = body(resources, css);
 
-      // try {
-      fn && (data || !attr(d, "data")) && (applyhtml(root, html) || !attr(d, "template")) && (applycss(root, css) || !attr(d, "css")) && fn.call(root, data);
+      try {
+        fn && (data || !attr(d, "data")) && (applyhtml(root, html) || !attr(d, "template")) && (applycss(root, css) || !attr(d, "css")) && fn.call(root, data);
 
-      d.observer && Object.unobserve(d.state, d.observer);
-      d.state && Object.observe(d.state, d.observer = later(ripple, d));
-      // } catch (e) {
-      //   err(e, e.stack)
-      // }
+        d.observer && Object.unobserve(d.state, d.observer);
+        d.state && Object.observe(d.state, d.observer = later(ripple, d));
+      } catch (e) {
+        err(e, e.stack);
+      }
 
       return d;
     }

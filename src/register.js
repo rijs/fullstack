@@ -1,4 +1,4 @@
-import { is, err, clone, promise, emitterify, table, interpret, log, parameterise, header, has, immmutable, listeners, call, def, versions, client, first } from './utils'
+import { is, err, clone, promise, emitterify, table, interpret, log, parameterise, header, has, immmutable, listeners, call, def, versions, client, first, str } from './utils'
 
 export default function(ripple){
   var resources = ripple._resources()
