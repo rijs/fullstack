@@ -211,6 +211,10 @@ ripple('users.data')
   .push(req.body)
 ```
 
+# Cross-Browser Support
+
+Cross-browser testing of Ripple is supported by [BrowserStack](browserstack.com).
+
 # Contact
 
 Twitter: [@pemrouz](https://twitter.com/pemrouz)
