@@ -1,49 +1,55 @@
 {
   "name": "ripple",
-  "version": "0.1.0",
-  "main": "dist/main.js",
-  "author": "pemrouz",
-  "description": "Ripple is a reactive, resource-oriented, native-focused, realtime app architecture built on top of express and socket.io. The philosophy is that all changes ripple across the network to all other connected servers, clients and databases synchronising them in realtime where possible",
-  "engines": {
-    "node": ">=0.11.13"
-  },
+  "version": "0.2.0",
+  "main": "dist",
+  "author": "Pedram Emrouznejad (https://github.com/pemrouz)",
+  "description": "Ripple",
   "repository": {
     "type": "git",
-    "url": "git://github.com/pemrouz/ripple.git"
+    "url": "git://github.com/rijs/ripple.git"
   },
   "scripts": {
-    "build": "babel src -d dist && browserify -i ./dist/sync.js -i ./dist/db/postgres.js -i ./dist/db/mysql.js dist/main.js -o dist/client.js && uglifyjs dist/client.js -c drop_console,dead_code -d debug=false -o dist/client.min.js",
-    "test-server": "mocha test/server -w --reporter spec --harmony",
-    "test-client": "node --harmony test/client"
+    "ignore": "find ./dist -type f -exec sed -i \"s/var _interopRequire/\\/* istanbul ignore next *\\/\\nvar _interopRequire/g\" {} ;",
+    "clean": "rm -rf dist && mkdir dist",
+    "babel": "babel src -d dist",
+    "bundle": "browserify dist/index.js -o dist/ripple.js -i socket.io -i mysql -i jsondiffpatch --standalone ripple",
+    "bundle:pure": "browserify dist/index.js -o dist/ripple.pure.js -i socket.io -i mysql -i jsondiffpatch -i socket.io-client -i **/utilise/**/*.js --standalone ripple && sed -i -E \"s/(= _interopRequire\\(require\\(\\\"utilise\\\/)(.+)(\\\"\\)\\))/= window['\\2']/\" dist/ripple.pure.js",
+    "minify": "uglifyjs dist/ripple.js -m -c drop_console,dead_code -d debug=false -o dist/ripple.min.js",
+    "minify:pure": "uglifyjs dist/ripple.pure.js -m -c drop_console,dead_code -d debug=false -o dist/ripple.pure.min.js",
+    "gzip": "gzip -c dist/ripple.min.js > dist/ripple.min.js.gz && gzip -c dist/ripple.pure.min.js > dist/ripple.pure.min.js.gz",
+    "build": "npm run clean && npm run babel && npm run ignore && npm run pure && npm run bundle && npm run minify && npm run gzip",
+    "build:pure": "npm run bundle:pure && npm run minify:pure",
+    "test-old": "browserify test/client.js -o dist/test.js && start http://localhost:5000 && node test/server",
+    "watch-old": "watch \"npm run build && npm test\" src/ test/"
   },
-  "browser": {
-    "path": false,
-    "socket.io": false,
-    "on-headers": false,
-    "cookie-parser": false,
-    "object-assign": false,
-    "colors": false
-  },
+  "license": "pemrouz.mit-license.org",
   "devDependencies": {
     "babel": "^4.6.3",
     "browserify": "^9.0.3",
-    "chai": "~1.9.1",
-    "express": "^4.11.1",
-    "mocha": "^1.21.4",
-    "serve-static": "^1.9.1",
-    "sinon": "~1.10.2",
-    "uglify-js": "^2.4.16"
+    "chai": "^2.3.0",
+    "coveralls": "^2.11.2",
+    "istanbul": "^0.3.13",
+    "mocha": "^2.2.4",
+    "mocha-lcov-reporter": "0.0.2",
+    "uglify-js": "^2.4.16",
+    "popper": "*"
   },
   "dependencies": {
-    "colors": "^1.0.3",
-    "cookie-parser": "^1.3.3",
-    "immutable": "^3.6.2",
-    "jsdom": "4.3.0",
-    "mysql": "*",
-    "object-assign": "^2.0.0",
-    "on-headers": "*",
-    "pg": "^4.0.0",
-    "socket.io": "^1.2.1",
-    "socket.io-client": "^1.3.5"
+    "components": "git://github.com/rijs/components",
+    "singleton": "git://github.com/rijs/singleton",
+    "utilise": "git://github.com/utilise/utilise",
+    "offline": "git://github.com/rijs/offline",
+    "prehtml": "git://github.com/rijs/prehtml",
+    "precss": "git://github.com/rijs/precss",
+    "shadow": "git://github.com/rijs/shadow",
+    "resdir": "git://github.com/rijs/resdir",
+    "serve": "git://github.com/rijs/serve",
+    "delay": "git://github.com/rijs/delay",
+    "sync": "git://github.com/rijs/sync",
+    "core": "git://github.com/rijs/core",
+    "html": "git://github.com/rijs/html",
+    "data": "git://github.com/rijs/data",
+    "css": "git://github.com/rijs/css",
+    "fn": "git://github.com/rijs/fn"
   }
 }
