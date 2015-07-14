@@ -17,7 +17,7 @@
     "minify": "uglifyjs dist/ripple.js -m -c drop_console,dead_code -d debug=false -o dist/ripple.min.js",
     "minify:pure": "uglifyjs dist/ripple.pure.js -m -c drop_console,dead_code -d debug=false -o dist/ripple.pure.min.js",
     "gzip": "gzip -c dist/ripple.min.js > dist/ripple.min.js.gz && gzip -c dist/ripple.pure.min.js > dist/ripple.pure.min.js.gz",
-    "build": "npm run clean && npm run babel && npm run ignore && npm run pure && npm run bundle && npm run minify && npm run gzip",
+    "build": "npm run clean && npm run babel && npm run ignore && npm run build:pure && npm run bundle && npm run minify && npm run gzip",
     "build:pure": "npm run bundle:pure && npm run minify:pure",
     "test-old": "browserify test/client.js -o dist/test.js && start http://localhost:5000 && node test/server",
     "watch-old": "watch \"npm run build && npm test\" src/ test/"

@@ -3,43 +3,43 @@
 /* istanbul ignore next */
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
-var components = _interopRequire(require("components"));
+var components = _interopRequire(require("rijs.components"));
 
-var singleton = _interopRequire(require("singleton"));
+var singleton = _interopRequire(require("rijs.singleton"));
 
-var sessions = _interopRequire(require("sessions"));
+var sessions = _interopRequire(require("rijs.sessions"));
 
-var reactive = _interopRequire(require("reactive"));
+var reactive = _interopRequire(require("rijs.reactive"));
 
-var prehtml = _interopRequire(require("prehtml"));
+var prehtml = _interopRequire(require("rijs.prehtml"));
 
-var offline = _interopRequire(require("offline"));
+var offline = _interopRequire(require("rijs.offline"));
 
-var precss = _interopRequire(require("precss"));
+var precss = _interopRequire(require("rijs.precss"));
 
-var shadow = _interopRequire(require("shadow"));
+var shadow = _interopRequire(require("rijs.shadow"));
 
-var resdir = _interopRequire(require("resdir"));
+var resdir = _interopRequire(require("rijs.resdir"));
 
-var mysql = _interopRequire(require("mysqlr"));
+var mysql = _interopRequire(require("rijs.mysql"));
 
-var serve = _interopRequire(require("serve"));
+var serve = _interopRequire(require("rijs.serve"));
 
-var delay = _interopRequire(require("delay"));
+var delay = _interopRequire(require("rijs.delay"));
 
-var sync = _interopRequire(require("sync"));
+var sync = _interopRequire(require("rijs.sync"));
 
-var core = _interopRequire(require("core"));
+var core = _interopRequire(require("rijs.core"));
 
-var data = _interopRequire(require("data"));
+var data = _interopRequire(require("rijs.data"));
 
-var html = _interopRequire(require("html"));
+var html = _interopRequire(require("rijs.html"));
 
-var css = _interopRequire(require("css"));
+var css = _interopRequire(require("rijs.css"));
 
-var fn = _interopRequire(require("fn"));
+var fn = _interopRequire(require("rijs.fn"));
 
-var db = _interopRequire(require("db"));
+var db = _interopRequire(require("rijs.db"));
 
 var client = _interopRequire(require("utilise/client"));
 
