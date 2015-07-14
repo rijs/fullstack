@@ -35,21 +35,21 @@
     "popper": "*"
   },
   "dependencies": {
-    "components": "git://github.com/rijs/components",
-    "singleton": "git://github.com/rijs/singleton",
-    "utilise": "git://github.com/utilise/utilise",
-    "offline": "git://github.com/rijs/offline",
-    "prehtml": "git://github.com/rijs/prehtml",
-    "precss": "git://github.com/rijs/precss",
-    "shadow": "git://github.com/rijs/shadow",
-    "resdir": "git://github.com/rijs/resdir",
-    "serve": "git://github.com/rijs/serve",
-    "delay": "git://github.com/rijs/delay",
-    "sync": "git://github.com/rijs/sync",
-    "core": "git://github.com/rijs/core",
-    "html": "git://github.com/rijs/html",
-    "data": "git://github.com/rijs/data",
-    "css": "git://github.com/rijs/css",
-    "fn": "git://github.com/rijs/fn"
+    "rijs.components": "git://github.com/rijs/components",
+    "rijs.singleton": "git://github.com/rijs/singleton",
+    "rijs.utilise": "git://github.com/utilise/utilise",
+    "rijs.offline": "git://github.com/rijs/offline",
+    "rijs.prehtml": "git://github.com/rijs/prehtml",
+    "rijs.precss": "git://github.com/rijs/precss",
+    "rijs.shadow": "git://github.com/rijs/shadow",
+    "rijs.resdir": "git://github.com/rijs/resdir",
+    "rijs.serve": "git://github.com/rijs/serve",
+    "rijs.delay": "git://github.com/rijs/delay",
+    "rijs.sync": "git://github.com/rijs/sync",
+    "rijs.core": "git://github.com/rijs/core",
+    "rijs.html": "git://github.com/rijs/html",
+    "rijs.data": "git://github.com/rijs/data",
+    "rijs.css": "git://github.com/rijs/css",
+    "rijs.fn": "git://github.com/rijs/fn"
   }
 }
