@@ -65,16 +65,14 @@ function sum(p, v){
 
 function browsers() {
   return [
-  //   'ie11'
-  // , 'chrome'
-  // , 'firefox'
+    'ie11'
+  , 'chrome'
+  , 'firefox'
   ]
 }
 
 function tests() {
   return pause(browserify()
-    // .add(glob.sync('./{,node_modules/rijs.components/}test.js'))
-    // .add(glob.sync('./node_modules/rijs.components/test.js'))
     .add(glob.sync('./{,node_modules/rijs.*/}test.js'))
     .ignore('chai')
     .ignore('jsdom')
