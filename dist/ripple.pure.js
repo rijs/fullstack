@@ -117,6 +117,10 @@ function components(ripple) {
   }log("creating");
 
   if (!customEls) document.body ? polyfill(ripple)() : document.addEventListener("DOMContentLoaded", polyfill(ripple));
+
+  values(ripple.types).map(function (type) {
+    return type.parse = proxy(type.parse || identity, clean(ripple));
+  });
   key("types.application/javascript.render", wrap(fn(ripple)))(ripple);
   key("types.application/data.render", wrap(data(ripple)))(ripple);
   ripple.draw = draw(ripple);
@@ -204,6 +208,14 @@ function drawCustomEls(ripple) {
     mutations.filter(key("attributeName")).filter(by("target", isCustomElement)).filter(onlyIfDifferent).map(ripple.draw);
 
     mutations.map(key("addedNodes")).map(to.arr).reduce(flatten).filter(isCustomElement).map(ripple.draw);
+  };
+}
+
+// clean local headers for transport
+function clean(ripple) {
+  return function (res) {
+    delete res.headers.pending;
+    return res;
   };
 }
 
@@ -2843,7 +2855,7 @@ module.exports = singleton;
 
 function singleton(ripple) {
   log("creating");
-  owner.ripple = ripple;
+  if (!owner.ripple) owner.ripple = ripple;
   return ripple;
 }
 
@@ -3186,7 +3198,6 @@ arguments[4][88][0].apply(exports,arguments)
 },{"dup":88,"values":454}],468:[function(require,module,exports){
 "use strict";
 
-/* istanbul ignore next */
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
 var components = _interopRequire(require("rijs.components"));
@@ -3229,9 +3240,9 @@ var db = _interopRequire(require("rijs.db"));
 
 var client = window['client'];
 
-module.exports = client ? createRipple() : createRipple;
+module.exports = client ? create() : create;
 
-function createRipple(opts) {
+function create(opts) {
   var ripple = core(); // empty base collection of resources
 
   // enrich..
@@ -3239,7 +3250,7 @@ function createRipple(opts) {
   html(ripple); // register html types
   css(ripple); // register css types
   fn(ripple); // register fn types
-  db(ripple); // register fn types
+  db(ripple); // enable external connections
   components(ripple); // invoke web components, fn.call(<el>, data)
   singleton(ripple); // exposes a single instance
   reactive(ripple); // react to changes in resources
@@ -3252,7 +3263,7 @@ function createRipple(opts) {
   sync(ripple, opts); // syncs resources between server/client
   sessions(ripple, opts); // populates sessionid on each connection
   resdir(ripple); // loads from resources folder
-  offline(ripple); // loads from resources folder
+  offline(ripple); // loads/saves from/to localstorage
 
   return ripple;
 }

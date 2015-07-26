@@ -1,11 +1,8 @@
 #!/usr/bin/env node
-var env        = process.env
-  , uglify     = require('uglify-js').minify
+var uglify     = require('uglify-js').minify
   , browserify = require('browserify')
-  , falsy      = require('utilise/falsy')
   , pause      = require('utilise/pause')
   , via        = require('utilise/via')
-  , chokidar   = require('chokidar')
   , popper     = require('popper')
   , glob       = require('glob')
   
@@ -68,17 +65,17 @@ function sum(p, v){
 
 function browsers() {
   return [
-  //   'ie9'
-  // , 'android'
-  // , 'iphone'
-  // , 'opera'
-  // , 'safari'
+  //   'ie11'
+  // , 'chrome'
+  // , 'firefox'
   ]
 }
 
 function tests() {
   return pause(browserify()
-    .add(glob.sync('./node_modules/*/{test.js,test/client.js}'))
+    // .add(glob.sync('./{,node_modules/rijs.components/}test.js'))
+    // .add(glob.sync('./node_modules/rijs.components/test.js'))
+    .add(glob.sync('./{,node_modules/rijs.*/}test.js'))
     .ignore('chai')
     .ignore('jsdom')
     .ignore('express')

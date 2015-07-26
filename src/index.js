@@ -19,17 +19,17 @@ import fn from 'rijs.fn'
 import db from 'rijs.db'
 import client from 'utilise/client'
 
-module.exports = client ? createRipple() : createRipple
+module.exports = client ? create() : create
  
-function createRipple(opts){
-  var ripple = core()  // empty base collection of resources
-
+function create(opts){
+  var ripple = core()    // empty base collection of resources
+ 
   // enrich..
   data(ripple)           // register data types
   html(ripple)           // register html types
   css(ripple)            // register css types
   fn(ripple)             // register fn types
-  db(ripple)             // register fn types
+  db(ripple)             // enable external connections
   components(ripple)     // invoke web components, fn.call(<el>, data)
   singleton(ripple)      // exposes a single instance
   reactive(ripple)       // react to changes in resources
@@ -42,7 +42,7 @@ function createRipple(opts){
   sync(ripple, opts)     // syncs resources between server/client
   sessions(ripple, opts) // populates sessionid on each connection
   resdir(ripple)         // loads from resources folder
-  offline(ripple)         // loads from resources folder
+  offline(ripple)        // loads/saves from/to localstorage
 
   return ripple
 }
