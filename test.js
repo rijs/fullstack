@@ -46,7 +46,7 @@ describe('Ripple', function() {
     setTimeout(function(){
       expect(ripple.resources.array.headers.pending).to.not.be.ok
       done()
-    }, 100)
+    }, 1000)
 
   })
 
