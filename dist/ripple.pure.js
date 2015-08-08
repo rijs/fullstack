@@ -1283,13 +1283,15 @@ function precss(ripple) {
 }
 
 function polyfill(css, prefix) {
+  var escaped = prefix.replace(/\[/g, "\\[").replace(/\]/g, "\\]");
+
   return !prefix ? css : css.replace(/:host\((.+)\)/gi, function ($1, $2) {
     return prefix + $2;
   }).replace(/:host/gi, prefix).replace(/^(.+)[{]/gim, function ($1) {
     return prefix + " " + $1;
   }).replace(/^(.+)(^[:])[,]/gim, function ($1) {
     return prefix + " " + $1;
-  }).replace(new RegExp(prefix + " " + prefix, "g"), prefix);
+  }).replace(new RegExp(escaped + "[\\s]*" + escaped, "g"), prefix).replace(/\/deep\/ /gim, "");
 }
 
 function css(ripple) {
