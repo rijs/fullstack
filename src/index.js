@@ -19,9 +19,7 @@ import fn from 'rijs.fn'
 import db from 'rijs.db'
 import client from 'utilise/client'
 
-module.exports = client ? create() : create
- 
-function create(opts){
+export default function create(opts){
   var ripple = core()    // empty base collection of resources
  
   // enrich..

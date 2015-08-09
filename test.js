@@ -4,7 +4,7 @@ var expect = require('chai').expect
 describe('Ripple', function() {
 
   before(function(){
-    ripple = require('./')
+    ripple = require('./')()
   })
 
   beforeEach(function(done){

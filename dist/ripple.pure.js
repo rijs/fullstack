@@ -1291,7 +1291,7 @@ function polyfill(css, prefix) {
     return prefix + " " + $1;
   }).replace(/^(.+)(^[:])[,]/gim, function ($1) {
     return prefix + " " + $1;
-  }).replace(new RegExp(escaped + "[\\s]*" + escaped, "g"), prefix).replace(/\/deep\/ /gim, "");
+  }).replace(/\/deep\/ /gim, "").replace(new RegExp(escaped + "[\\s]*" + escaped, "g"), prefix);
 }
 
 function css(ripple) {
@@ -1917,6 +1917,8 @@ arguments[4][32][0].apply(exports,arguments)
 /* istanbul ignore next */
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
+module.exports = create;
+
 var components = _interopRequire(require("rijs.components"));
 
 var singleton = _interopRequire(require("rijs.singleton"));
@@ -1956,8 +1958,6 @@ var fn = _interopRequire(require("rijs.fn"));
 var db = _interopRequire(require("rijs.db"));
 
 var client = window['client'];
-
-module.exports = client ? create() : create;
 
 function create(opts) {
   var ripple = core(); // empty base collection of resources
