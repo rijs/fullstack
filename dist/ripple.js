@@ -1,4 +1,4 @@
-(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.ripple = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 
 },{}],2:[function(require,module,exports){
 // shim for using process in browser
@@ -9780,17 +9780,19 @@ var db = _interopRequire(require("rijs.db"));
 
 var client = _interopRequire(require("utilise/client"));
 
+client && !window.ripple && create();
+
 function create(opts) {
   var ripple = core(); // empty base collection of resources
 
   // enrich..
+  singleton(ripple); // exposes a single instance
   data(ripple); // register data types
   html(ripple); // register html types
   css(ripple); // register css types
   fn(ripple); // register fn types
   db(ripple); // enable external connections
   components(ripple); // invoke web components, fn.call(<el>, data)
-  singleton(ripple); // exposes a single instance
   reactive(ripple); // react to changes in resources
   prehtml(ripple); // preapplies html templates
   precss(ripple); // preapplies scoped css
@@ -9805,5 +9807,4 @@ function create(opts) {
 
   return ripple;
 }
-},{"rijs.components":3,"rijs.core":35,"rijs.css":37,"rijs.data":44,"rijs.db":59,"rijs.delay":60,"rijs.fn":68,"rijs.html":76,"rijs.mysql":83,"rijs.offline":84,"rijs.precss":106,"rijs.prehtml":119,"rijs.reactive":131,"rijs.resdir":144,"rijs.serve":145,"rijs.sessions":146,"rijs.shadow":147,"rijs.singleton":154,"rijs.sync":160,"utilise/client":232}]},{},[265])(265)
-});
+},{"rijs.components":3,"rijs.core":35,"rijs.css":37,"rijs.data":44,"rijs.db":59,"rijs.delay":60,"rijs.fn":68,"rijs.html":76,"rijs.mysql":83,"rijs.offline":84,"rijs.precss":106,"rijs.prehtml":119,"rijs.reactive":131,"rijs.resdir":144,"rijs.serve":145,"rijs.sessions":146,"rijs.shadow":147,"rijs.singleton":154,"rijs.sync":160,"utilise/client":232}]},{},[265]);

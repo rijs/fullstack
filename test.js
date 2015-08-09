@@ -23,7 +23,17 @@ describe('Ripple', function() {
     expect('text/plain' in ripple.types).to.be.ok
     expect('text/html' in ripple.types).to.be.ok
     expect('text/css' in ripple.types).to.be.ok
-    // expect(window.ripple).to.equal(ripple)
+  })
+
+  it('should create global and local isolated instances', function(){  
+    expect(window.ripple).to.be.a('function')
+    expect(window.ripple.resources).to.be.a('object')
+
+    var ripple1 = require('./')()
+    expect(ripple != ripple1).to.be.ok
+
+    var ripple2 = require('./')()
+    expect(ripple1 != ripple2).to.be.ok
   })
 
   // background: 

@@ -19,17 +19,19 @@ import fn from 'rijs.fn'
 import db from 'rijs.db'
 import client from 'utilise/client'
 
+client && !window.ripple && create()
+
 export default function create(opts){
   var ripple = core()    // empty base collection of resources
  
   // enrich..
+  singleton(ripple)      // exposes a single instance
   data(ripple)           // register data types
   html(ripple)           // register html types
   css(ripple)            // register css types
   fn(ripple)             // register fn types
   db(ripple)             // enable external connections
   components(ripple)     // invoke web components, fn.call(<el>, data)
-  singleton(ripple)      // exposes a single instance
   reactive(ripple)       // react to changes in resources
   prehtml(ripple)        // preapplies html templates
   precss(ripple)         // preapplies scoped css 
