@@ -313,11 +313,14 @@ module.exports = function first(d){
   return d[0]
 }
 },{}],13:[function(require,module,exports){
+var is = require('utilise/is')  
+
 module.exports = function flatten(p,v){ 
+  is.arr(v) && (v = v.reduce(flatten, []))
   return (p = p || []), p.concat(v) 
 }
 
-},{}],14:[function(require,module,exports){
+},{"utilise/is":19}],14:[function(require,module,exports){
 var datum = require('utilise/datum')
   , key = require('utilise/key')
 
@@ -635,13 +638,14 @@ function register(ripple) {
     var _ref$headers = _ref.headers;
     var headers = _ref$headers === undefined ? {} : _ref$headers;
 
-    if (!name) return err("cannot register nameless resource");
+    if (!name) return (err("cannot register nameless resource"), false);
     log("registering", name);
-    var res = normalise(ripple)({ name: name, body: body, headers: headers });
+    var res = normalise(ripple)({ name: name, body: body, headers: headers }),
+        type = !ripple.resources[name] ? "load" : "";
 
     if (!res) return (err("failed to register", name), false);
     ripple.resources[name] = res;
-    ripple.emit("change", [ripple.resources[name]]);
+    ripple.emit("change", [ripple.resources[name], { type: type }]);
     return ripple.resources[name].body;
   };
 }
@@ -649,14 +653,16 @@ function register(ripple) {
 function normalise(ripple) {
   return function (res) {
     if (!header("content-type")(res)) values(ripple.types).some(contentType(res));
-    if (!header("content-type")(res)) return (err("could not understand", res), false);
+    if (!header("content-type")(res)) return (err("could not understand resource", res), false);
     return parse(ripple)(res);
   };
 }
 
 function parse(ripple) {
   return function (res) {
-    return ((ripple.types[header("content-type")(res)] || {}).parse || identity)(res);
+    var type = header("content-type")(res);
+    if (!ripple.types[type]) return (err("could not understand type", type), false);
+    return (ripple.types[type].parse || identity)(res);
   };
 }
 
@@ -863,9 +869,10 @@ module.exports = function emitterify(body) {
 
   function invoke(o, k, p){
     if (!o[k]) return
-    try { o[k].apply(body, p) } catch(e) { err(e, e.stack)  }
+    var fn = o[k]
     o[k].once && (isFinite(k) ? o.splice(k, 1) : delete o[k])
-  }
+    try { fn.apply(body, p) } catch(e) { err(e, e.stack)  }
+   }
 
   function on(type, callback) {
     var ns = type.split('.')[1]
@@ -940,8 +947,8 @@ function delay(ripple) {
   var render = ripple.render;
 
   ripple.render = function (el) {
-    var delay = attr(el, "delay");
-    return delay != null ? (el.setAttribute("inert", ""), el.removeAttribute("delay"), setTimeout(el.removeAttribute.bind(el, "inert"), +delay)) : render.apply(this, arguments);
+    var delay = attr("delay")(el);
+    return delay != null ? (el.setAttribute("inert", ""), el.removeAttribute("delay"), setTimeout(el.removeAttribute.bind(el, "inert"), +delay)) : render(el);
   };
 
   return ripple;
@@ -1371,8 +1378,7 @@ function prehtml(ripple) {
     if (!html) return render.apply(this, arguments);
     if (html && !ripple(html)) return;
     div = document.createElement("div");
-    div.innerHTML = ripple(html);
-    el.innerHTML = div.innerHTML;
+    div.innerHTML = ripple(html);(el.shadowRoot || el).innerHTML = div.innerHTML;
     render.apply(this, arguments);
   };
 
@@ -1691,10 +1697,10 @@ function sync(ripple, server) {
   ripple.io.on("connection", function (s) {
     return s.on("change", change(ripple));
   });
-  // ripple.io.on('connection', s => s.on('change', res => emit(ripple)()(res.name)))
   ripple.io.on("connection", function (s) {
     return emit(ripple)(s)();
   });
+  ripple.io.use(setIP);
   return ripple;
 }
 
@@ -1713,12 +1719,11 @@ function change(ripple) {
         body = to.call(socket, key("body")(res)),
         deltas = diff(body, req.body);
 
-    if (is.arr(deltas)) return delta("");
+    if (is.arr(deltas)) return delta("") && res.body.emit("change");
 
-    keys(deltas).reverse().filter(not(is("_t"))).map(flatten(deltas)).map(delta);
+    keys(deltas).reverse().filter(not(is("_t"))).map(paths(deltas)).reduce(flatten, []).map(delta).some(Boolean) && res.body.emit("change");
 
     function delta(k) {
-
       var d = key(k)(deltas),
           name = req.name,
           body = res.body,
@@ -1728,24 +1733,21 @@ function change(ripple) {
           next = types[type];
 
       if (!type) {
-        return;
+        return false;
       }if (!from || from.call(socket, value, body, index, type, name, next)) {
-        if (!index) {
-          return silent(ripple)(req);
-        }next(index, value, body, name, res);
-        // res.headers.silent = true
-        ripple(name).emit("change");
+        !index ? silent(ripple)(req) : next(index, value, body, name, res);
+        return true;
       }
     }
   };
 }
 
-function flatten(base) {
+function paths(base) {
   return function (k) {
     var d = key(k)(base);
     k = is.arr(k) ? k : [k];
 
-    return is.arr(d) ? k.join(".") : flatten(base)(k.concat(keys(d)).join("."));
+    return is.arr(d) ? k.join(".") : keys(d).map(prepend(k.join(".") + ".")).map(paths(base));
   };
 }
 
@@ -1834,9 +1836,18 @@ function stats(total, name) {
   };
 }
 
+function setIP(socket, next) {
+  socket.ip = socket.request.headers["x-forwarded-for"] || socket.request.connection.remoteAddress;
+  next();
+}
+
 var identity = window['identity'];
 
 var replace = window['replace'];
+
+var prepend = window['prepend'];
+
+var flatten = window['flatten'];
 
 var values = window['values'];
 
@@ -1867,51 +1878,55 @@ var diff = require("jsondiffpatch").diff;
 log = log("[ri/sync]");
 err = err("[ri/sync]");
 var types = { push: push, remove: remove, update: update };
-},{"jsondiffpatch":1,"socket.io":1,"socket.io-client":1,"utilise/by":160,"utilise/client":161,"utilise/err":163,"utilise/header":166,"utilise/identity":167,"utilise/is":168,"utilise/key":169,"utilise/keys":170,"utilise/log":171,"utilise/noop":172,"utilise/not":173,"utilise/replace":175,"utilise/str":177,"utilise/values":179}],160:[function(require,module,exports){
+},{"jsondiffpatch":1,"socket.io":1,"socket.io-client":1,"utilise/by":160,"utilise/client":161,"utilise/err":163,"utilise/flatten":164,"utilise/header":167,"utilise/identity":168,"utilise/is":169,"utilise/key":170,"utilise/keys":171,"utilise/log":172,"utilise/noop":173,"utilise/not":174,"utilise/prepend":176,"utilise/replace":177,"utilise/str":179,"utilise/values":181}],160:[function(require,module,exports){
 arguments[4][8][0].apply(exports,arguments)
-},{"dup":8,"utilise/is":168,"utilise/key":169}],161:[function(require,module,exports){
+},{"dup":8,"utilise/is":169,"utilise/key":170}],161:[function(require,module,exports){
 arguments[4][9][0].apply(exports,arguments)
 },{"dup":9}],162:[function(require,module,exports){
 arguments[4][10][0].apply(exports,arguments)
-},{"dup":10,"utilise/sel":176}],163:[function(require,module,exports){
+},{"dup":10,"utilise/sel":178}],163:[function(require,module,exports){
 arguments[4][11][0].apply(exports,arguments)
-},{"dup":11,"utilise/owner":174,"utilise/to":178}],164:[function(require,module,exports){
+},{"dup":11,"utilise/owner":175,"utilise/to":180}],164:[function(require,module,exports){
+arguments[4][13][0].apply(exports,arguments)
+},{"dup":13,"utilise/is":169}],165:[function(require,module,exports){
 arguments[4][14][0].apply(exports,arguments)
-},{"dup":14,"utilise/datum":162,"utilise/key":169}],165:[function(require,module,exports){
+},{"dup":14,"utilise/datum":162,"utilise/key":170}],166:[function(require,module,exports){
 arguments[4][15][0].apply(exports,arguments)
-},{"dup":15}],166:[function(require,module,exports){
+},{"dup":15}],167:[function(require,module,exports){
 arguments[4][16][0].apply(exports,arguments)
-},{"dup":16,"utilise/has":165}],167:[function(require,module,exports){
+},{"dup":16,"utilise/has":166}],168:[function(require,module,exports){
 arguments[4][17][0].apply(exports,arguments)
-},{"dup":17}],168:[function(require,module,exports){
+},{"dup":17}],169:[function(require,module,exports){
 arguments[4][19][0].apply(exports,arguments)
-},{"dup":19}],169:[function(require,module,exports){
+},{"dup":19}],170:[function(require,module,exports){
 arguments[4][20][0].apply(exports,arguments)
-},{"dup":20,"utilise/is":168,"utilise/str":177}],170:[function(require,module,exports){
+},{"dup":20,"utilise/is":169,"utilise/str":179}],171:[function(require,module,exports){
 arguments[4][21][0].apply(exports,arguments)
-},{"dup":21}],171:[function(require,module,exports){
+},{"dup":21}],172:[function(require,module,exports){
 arguments[4][23][0].apply(exports,arguments)
-},{"dup":23,"utilise/is":168,"utilise/owner":174,"utilise/to":178}],172:[function(require,module,exports){
+},{"dup":23,"utilise/is":169,"utilise/owner":175,"utilise/to":180}],173:[function(require,module,exports){
 arguments[4][24][0].apply(exports,arguments)
-},{"dup":24}],173:[function(require,module,exports){
+},{"dup":24}],174:[function(require,module,exports){
 arguments[4][55][0].apply(exports,arguments)
-},{"dup":55}],174:[function(require,module,exports){
+},{"dup":55}],175:[function(require,module,exports){
 arguments[4][25][0].apply(exports,arguments)
-},{"dup":25,"utilise/client":161}],175:[function(require,module,exports){
+},{"dup":25,"utilise/client":161}],176:[function(require,module,exports){
+arguments[4][26][0].apply(exports,arguments)
+},{"dup":26}],177:[function(require,module,exports){
 module.exports = function replace(from, to){
   return function(d){
     return d.replace(from, to)
   }
 }
-},{}],176:[function(require,module,exports){
+},{}],178:[function(require,module,exports){
 arguments[4][29][0].apply(exports,arguments)
-},{"dup":29}],177:[function(require,module,exports){
+},{"dup":29}],179:[function(require,module,exports){
 arguments[4][30][0].apply(exports,arguments)
-},{"dup":30,"utilise/is":168}],178:[function(require,module,exports){
+},{"dup":30,"utilise/is":169}],180:[function(require,module,exports){
 arguments[4][31][0].apply(exports,arguments)
-},{"dup":31}],179:[function(require,module,exports){
+},{"dup":31}],181:[function(require,module,exports){
 arguments[4][32][0].apply(exports,arguments)
-},{"dup":32,"utilise/from":164,"utilise/keys":170}],180:[function(require,module,exports){
+},{"dup":32,"utilise/from":165,"utilise/keys":171}],182:[function(require,module,exports){
 "use strict";
 
 /* istanbul ignore next */
@@ -1973,8 +1988,8 @@ function create(opts) {
   db(ripple); // enable external connections
   components(ripple); // invoke web components, fn.call(<el>, data)
   reactive(ripple); // react to changes in resources
-  prehtml(ripple); // preapplies html templates
   precss(ripple); // preapplies scoped css
+  prehtml(ripple); // preapplies html templates
   shadow(ripple); // encapsulates with shadow dom or closes gap
   delay(ripple); // async rendering delay
   mysql(ripple); // adds mysql adaptor crud hooks
@@ -1986,4 +2001,4 @@ function create(opts) {
 
   return ripple;
 }
-},{"rijs.components":2,"rijs.core":34,"rijs.css":36,"rijs.data":43,"rijs.db":58,"rijs.delay":59,"rijs.fn":67,"rijs.html":75,"rijs.mysql":82,"rijs.offline":83,"rijs.precss":105,"rijs.prehtml":118,"rijs.reactive":130,"rijs.resdir":143,"rijs.serve":144,"rijs.sessions":145,"rijs.shadow":146,"rijs.singleton":153,"rijs.sync":159,"utilise/client":1}]},{},[180]);
+},{"rijs.components":2,"rijs.core":34,"rijs.css":36,"rijs.data":43,"rijs.db":58,"rijs.delay":59,"rijs.fn":67,"rijs.html":75,"rijs.mysql":82,"rijs.offline":83,"rijs.precss":105,"rijs.prehtml":118,"rijs.reactive":130,"rijs.resdir":143,"rijs.serve":144,"rijs.sessions":145,"rijs.shadow":146,"rijs.singleton":153,"rijs.sync":159,"utilise/client":1}]},{},[182]);

@@ -33,8 +33,8 @@ export default function create(opts){
   db(ripple)             // enable external connections
   components(ripple)     // invoke web components, fn.call(<el>, data)
   reactive(ripple)       // react to changes in resources
-  prehtml(ripple)        // preapplies html templates
   precss(ripple)         // preapplies scoped css 
+  prehtml(ripple)        // preapplies html templates
   shadow(ripple)         // encapsulates with shadow dom or closes gap
   delay(ripple)          // async rendering delay 
   mysql(ripple)          // adds mysql adaptor crud hooks
