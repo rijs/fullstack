@@ -67,7 +67,7 @@ function create(opts) {
   serve(opts); // serve client libraries
   sync(ripple, opts); // syncs resources between server/client
   sessions(ripple, opts); // populates sessionid on each connection
-  resdir(ripple); // loads from resources folder
+  resdir(ripple, opts); // loads from resources folder
   offline(ripple); // loads/saves from/to localstorage
 
   return ripple;
