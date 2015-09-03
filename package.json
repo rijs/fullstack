@@ -1,6 +1,6 @@
 {
   "name": "rijs",
-  "version": "0.2.10",
+  "version": "0.3.0",
   "main": "dist",
   "author": "Pedram Emrouznejad (https://github.com/pemrouz)",
   "description": "Ripple",
