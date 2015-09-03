@@ -452,7 +452,7 @@ module.exports = function identity(d) {
 },{}],19:[function(require,module,exports){
 module.exports = function includes(pattern){
   return function(d){
-    return ~d.indexOf(pattern)
+    return d && d.indexOf && ~d.indexOf(pattern)
   }
 }
 },{}],20:[function(require,module,exports){
@@ -523,9 +523,9 @@ function isDef(d) {
 
 function isIn(set) {
   return function(d){
-    return  set.indexOf 
-         ? ~set.indexOf(d)
-         :  d in set
+    return !set ? false  
+         : set.indexOf ? ~set.indexOf(d)
+         : d in set
   }
 }
 },{}],21:[function(require,module,exports){
@@ -547,8 +547,9 @@ module.exports = function key(k, v){
                                 : (set ? (key(keys.join('.'), v)(o[root] ? o[root] : (o[root] = {})), o)
                                        : key(keys.join('.'))(o[root]))
 
-    function copy(d){
-      key(d, key(d)(o))(masked)
+    function copy(k){
+      var val = key(k)(o)
+      ;(val != undefined) && key(k, val)(masked)
     }
   }
 }
@@ -710,12 +711,16 @@ function core() {
         if (is.arr(name)) {
           return name.map(ripple);
         } else {
-          if (is.fn(name) && name.resources) {
-            _x = values(name.resources);
-            _again = true;
-            continue _function;
+          if (is.obj(name) && !name.name) {
+            return ripple;
           } else {
-            return is.str(name) && !body && resources[name] ? resources[name].body : is.str(name) && !body && !resources[name] ? register(ripple)({ name: name }) : is.str(name) && body ? register(ripple)({ name: name, body: body, headers: headers }) : is.obj(name) && !is.arr(name) ? register(ripple)(name) : (err("could not find or create resource", name), false);
+            if (is.fn(name) && name.resources) {
+              _x = values(name.resources);
+              _again = true;
+              continue _function;
+            } else {
+              return is.str(name) && !body && resources[name] ? resources[name].body : is.str(name) && !body && !resources[name] ? register(ripple)({ name: name }) : is.str(name) && body ? register(ripple)({ name: name, body: body, headers: headers }) : is.obj(name) && !is.arr(name) ? register(ripple)(name) : (err("could not find or create resource", name), false);
+            }
           }
         }
       }
@@ -730,7 +735,6 @@ function register(ripple) {
     var _ref$headers = _ref.headers;
     var headers = _ref$headers === undefined ? {} : _ref$headers;
 
-    if (!name) return (err("cannot register nameless resource"), false);
     log("registering", name);
     var res = normalise(ripple)({ name: name, body: body, headers: headers }),
         type = !ripple.resources[name] ? "load" : "";
@@ -744,7 +748,7 @@ function register(ripple) {
 
 function normalise(ripple) {
   return function (res) {
-    if (!header("content-type")(res)) values(ripple.types).some(contentType(res));
+    if (!header("content-type")(res)) values(ripple.types).sort(za("priority")).some(contentType(res));
     if (!header("content-type")(res)) return (err("could not understand resource", res), false);
     return parse(ripple)(res);
   };
@@ -790,11 +794,13 @@ var is = _interopRequire(require("utilise/is"));
 
 var to = _interopRequire(require("utilise/to"));
 
+var za = _interopRequire(require("utilise/za"));
+
 var text = _interopRequire(require("./types/text"));
 
 err = err("[ri/core]");
 log = log("[ri/core]");
-},{"./types/text":36,"utilise/chainable":233,"utilise/colorfill":235,"utilise/emitterify":238,"utilise/err":239,"utilise/header":242,"utilise/identity":243,"utilise/is":245,"utilise/log":248,"utilise/rebind":262,"utilise/to":265,"utilise/values":266}],36:[function(require,module,exports){
+},{"./types/text":36,"utilise/chainable":233,"utilise/colorfill":235,"utilise/emitterify":238,"utilise/err":239,"utilise/header":242,"utilise/identity":243,"utilise/is":245,"utilise/log":248,"utilise/rebind":262,"utilise/to":265,"utilise/values":266,"utilise/za":267}],36:[function(require,module,exports){
 "use strict";
 
 /* istanbul ignore next */
@@ -1249,7 +1255,7 @@ var parse = require('utilise/parse')
   , is = require('utilise/is')
 
 module.exports = function clone(d) {
-  return !is.fn(d) 
+  return !is.fn(d) && !is.str(d)
        ? parse(str(d))
        : d
 }
@@ -1392,14 +1398,14 @@ function polyfill(css, el) {
   var prefix = attr(el, "is") ? "[is=\"" + attr(el, "is") + "\"]" : el.tagName.toLowerCase(),
       escaped = prefix.replace(/\[/g, "\\[").replace(/\]/g, "\\]");
 
-  return !prefix ? css : css.replace(/:host\((.+)\)/gi, function ($1, $2) {
+  return !prefix ? css : css.replace(/:host\((.+?)\)/gi, function ($1, $2) {
     return prefix + $2;
   }) // :host(...) -> tag...
   .replace(/:host/gi, prefix) // :host      -> tag
-  .replace(/^([^@%]*)[{]/gi, function ($1) {
+  .replace(/^([^@%\n]*){/gim, function ($1) {
     return prefix + " " + $1;
   }) // ... {      -> tag ... {
-  .replace(/^([^:]*)[,]/gi, function ($1) {
+  .replace(/^(.*?),\s*$/gim, function ($1) {
     return prefix + " " + $1;
   }) // ... ,      -> tag ... ,
   .replace(/\/deep\/ /gi, "") // /deep/     ->
@@ -1407,7 +1413,6 @@ function polyfill(css, el) {
   ;
 }
 
-// ' * ,\n color:rgba(1,2,3) {'.replace(/(.*)[^:](.*)[,]/gim, function($1){ return 'css-2 '+$1 })
 function css(ripple) {
   return function (res) {
     return all("[css=\"" + res.name + "\"]:not([inert])").map(ripple.draw);
@@ -1537,6 +1542,7 @@ arguments[4][32][0].apply(exports,arguments)
 },{"dup":32}],130:[function(require,module,exports){
 arguments[4][34][0].apply(exports,arguments)
 },{"dup":34}],131:[function(require,module,exports){
+(function (process){
 "use strict";
 
 /* istanbul ignore next */
@@ -1586,7 +1592,7 @@ function child(ripple) {
           type = "update",
           change = { key: key, value: value, type: type };
 
-      log("changed (c)".green, res.name.bold, str(key).grey);
+      log("changed (c)".green, res.name.bold, str(key).grey, debug ? changes : "");
       ripple.emit("change", [res, change], not(is["in"](["reactive"])));
     };
   };
@@ -1598,7 +1604,7 @@ function changed(ripple) {
       changes.map(normalize).filter(Boolean).map(function (change) {
         return (log("changed (p)".green, res.name.bold, change.key.grey), change);
       }).map(function (change) {
-        return (change.type == "push" && observe(ripple)(res)(change.value), change);
+        return (is.arr(res.body) && change.type == "push" && observe(ripple)(res)(change.value), change);
       }).map(function (change) {
         return ripple.emit("change", [res, change], not(is["in"](["reactive"])));
       });
@@ -1647,6 +1653,8 @@ function normalize(change) {
   }return details;
 }
 
+var debug = process.env.NODE_ENV == "DEBUG";
+
 var header = _interopRequire(require("utilise/header"));
 
 var keys = _interopRequire(require("utilise/keys"));
@@ -1667,7 +1675,8 @@ var is = _interopRequire(require("utilise/is"));
 
 log = log("[ri/reactive]");
 err = err("[ri/reactive]");
-},{"utilise/def":133,"utilise/err":134,"utilise/has":135,"utilise/header":136,"utilise/is":137,"utilise/keys":138,"utilise/log":139,"utilise/not":140,"utilise/str":142}],132:[function(require,module,exports){
+}).call(this,require('_process'))
+},{"_process":2,"utilise/def":133,"utilise/err":134,"utilise/has":135,"utilise/header":136,"utilise/is":137,"utilise/keys":138,"utilise/log":139,"utilise/not":140,"utilise/str":142}],132:[function(require,module,exports){
 arguments[4][10][0].apply(exports,arguments)
 },{"dup":10}],133:[function(require,module,exports){
 arguments[4][47][0].apply(exports,arguments)
@@ -1835,7 +1844,7 @@ function change(ripple) {
       var d = key(k)(deltas),
           name = req.name,
           body = res.body,
-          index = k.replace(/_/g, ""),
+          index = k.replace(/(^|\.)_/g, "$1"),
           type = d.length == 1 ? "push" : d.length == 2 ? "update" : d[2] === 0 ? "remove" : "",
           value = type == "update" ? d[1] : d[0],
           next = types[type];
@@ -9766,6 +9775,20 @@ arguments[4][32][0].apply(exports,arguments)
 },{"dup":32}],266:[function(require,module,exports){
 arguments[4][33][0].apply(exports,arguments)
 },{"dup":33,"utilise/from":240,"utilise/keys":247}],267:[function(require,module,exports){
+var key = require('utilise/key')
+
+module.exports = function za(k) {
+  return function(a, b){
+    var ka = key(k)(a) || ''
+      , kb = key(k)(b) || ''
+
+    return ka > kb ? -1 
+         : ka < kb ?  1 
+                   :  0
+  }
+}
+
+},{"utilise/key":246}],268:[function(require,module,exports){
 "use strict";
 
 /* istanbul ignore next */
@@ -9840,4 +9863,4 @@ function create(opts) {
 
   return ripple;
 }
-},{"rijs.components":3,"rijs.core":35,"rijs.css":37,"rijs.data":44,"rijs.db":59,"rijs.delay":60,"rijs.fn":68,"rijs.html":76,"rijs.mysql":83,"rijs.offline":84,"rijs.precss":106,"rijs.prehtml":119,"rijs.reactive":131,"rijs.resdir":144,"rijs.serve":145,"rijs.sessions":146,"rijs.shadow":147,"rijs.singleton":154,"rijs.sync":160,"utilise/client":234}]},{},[267]);
+},{"rijs.components":3,"rijs.core":35,"rijs.css":37,"rijs.data":44,"rijs.db":59,"rijs.delay":60,"rijs.fn":68,"rijs.html":76,"rijs.mysql":83,"rijs.offline":84,"rijs.precss":106,"rijs.prehtml":119,"rijs.reactive":131,"rijs.resdir":144,"rijs.serve":145,"rijs.sessions":146,"rijs.shadow":147,"rijs.singleton":154,"rijs.sync":160,"utilise/client":234}]},{},[268]);

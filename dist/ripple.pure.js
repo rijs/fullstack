@@ -1,6 +1,98 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 
 },{}],2:[function(require,module,exports){
+// shim for using process in browser
+
+var process = module.exports = {};
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = setTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            currentQueue[queueIndex].run();
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    clearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        setTimeout(drainQueue, 0);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+// TODO(shtylman)
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+},{}],3:[function(require,module,exports){
 "use strict";
 
 /* istanbul ignore next */
@@ -187,7 +279,7 @@ var mutation = client && window.MutationRecord || noop,
     customEls = client && !!document.registerElement,
     isAttached = customEls ? "html *, :host-context(html) *" : "html *";
 client && (Element.prototype.matches = Element.prototype.matches || Element.prototype.msMatchesSelector);
-},{"./types/data":3,"./types/fn":4,"utilise/all":5,"utilise/attr":6,"utilise/body":7,"utilise/by":8,"utilise/client":9,"utilise/err":11,"utilise/flatten":13,"utilise/header":16,"utilise/identity":17,"utilise/includes":18,"utilise/is":19,"utilise/key":20,"utilise/lo":22,"utilise/log":23,"utilise/noop":24,"utilise/prepend":26,"utilise/proxy":27,"utilise/resourcify":28,"utilise/to":31,"utilise/values":32,"utilise/wrap":33}],3:[function(require,module,exports){
+},{"./types/data":4,"./types/fn":5,"utilise/all":6,"utilise/attr":7,"utilise/body":8,"utilise/by":9,"utilise/client":10,"utilise/err":12,"utilise/flatten":14,"utilise/header":17,"utilise/identity":18,"utilise/includes":19,"utilise/is":20,"utilise/key":21,"utilise/lo":23,"utilise/log":24,"utilise/noop":25,"utilise/prepend":27,"utilise/proxy":28,"utilise/resourcify":29,"utilise/to":32,"utilise/values":33,"utilise/wrap":34}],4:[function(require,module,exports){
 "use strict";
 
 /* istanbul ignore next */
@@ -203,7 +295,7 @@ function data(ripple) {
 }
 
 var all = window['all'];
-},{"utilise/all":5}],4:[function(require,module,exports){
+},{"utilise/all":6}],5:[function(require,module,exports){
 "use strict";
 
 /* istanbul ignore next */
@@ -245,14 +337,14 @@ var client = window['client'];
 var all = window['all'];
 
 var customEls = client && !!document.registerElement;
-},{"utilise/all":5,"utilise/client":9,"utilise/header":16}],5:[function(require,module,exports){
+},{"utilise/all":6,"utilise/client":10,"utilise/header":17}],6:[function(require,module,exports){
 var to = require('utilise/to')
 
 module.exports = function all(selector, doc){
   var prefix = !doc && document.head.createShadowRoot ? 'html /deep/ ' : ''
   return to.arr((doc || document).querySelectorAll(prefix+selector))
 }
-},{"utilise/to":31}],6:[function(require,module,exports){
+},{"utilise/to":32}],7:[function(require,module,exports){
 var is = require('utilise/is')
 
 module.exports = function attr(d, name, value) {
@@ -265,7 +357,7 @@ module.exports = function attr(d, name, value) {
       && d.attributes.getNamedItem(name).value
 }
 
-},{"utilise/is":19}],7:[function(require,module,exports){
+},{"utilise/is":20}],8:[function(require,module,exports){
 var key = require('utilise/key')
 
 module.exports = function body(ripple){
@@ -273,7 +365,7 @@ module.exports = function body(ripple){
     return key([name, 'body'].join('.'))(ripple.resources)
   }
 }
-},{"utilise/key":20}],8:[function(require,module,exports){
+},{"utilise/key":21}],9:[function(require,module,exports){
 var key = require('utilise/key')
   , is  = require('utilise/is')
 
@@ -288,15 +380,15 @@ module.exports = function by(k, v){
          : d == v
   }
 }
-},{"utilise/is":19,"utilise/key":20}],9:[function(require,module,exports){
+},{"utilise/is":20,"utilise/key":21}],10:[function(require,module,exports){
 module.exports = typeof window != 'undefined'
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 var sel = require('utilise/sel')
 
 module.exports = function datum(node){
   return sel(node).datum()
 }
-},{"utilise/sel":29}],11:[function(require,module,exports){
+},{"utilise/sel":30}],12:[function(require,module,exports){
 var owner = require('utilise/owner')
   , to = require('utilise/to')
 
@@ -308,11 +400,11 @@ module.exports = function err(prefix){
     return console.error.apply(console, args), d
   }
 }
-},{"utilise/owner":25,"utilise/to":31}],12:[function(require,module,exports){
+},{"utilise/owner":26,"utilise/to":32}],13:[function(require,module,exports){
 module.exports = function first(d){
   return d[0]
 }
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 var is = require('utilise/is')  
 
 module.exports = function flatten(p,v){ 
@@ -320,7 +412,7 @@ module.exports = function flatten(p,v){
   return (p = p || []), p.concat(v) 
 }
 
-},{"utilise/is":19}],14:[function(require,module,exports){
+},{"utilise/is":20}],15:[function(require,module,exports){
 var datum = require('utilise/datum')
   , key = require('utilise/key')
 
@@ -336,11 +428,11 @@ function from(o){
 function fromParent(k){
   return datum(this.parentNode)[k]
 }
-},{"utilise/datum":10,"utilise/key":20}],15:[function(require,module,exports){
+},{"utilise/datum":11,"utilise/key":21}],16:[function(require,module,exports){
 module.exports = function has(o, k) {
   return k in o
 }
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 var has = require('utilise/has')
 
 module.exports = function header(header, value) {
@@ -353,17 +445,17 @@ module.exports = function header(header, value) {
                                    : d['headers'][header] == value
   }
 }
-},{"utilise/has":15}],17:[function(require,module,exports){
+},{"utilise/has":16}],18:[function(require,module,exports){
 module.exports = function identity(d) {
   return d
 }
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 module.exports = function includes(pattern){
   return function(d){
-    return ~d.indexOf(pattern)
+    return d && d.indexOf && ~d.indexOf(pattern)
   }
 }
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 module.exports = is
 is.fn     = isFunction
 is.str    = isString
@@ -431,12 +523,12 @@ function isDef(d) {
 
 function isIn(set) {
   return function(d){
-    return  set.indexOf 
-         ? ~set.indexOf(d)
-         :  d in set
+    return !set ? false  
+         : set.indexOf ? ~set.indexOf(d)
+         : d in set
   }
 }
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 var is = require('utilise/is')
   , str = require('utilise/str')
 
@@ -455,21 +547,22 @@ module.exports = function key(k, v){
                                 : (set ? (key(keys.join('.'), v)(o[root] ? o[root] : (o[root] = {})), o)
                                        : key(keys.join('.'))(o[root]))
 
-    function copy(d){
-      key(d, key(d)(o))(masked)
+    function copy(k){
+      var val = key(k)(o)
+      ;(val != undefined) && key(k, val)(masked)
     }
   }
 }
-},{"utilise/is":19,"utilise/str":30}],21:[function(require,module,exports){
+},{"utilise/is":20,"utilise/str":31}],22:[function(require,module,exports){
 module.exports = function keys(o) {
   return Object.keys(o || {})
 }
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 module.exports = function lo(d){
   return (d || '').toLowerCase()
 }
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 var is = require('utilise/is')
   , to = require('utilise/to')
   , owner = require('utilise/owner')
@@ -483,19 +576,19 @@ module.exports = function log(prefix){
     return console.log.apply(console, args), d
   }
 }
-},{"utilise/is":19,"utilise/owner":25,"utilise/to":31}],24:[function(require,module,exports){
+},{"utilise/is":20,"utilise/owner":26,"utilise/to":32}],25:[function(require,module,exports){
 module.exports = function noop(){}
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 (function (global){
 module.exports = require('utilise/client') ? /* istanbul ignore next */ window : global
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"utilise/client":9}],26:[function(require,module,exports){
+},{"utilise/client":10}],27:[function(require,module,exports){
 module.exports = function prepend(v) {
   return function(d){
     return v+d
   }
 }
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 var is = require('utilise/is')
 
 module.exports = function proxy(fn, ret, ctx){ 
@@ -504,7 +597,7 @@ module.exports = function proxy(fn, ret, ctx){
     return is.fn(ret) ? ret(result) : ret || result
   }
 }
-},{"utilise/is":19}],28:[function(require,module,exports){
+},{"utilise/is":20}],29:[function(require,module,exports){
 var is = require('utilise/is')
   , body = require('utilise/body')
   , first = require('utilise/first')
@@ -522,11 +615,11 @@ module.exports = function resourcify(ripple){
            )
   }
 }
-},{"utilise/body":7,"utilise/first":12,"utilise/is":19,"utilise/values":32}],29:[function(require,module,exports){
+},{"utilise/body":8,"utilise/first":13,"utilise/is":20,"utilise/values":33}],30:[function(require,module,exports){
 module.exports = function sel(){
   return d3.select.apply(this, arguments)
 }
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 var is = require('utilise/is') 
 
 module.exports = function str(d){
@@ -536,7 +629,7 @@ module.exports = function str(d){
        : is.obj(d) ? JSON.stringify(d)
        : String(d)
 }
-},{"utilise/is":19}],31:[function(require,module,exports){
+},{"utilise/is":20}],32:[function(require,module,exports){
 module.exports = { 
   arr: toArray
 , obj: toObject
@@ -560,20 +653,20 @@ function toObject(d) {
     return p
   }
 }
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 var keys = require('utilise/keys')
   , from = require('utilise/from')
 
 module.exports = function values(o) {
   return !o ? [] : keys(o).map(from(o))
 }
-},{"utilise/from":14,"utilise/keys":21}],33:[function(require,module,exports){
+},{"utilise/from":15,"utilise/keys":22}],34:[function(require,module,exports){
 module.exports = function wrap(d){
   return function(){
     return d
   }
 }
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 "use strict";
 
 /* istanbul ignore next */
@@ -618,12 +711,16 @@ function core() {
         if (is.arr(name)) {
           return name.map(ripple);
         } else {
-          if (is.fn(name) && name.resources) {
-            _x = values(name.resources);
-            _again = true;
-            continue _function;
+          if (is.obj(name) && !name.name) {
+            return ripple;
           } else {
-            return is.str(name) && !body && resources[name] ? resources[name].body : is.str(name) && !body && !resources[name] ? register(ripple)({ name: name }) : is.str(name) && body ? register(ripple)({ name: name, body: body, headers: headers }) : is.obj(name) && !is.arr(name) ? register(ripple)(name) : (err("could not find or create resource", name), false);
+            if (is.fn(name) && name.resources) {
+              _x = values(name.resources);
+              _again = true;
+              continue _function;
+            } else {
+              return is.str(name) && !body && resources[name] ? resources[name].body : is.str(name) && !body && !resources[name] ? register(ripple)({ name: name }) : is.str(name) && body ? register(ripple)({ name: name, body: body, headers: headers }) : is.obj(name) && !is.arr(name) ? register(ripple)(name) : (err("could not find or create resource", name), false);
+            }
           }
         }
       }
@@ -638,7 +735,6 @@ function register(ripple) {
     var _ref$headers = _ref.headers;
     var headers = _ref$headers === undefined ? {} : _ref$headers;
 
-    if (!name) return (err("cannot register nameless resource"), false);
     log("registering", name);
     var res = normalise(ripple)({ name: name, body: body, headers: headers }),
         type = !ripple.resources[name] ? "load" : "";
@@ -652,7 +748,7 @@ function register(ripple) {
 
 function normalise(ripple) {
   return function (res) {
-    if (!header("content-type")(res)) values(ripple.types).some(contentType(res));
+    if (!header("content-type")(res)) values(ripple.types).sort(za("priority")).some(contentType(res));
     if (!header("content-type")(res)) return (err("could not understand resource", res), false);
     return parse(ripple)(res);
   };
@@ -698,11 +794,13 @@ var is = window['is'];
 
 var to = window['to'];
 
+var za = window['za'];
+
 var text = _interopRequire(require("./types/text"));
 
 err = err("[ri/core]");
 log = log("[ri/core]");
-},{"./types/text":35,"utilise/chainable":1,"utilise/colorfill":1,"utilise/emitterify":1,"utilise/err":1,"utilise/header":1,"utilise/identity":1,"utilise/is":1,"utilise/log":1,"utilise/rebind":1,"utilise/to":1,"utilise/values":1}],35:[function(require,module,exports){
+},{"./types/text":36,"utilise/chainable":1,"utilise/colorfill":1,"utilise/emitterify":1,"utilise/err":1,"utilise/header":1,"utilise/identity":1,"utilise/is":1,"utilise/log":1,"utilise/rebind":1,"utilise/to":1,"utilise/values":1,"utilise/za":1}],36:[function(require,module,exports){
 "use strict";
 
 /* istanbul ignore next */
@@ -718,7 +816,7 @@ module.exports = {
 var includes = window['includes'];
 
 var is = window['is'];
-},{"utilise/includes":1,"utilise/is":1}],36:[function(require,module,exports){
+},{"utilise/includes":1,"utilise/is":1}],37:[function(require,module,exports){
 "use strict";
 
 /* istanbul ignore next */
@@ -746,19 +844,19 @@ var includes = window['includes'];
 var log = window['log'];
 
 log = log("[ri/types/css]");
-},{"utilise/includes":38,"utilise/log":40}],37:[function(require,module,exports){
-arguments[4][9][0].apply(exports,arguments)
-},{"dup":9}],38:[function(require,module,exports){
-arguments[4][18][0].apply(exports,arguments)
-},{"dup":18}],39:[function(require,module,exports){
+},{"utilise/includes":39,"utilise/log":41}],38:[function(require,module,exports){
+arguments[4][10][0].apply(exports,arguments)
+},{"dup":10}],39:[function(require,module,exports){
 arguments[4][19][0].apply(exports,arguments)
 },{"dup":19}],40:[function(require,module,exports){
-arguments[4][23][0].apply(exports,arguments)
-},{"dup":23,"utilise/is":39,"utilise/owner":41,"utilise/to":42}],41:[function(require,module,exports){
-arguments[4][25][0].apply(exports,arguments)
-},{"dup":25,"utilise/client":37}],42:[function(require,module,exports){
-arguments[4][31][0].apply(exports,arguments)
-},{"dup":31}],43:[function(require,module,exports){
+arguments[4][20][0].apply(exports,arguments)
+},{"dup":20}],41:[function(require,module,exports){
+arguments[4][24][0].apply(exports,arguments)
+},{"dup":24,"utilise/is":40,"utilise/owner":42,"utilise/to":43}],42:[function(require,module,exports){
+arguments[4][26][0].apply(exports,arguments)
+},{"dup":26,"utilise/client":38}],43:[function(require,module,exports){
+arguments[4][32][0].apply(exports,arguments)
+},{"dup":32}],44:[function(require,module,exports){
 "use strict";
 
 /* istanbul ignore next */
@@ -818,15 +916,15 @@ var is = window['is'];
 var to = window['to'];
 
 log = log("[ri/types/data]");
-},{"utilise/emitterify":47,"utilise/extend":49,"utilise/header":51,"utilise/is":52,"utilise/log":54,"utilise/not":55,"utilise/to":57}],44:[function(require,module,exports){
-arguments[4][9][0].apply(exports,arguments)
-},{"dup":9}],45:[function(require,module,exports){
+},{"utilise/emitterify":48,"utilise/extend":50,"utilise/header":52,"utilise/is":53,"utilise/log":55,"utilise/not":56,"utilise/to":58}],45:[function(require,module,exports){
+arguments[4][10][0].apply(exports,arguments)
+},{"dup":10}],46:[function(require,module,exports){
 module.exports = function copy(from, to){ 
   return function(d){ 
     return to[d] = from[d], d
   }
 }
-},{}],46:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 var has = require('utilise/has')
 
 module.exports = function def(o, p, v, w){
@@ -834,7 +932,7 @@ module.exports = function def(o, p, v, w){
   return o[p]
 }
 
-},{"utilise/has":50}],47:[function(require,module,exports){
+},{"utilise/has":51}],48:[function(require,module,exports){
 var err  = require('utilise/err')('[emitterify]')
   , keys = require('utilise/keys')
   , def  = require('utilise/def')
@@ -889,9 +987,9 @@ module.exports = function emitterify(body) {
     return callback.once = true, body.on(type, callback), body
   }
 }
-},{"utilise/def":46,"utilise/err":48,"utilise/is":52,"utilise/keys":53,"utilise/not":55}],48:[function(require,module,exports){
-arguments[4][11][0].apply(exports,arguments)
-},{"dup":11,"utilise/owner":56,"utilise/to":57}],49:[function(require,module,exports){
+},{"utilise/def":47,"utilise/err":49,"utilise/is":53,"utilise/keys":54,"utilise/not":56}],49:[function(require,module,exports){
+arguments[4][12][0].apply(exports,arguments)
+},{"dup":12,"utilise/owner":57,"utilise/to":58}],50:[function(require,module,exports){
 var is = require('utilise/is')
   , not = require('utilise/not')
   , keys = require('utilise/keys')
@@ -906,29 +1004,29 @@ module.exports = function extend(to){
     return to
   }
 }
-},{"utilise/copy":45,"utilise/is":52,"utilise/keys":53,"utilise/not":55}],50:[function(require,module,exports){
-arguments[4][15][0].apply(exports,arguments)
-},{"dup":15}],51:[function(require,module,exports){
+},{"utilise/copy":46,"utilise/is":53,"utilise/keys":54,"utilise/not":56}],51:[function(require,module,exports){
 arguments[4][16][0].apply(exports,arguments)
-},{"dup":16,"utilise/has":50}],52:[function(require,module,exports){
-arguments[4][19][0].apply(exports,arguments)
-},{"dup":19}],53:[function(require,module,exports){
-arguments[4][21][0].apply(exports,arguments)
-},{"dup":21}],54:[function(require,module,exports){
-arguments[4][23][0].apply(exports,arguments)
-},{"dup":23,"utilise/is":52,"utilise/owner":56,"utilise/to":57}],55:[function(require,module,exports){
+},{"dup":16}],52:[function(require,module,exports){
+arguments[4][17][0].apply(exports,arguments)
+},{"dup":17,"utilise/has":51}],53:[function(require,module,exports){
+arguments[4][20][0].apply(exports,arguments)
+},{"dup":20}],54:[function(require,module,exports){
+arguments[4][22][0].apply(exports,arguments)
+},{"dup":22}],55:[function(require,module,exports){
+arguments[4][24][0].apply(exports,arguments)
+},{"dup":24,"utilise/is":53,"utilise/owner":57,"utilise/to":58}],56:[function(require,module,exports){
 module.exports = function not(fn){
   return function(){
     return !fn.apply(this, arguments)
   }
 }
-},{}],56:[function(require,module,exports){
-arguments[4][25][0].apply(exports,arguments)
-},{"dup":25,"utilise/client":44}],57:[function(require,module,exports){
-arguments[4][31][0].apply(exports,arguments)
-},{"dup":31}],58:[function(require,module,exports){
-arguments[4][17][0].apply(exports,arguments)
-},{"dup":17}],59:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
+arguments[4][26][0].apply(exports,arguments)
+},{"dup":26,"utilise/client":45}],58:[function(require,module,exports){
+arguments[4][32][0].apply(exports,arguments)
+},{"dup":32}],59:[function(require,module,exports){
+arguments[4][18][0].apply(exports,arguments)
+},{"dup":18}],60:[function(require,module,exports){
 "use strict";
 
 /* istanbul ignore next */
@@ -964,21 +1062,21 @@ var err = window['err'];
 
 log = log("[ri/delay]");
 err = err("[ri/delay]");
-},{"utilise/attr":60,"utilise/client":61,"utilise/err":62,"utilise/log":64}],60:[function(require,module,exports){
-arguments[4][6][0].apply(exports,arguments)
-},{"dup":6,"utilise/is":63}],61:[function(require,module,exports){
-arguments[4][9][0].apply(exports,arguments)
-},{"dup":9}],62:[function(require,module,exports){
-arguments[4][11][0].apply(exports,arguments)
-},{"dup":11,"utilise/owner":65,"utilise/to":66}],63:[function(require,module,exports){
-arguments[4][19][0].apply(exports,arguments)
-},{"dup":19}],64:[function(require,module,exports){
-arguments[4][23][0].apply(exports,arguments)
-},{"dup":23,"utilise/is":63,"utilise/owner":65,"utilise/to":66}],65:[function(require,module,exports){
-arguments[4][25][0].apply(exports,arguments)
-},{"dup":25,"utilise/client":61}],66:[function(require,module,exports){
-arguments[4][31][0].apply(exports,arguments)
-},{"dup":31}],67:[function(require,module,exports){
+},{"utilise/attr":61,"utilise/client":62,"utilise/err":63,"utilise/log":65}],61:[function(require,module,exports){
+arguments[4][7][0].apply(exports,arguments)
+},{"dup":7,"utilise/is":64}],62:[function(require,module,exports){
+arguments[4][10][0].apply(exports,arguments)
+},{"dup":10}],63:[function(require,module,exports){
+arguments[4][12][0].apply(exports,arguments)
+},{"dup":12,"utilise/owner":66,"utilise/to":67}],64:[function(require,module,exports){
+arguments[4][20][0].apply(exports,arguments)
+},{"dup":20}],65:[function(require,module,exports){
+arguments[4][24][0].apply(exports,arguments)
+},{"dup":24,"utilise/is":64,"utilise/owner":66,"utilise/to":67}],66:[function(require,module,exports){
+arguments[4][26][0].apply(exports,arguments)
+},{"dup":26,"utilise/client":62}],67:[function(require,module,exports){
+arguments[4][32][0].apply(exports,arguments)
+},{"dup":32}],68:[function(require,module,exports){
 "use strict";
 
 /* istanbul ignore next */
@@ -1013,26 +1111,26 @@ var is = window['is'];
 var fn = window['fn'];
 
 log = log("[ri/types/fn]");
-},{"utilise/fn":69,"utilise/includes":70,"utilise/is":71,"utilise/log":72}],68:[function(require,module,exports){
-arguments[4][9][0].apply(exports,arguments)
-},{"dup":9}],69:[function(require,module,exports){
+},{"utilise/fn":70,"utilise/includes":71,"utilise/is":72,"utilise/log":73}],69:[function(require,module,exports){
+arguments[4][10][0].apply(exports,arguments)
+},{"dup":10}],70:[function(require,module,exports){
 var is = require('utilise/is')
 
 module.exports = function fn(candid){
   return is.fn(candid) ? candid
        : (new Function("return " + candid))()
 }
-},{"utilise/is":71}],70:[function(require,module,exports){
-arguments[4][18][0].apply(exports,arguments)
-},{"dup":18}],71:[function(require,module,exports){
+},{"utilise/is":72}],71:[function(require,module,exports){
 arguments[4][19][0].apply(exports,arguments)
 },{"dup":19}],72:[function(require,module,exports){
-arguments[4][23][0].apply(exports,arguments)
-},{"dup":23,"utilise/is":71,"utilise/owner":73,"utilise/to":74}],73:[function(require,module,exports){
-arguments[4][25][0].apply(exports,arguments)
-},{"dup":25,"utilise/client":68}],74:[function(require,module,exports){
-arguments[4][31][0].apply(exports,arguments)
-},{"dup":31}],75:[function(require,module,exports){
+arguments[4][20][0].apply(exports,arguments)
+},{"dup":20}],73:[function(require,module,exports){
+arguments[4][24][0].apply(exports,arguments)
+},{"dup":24,"utilise/is":72,"utilise/owner":74,"utilise/to":75}],74:[function(require,module,exports){
+arguments[4][26][0].apply(exports,arguments)
+},{"dup":26,"utilise/client":69}],75:[function(require,module,exports){
+arguments[4][32][0].apply(exports,arguments)
+},{"dup":32}],76:[function(require,module,exports){
 "use strict";
 
 /* istanbul ignore next */
@@ -1060,21 +1158,21 @@ var includes = window['includes'];
 var log = window['log'];
 
 log = log("[ri/types/html]");
-},{"utilise/includes":77,"utilise/log":79}],76:[function(require,module,exports){
-arguments[4][9][0].apply(exports,arguments)
-},{"dup":9}],77:[function(require,module,exports){
-arguments[4][18][0].apply(exports,arguments)
-},{"dup":18}],78:[function(require,module,exports){
+},{"utilise/includes":78,"utilise/log":80}],77:[function(require,module,exports){
+arguments[4][10][0].apply(exports,arguments)
+},{"dup":10}],78:[function(require,module,exports){
 arguments[4][19][0].apply(exports,arguments)
 },{"dup":19}],79:[function(require,module,exports){
-arguments[4][23][0].apply(exports,arguments)
-},{"dup":23,"utilise/is":78,"utilise/owner":80,"utilise/to":81}],80:[function(require,module,exports){
-arguments[4][25][0].apply(exports,arguments)
-},{"dup":25,"utilise/client":76}],81:[function(require,module,exports){
-arguments[4][31][0].apply(exports,arguments)
-},{"dup":31}],82:[function(require,module,exports){
-arguments[4][17][0].apply(exports,arguments)
-},{"dup":17}],83:[function(require,module,exports){
+arguments[4][20][0].apply(exports,arguments)
+},{"dup":20}],80:[function(require,module,exports){
+arguments[4][24][0].apply(exports,arguments)
+},{"dup":24,"utilise/is":79,"utilise/owner":81,"utilise/to":82}],81:[function(require,module,exports){
+arguments[4][26][0].apply(exports,arguments)
+},{"dup":26,"utilise/client":77}],82:[function(require,module,exports){
+arguments[4][32][0].apply(exports,arguments)
+},{"dup":32}],83:[function(require,module,exports){
+arguments[4][18][0].apply(exports,arguments)
+},{"dup":18}],84:[function(require,module,exports){
 "use strict";
 
 /* istanbul ignore next */
@@ -1149,22 +1247,22 @@ var is = window['is'];
 
 log = log("[ri/offline]");
 err = err("[ri/offline]");
-},{"utilise/client":84,"utilise/clone":85,"utilise/debounce":87,"utilise/err":88,"utilise/group":90,"utilise/header":92,"utilise/is":93,"utilise/key":94,"utilise/log":96,"utilise/not":97,"utilise/parse":99,"utilise/proxy":100,"utilise/str":102,"utilise/values":104}],84:[function(require,module,exports){
-arguments[4][9][0].apply(exports,arguments)
-},{"dup":9}],85:[function(require,module,exports){
+},{"utilise/client":85,"utilise/clone":86,"utilise/debounce":88,"utilise/err":89,"utilise/group":91,"utilise/header":93,"utilise/is":94,"utilise/key":95,"utilise/log":97,"utilise/not":98,"utilise/parse":100,"utilise/proxy":101,"utilise/str":103,"utilise/values":105}],85:[function(require,module,exports){
+arguments[4][10][0].apply(exports,arguments)
+},{"dup":10}],86:[function(require,module,exports){
 var parse = require('utilise/parse')
   , str = require('utilise/str')
   , is = require('utilise/is')
 
 module.exports = function clone(d) {
-  return !is.fn(d) 
+  return !is.fn(d) && !is.str(d)
        ? parse(str(d))
        : d
 }
 
-},{"utilise/is":93,"utilise/parse":99,"utilise/str":102}],86:[function(require,module,exports){
-arguments[4][10][0].apply(exports,arguments)
-},{"dup":10,"utilise/sel":101}],87:[function(require,module,exports){
+},{"utilise/is":94,"utilise/parse":100,"utilise/str":103}],87:[function(require,module,exports){
+arguments[4][11][0].apply(exports,arguments)
+},{"dup":11,"utilise/sel":102}],88:[function(require,module,exports){
 var is = require('utilise/is')
 
 module.exports = function debounce(d){
@@ -1183,11 +1281,11 @@ module.exports = function debounce(d){
   }
   
 }
-},{"utilise/is":93}],88:[function(require,module,exports){
-arguments[4][11][0].apply(exports,arguments)
-},{"dup":11,"utilise/owner":98,"utilise/to":103}],89:[function(require,module,exports){
-arguments[4][14][0].apply(exports,arguments)
-},{"dup":14,"utilise/datum":86,"utilise/key":94}],90:[function(require,module,exports){
+},{"utilise/is":94}],89:[function(require,module,exports){
+arguments[4][12][0].apply(exports,arguments)
+},{"dup":12,"utilise/owner":99,"utilise/to":104}],90:[function(require,module,exports){
+arguments[4][15][0].apply(exports,arguments)
+},{"dup":15,"utilise/datum":87,"utilise/key":95}],91:[function(require,module,exports){
 var client = require('utilise/client')
   , owner = require('utilise/owner')
 
@@ -1204,37 +1302,37 @@ function polyfill() {
     console.log('*****', d, '*****')
   }
 }
-},{"utilise/client":84,"utilise/owner":98}],91:[function(require,module,exports){
-arguments[4][15][0].apply(exports,arguments)
-},{"dup":15}],92:[function(require,module,exports){
+},{"utilise/client":85,"utilise/owner":99}],92:[function(require,module,exports){
 arguments[4][16][0].apply(exports,arguments)
-},{"dup":16,"utilise/has":91}],93:[function(require,module,exports){
-arguments[4][19][0].apply(exports,arguments)
-},{"dup":19}],94:[function(require,module,exports){
+},{"dup":16}],93:[function(require,module,exports){
+arguments[4][17][0].apply(exports,arguments)
+},{"dup":17,"utilise/has":92}],94:[function(require,module,exports){
 arguments[4][20][0].apply(exports,arguments)
-},{"dup":20,"utilise/is":93,"utilise/str":102}],95:[function(require,module,exports){
+},{"dup":20}],95:[function(require,module,exports){
 arguments[4][21][0].apply(exports,arguments)
-},{"dup":21}],96:[function(require,module,exports){
-arguments[4][23][0].apply(exports,arguments)
-},{"dup":23,"utilise/is":93,"utilise/owner":98,"utilise/to":103}],97:[function(require,module,exports){
-arguments[4][55][0].apply(exports,arguments)
-},{"dup":55}],98:[function(require,module,exports){
-arguments[4][25][0].apply(exports,arguments)
-},{"dup":25,"utilise/client":84}],99:[function(require,module,exports){
+},{"dup":21,"utilise/is":94,"utilise/str":103}],96:[function(require,module,exports){
+arguments[4][22][0].apply(exports,arguments)
+},{"dup":22}],97:[function(require,module,exports){
+arguments[4][24][0].apply(exports,arguments)
+},{"dup":24,"utilise/is":94,"utilise/owner":99,"utilise/to":104}],98:[function(require,module,exports){
+arguments[4][56][0].apply(exports,arguments)
+},{"dup":56}],99:[function(require,module,exports){
+arguments[4][26][0].apply(exports,arguments)
+},{"dup":26,"utilise/client":85}],100:[function(require,module,exports){
 module.exports = function parse(d){
   return d && JSON.parse(d)
 }
-},{}],100:[function(require,module,exports){
-arguments[4][27][0].apply(exports,arguments)
-},{"dup":27,"utilise/is":93}],101:[function(require,module,exports){
-arguments[4][29][0].apply(exports,arguments)
-},{"dup":29}],102:[function(require,module,exports){
+},{}],101:[function(require,module,exports){
+arguments[4][28][0].apply(exports,arguments)
+},{"dup":28,"utilise/is":94}],102:[function(require,module,exports){
 arguments[4][30][0].apply(exports,arguments)
-},{"dup":30,"utilise/is":93}],103:[function(require,module,exports){
+},{"dup":30}],103:[function(require,module,exports){
 arguments[4][31][0].apply(exports,arguments)
-},{"dup":31}],104:[function(require,module,exports){
+},{"dup":31,"utilise/is":94}],104:[function(require,module,exports){
 arguments[4][32][0].apply(exports,arguments)
-},{"dup":32,"utilise/from":89,"utilise/keys":95}],105:[function(require,module,exports){
+},{"dup":32}],105:[function(require,module,exports){
+arguments[4][33][0].apply(exports,arguments)
+},{"dup":33,"utilise/from":90,"utilise/keys":96}],106:[function(require,module,exports){
 "use strict";
 
 /* istanbul ignore next */
@@ -1300,14 +1398,14 @@ function polyfill(css, el) {
   var prefix = attr(el, "is") ? "[is=\"" + attr(el, "is") + "\"]" : el.tagName.toLowerCase(),
       escaped = prefix.replace(/\[/g, "\\[").replace(/\]/g, "\\]");
 
-  return !prefix ? css : css.replace(/:host\((.+)\)/gi, function ($1, $2) {
+  return !prefix ? css : css.replace(/:host\((.+?)\)/gi, function ($1, $2) {
     return prefix + $2;
   }) // :host(...) -> tag...
   .replace(/:host/gi, prefix) // :host      -> tag
-  .replace(/^([^@%]*)[{]/gi, function ($1) {
+  .replace(/^([^@%\n]*){/gim, function ($1) {
     return prefix + " " + $1;
   }) // ... {      -> tag ... {
-  .replace(/^([^:]*)[,]/gi, function ($1) {
+  .replace(/^(.*?),\s*$/gim, function ($1) {
     return prefix + " " + $1;
   }) // ... ,      -> tag ... ,
   .replace(/\/deep\/ /gi, "") // /deep/     ->
@@ -1315,7 +1413,6 @@ function polyfill(css, el) {
   ;
 }
 
-// ' * ,\n color:rgba(1,2,3) {'.replace(/(.*)[^:](.*)[,]/gim, function($1){ return 'css-2 '+$1 })
 function css(ripple) {
   return function (res) {
     return all("[css=\"" + res.name + "\"]:not([inert])").map(ripple.draw);
@@ -1340,34 +1437,34 @@ var err = window['err'];
 
 log = log("[ri/precss]");
 err = err("[ri/precss]");
-},{"utilise/all":106,"utilise/attr":107,"utilise/client":108,"utilise/err":109,"utilise/key":111,"utilise/log":112,"utilise/raw":114,"utilise/wrap":117}],106:[function(require,module,exports){
-arguments[4][5][0].apply(exports,arguments)
-},{"dup":5,"utilise/to":116}],107:[function(require,module,exports){
+},{"utilise/all":107,"utilise/attr":108,"utilise/client":109,"utilise/err":110,"utilise/key":112,"utilise/log":113,"utilise/raw":115,"utilise/wrap":118}],107:[function(require,module,exports){
 arguments[4][6][0].apply(exports,arguments)
-},{"dup":6,"utilise/is":110}],108:[function(require,module,exports){
-arguments[4][9][0].apply(exports,arguments)
-},{"dup":9}],109:[function(require,module,exports){
-arguments[4][11][0].apply(exports,arguments)
-},{"dup":11,"utilise/owner":113,"utilise/to":116}],110:[function(require,module,exports){
-arguments[4][19][0].apply(exports,arguments)
-},{"dup":19}],111:[function(require,module,exports){
+},{"dup":6,"utilise/to":117}],108:[function(require,module,exports){
+arguments[4][7][0].apply(exports,arguments)
+},{"dup":7,"utilise/is":111}],109:[function(require,module,exports){
+arguments[4][10][0].apply(exports,arguments)
+},{"dup":10}],110:[function(require,module,exports){
+arguments[4][12][0].apply(exports,arguments)
+},{"dup":12,"utilise/owner":114,"utilise/to":117}],111:[function(require,module,exports){
 arguments[4][20][0].apply(exports,arguments)
-},{"dup":20,"utilise/is":110,"utilise/str":115}],112:[function(require,module,exports){
-arguments[4][23][0].apply(exports,arguments)
-},{"dup":23,"utilise/is":110,"utilise/owner":113,"utilise/to":116}],113:[function(require,module,exports){
-arguments[4][25][0].apply(exports,arguments)
-},{"dup":25,"utilise/client":108}],114:[function(require,module,exports){
+},{"dup":20}],112:[function(require,module,exports){
+arguments[4][21][0].apply(exports,arguments)
+},{"dup":21,"utilise/is":111,"utilise/str":116}],113:[function(require,module,exports){
+arguments[4][24][0].apply(exports,arguments)
+},{"dup":24,"utilise/is":111,"utilise/owner":114,"utilise/to":117}],114:[function(require,module,exports){
+arguments[4][26][0].apply(exports,arguments)
+},{"dup":26,"utilise/client":109}],115:[function(require,module,exports){
 module.exports = function raw(selector, doc){
   var prefix = !doc && document.head.createShadowRoot ? 'html /deep/ ' : ''
   return (doc ? doc : document).querySelector(prefix+selector)
 }
-},{}],115:[function(require,module,exports){
-arguments[4][30][0].apply(exports,arguments)
-},{"dup":30,"utilise/is":110}],116:[function(require,module,exports){
+},{}],116:[function(require,module,exports){
 arguments[4][31][0].apply(exports,arguments)
-},{"dup":31}],117:[function(require,module,exports){
-arguments[4][33][0].apply(exports,arguments)
-},{"dup":33}],118:[function(require,module,exports){
+},{"dup":31,"utilise/is":111}],117:[function(require,module,exports){
+arguments[4][32][0].apply(exports,arguments)
+},{"dup":32}],118:[function(require,module,exports){
+arguments[4][34][0].apply(exports,arguments)
+},{"dup":34}],119:[function(require,module,exports){
 "use strict";
 
 /* istanbul ignore next */
@@ -1422,29 +1519,30 @@ var err = window['err'];
 
 log = log("[ri/prehtml]");
 err = err("[ri/prehtml]");
-},{"utilise/all":119,"utilise/attr":120,"utilise/client":121,"utilise/err":122,"utilise/key":124,"utilise/log":125,"utilise/wrap":129}],119:[function(require,module,exports){
-arguments[4][5][0].apply(exports,arguments)
-},{"dup":5,"utilise/to":128}],120:[function(require,module,exports){
+},{"utilise/all":120,"utilise/attr":121,"utilise/client":122,"utilise/err":123,"utilise/key":125,"utilise/log":126,"utilise/wrap":130}],120:[function(require,module,exports){
 arguments[4][6][0].apply(exports,arguments)
-},{"dup":6,"utilise/is":123}],121:[function(require,module,exports){
-arguments[4][9][0].apply(exports,arguments)
-},{"dup":9}],122:[function(require,module,exports){
-arguments[4][11][0].apply(exports,arguments)
-},{"dup":11,"utilise/owner":126,"utilise/to":128}],123:[function(require,module,exports){
-arguments[4][19][0].apply(exports,arguments)
-},{"dup":19}],124:[function(require,module,exports){
+},{"dup":6,"utilise/to":129}],121:[function(require,module,exports){
+arguments[4][7][0].apply(exports,arguments)
+},{"dup":7,"utilise/is":124}],122:[function(require,module,exports){
+arguments[4][10][0].apply(exports,arguments)
+},{"dup":10}],123:[function(require,module,exports){
+arguments[4][12][0].apply(exports,arguments)
+},{"dup":12,"utilise/owner":127,"utilise/to":129}],124:[function(require,module,exports){
 arguments[4][20][0].apply(exports,arguments)
-},{"dup":20,"utilise/is":123,"utilise/str":127}],125:[function(require,module,exports){
-arguments[4][23][0].apply(exports,arguments)
-},{"dup":23,"utilise/is":123,"utilise/owner":126,"utilise/to":128}],126:[function(require,module,exports){
-arguments[4][25][0].apply(exports,arguments)
-},{"dup":25,"utilise/client":121}],127:[function(require,module,exports){
-arguments[4][30][0].apply(exports,arguments)
-},{"dup":30,"utilise/is":123}],128:[function(require,module,exports){
+},{"dup":20}],125:[function(require,module,exports){
+arguments[4][21][0].apply(exports,arguments)
+},{"dup":21,"utilise/is":124,"utilise/str":128}],126:[function(require,module,exports){
+arguments[4][24][0].apply(exports,arguments)
+},{"dup":24,"utilise/is":124,"utilise/owner":127,"utilise/to":129}],127:[function(require,module,exports){
+arguments[4][26][0].apply(exports,arguments)
+},{"dup":26,"utilise/client":122}],128:[function(require,module,exports){
 arguments[4][31][0].apply(exports,arguments)
-},{"dup":31}],129:[function(require,module,exports){
-arguments[4][33][0].apply(exports,arguments)
-},{"dup":33}],130:[function(require,module,exports){
+},{"dup":31,"utilise/is":124}],129:[function(require,module,exports){
+arguments[4][32][0].apply(exports,arguments)
+},{"dup":32}],130:[function(require,module,exports){
+arguments[4][34][0].apply(exports,arguments)
+},{"dup":34}],131:[function(require,module,exports){
+(function (process){
 "use strict";
 
 /* istanbul ignore next */
@@ -1494,7 +1592,7 @@ function child(ripple) {
           type = "update",
           change = { key: key, value: value, type: type };
 
-      log("changed (c)".green, res.name.bold, str(key).grey);
+      log("changed (c)".green, res.name.bold, str(key).grey, debug ? changes : "");
       ripple.emit("change", [res, change], not(is["in"](["reactive"])));
     };
   };
@@ -1506,7 +1604,7 @@ function changed(ripple) {
       changes.map(normalize).filter(Boolean).map(function (change) {
         return (log("changed (p)".green, res.name.bold, change.key.grey), change);
       }).map(function (change) {
-        return (change.type == "push" && observe(ripple)(res)(change.value), change);
+        return (is.arr(res.body) && change.type == "push" && observe(ripple)(res)(change.value), change);
       }).map(function (change) {
         return ripple.emit("change", [res, change], not(is["in"](["reactive"])));
       });
@@ -1555,6 +1653,8 @@ function normalize(change) {
   }return details;
 }
 
+var debug = process.env.NODE_ENV == "DEBUG";
+
 var header = window['header'];
 
 var keys = window['keys'];
@@ -1575,37 +1675,38 @@ var is = window['is'];
 
 log = log("[ri/reactive]");
 err = err("[ri/reactive]");
-},{"utilise/def":132,"utilise/err":133,"utilise/has":134,"utilise/header":135,"utilise/is":136,"utilise/keys":137,"utilise/log":138,"utilise/not":139,"utilise/str":141}],131:[function(require,module,exports){
-arguments[4][9][0].apply(exports,arguments)
-},{"dup":9}],132:[function(require,module,exports){
-arguments[4][46][0].apply(exports,arguments)
-},{"dup":46,"utilise/has":134}],133:[function(require,module,exports){
-arguments[4][11][0].apply(exports,arguments)
-},{"dup":11,"utilise/owner":140,"utilise/to":142}],134:[function(require,module,exports){
-arguments[4][15][0].apply(exports,arguments)
-},{"dup":15}],135:[function(require,module,exports){
+}).call(this,require('_process'))
+},{"_process":2,"utilise/def":133,"utilise/err":134,"utilise/has":135,"utilise/header":136,"utilise/is":137,"utilise/keys":138,"utilise/log":139,"utilise/not":140,"utilise/str":142}],132:[function(require,module,exports){
+arguments[4][10][0].apply(exports,arguments)
+},{"dup":10}],133:[function(require,module,exports){
+arguments[4][47][0].apply(exports,arguments)
+},{"dup":47,"utilise/has":135}],134:[function(require,module,exports){
+arguments[4][12][0].apply(exports,arguments)
+},{"dup":12,"utilise/owner":141,"utilise/to":143}],135:[function(require,module,exports){
 arguments[4][16][0].apply(exports,arguments)
-},{"dup":16,"utilise/has":134}],136:[function(require,module,exports){
-arguments[4][19][0].apply(exports,arguments)
-},{"dup":19}],137:[function(require,module,exports){
-arguments[4][21][0].apply(exports,arguments)
-},{"dup":21}],138:[function(require,module,exports){
-arguments[4][23][0].apply(exports,arguments)
-},{"dup":23,"utilise/is":136,"utilise/owner":140,"utilise/to":142}],139:[function(require,module,exports){
-arguments[4][55][0].apply(exports,arguments)
-},{"dup":55}],140:[function(require,module,exports){
-arguments[4][25][0].apply(exports,arguments)
-},{"dup":25,"utilise/client":131}],141:[function(require,module,exports){
-arguments[4][30][0].apply(exports,arguments)
-},{"dup":30,"utilise/is":136}],142:[function(require,module,exports){
+},{"dup":16}],136:[function(require,module,exports){
+arguments[4][17][0].apply(exports,arguments)
+},{"dup":17,"utilise/has":135}],137:[function(require,module,exports){
+arguments[4][20][0].apply(exports,arguments)
+},{"dup":20}],138:[function(require,module,exports){
+arguments[4][22][0].apply(exports,arguments)
+},{"dup":22}],139:[function(require,module,exports){
+arguments[4][24][0].apply(exports,arguments)
+},{"dup":24,"utilise/is":137,"utilise/owner":141,"utilise/to":143}],140:[function(require,module,exports){
+arguments[4][56][0].apply(exports,arguments)
+},{"dup":56}],141:[function(require,module,exports){
+arguments[4][26][0].apply(exports,arguments)
+},{"dup":26,"utilise/client":132}],142:[function(require,module,exports){
 arguments[4][31][0].apply(exports,arguments)
-},{"dup":31}],143:[function(require,module,exports){
-arguments[4][17][0].apply(exports,arguments)
-},{"dup":17}],144:[function(require,module,exports){
-arguments[4][17][0].apply(exports,arguments)
-},{"dup":17}],145:[function(require,module,exports){
-arguments[4][17][0].apply(exports,arguments)
-},{"dup":17}],146:[function(require,module,exports){
+},{"dup":31,"utilise/is":137}],143:[function(require,module,exports){
+arguments[4][32][0].apply(exports,arguments)
+},{"dup":32}],144:[function(require,module,exports){
+arguments[4][18][0].apply(exports,arguments)
+},{"dup":18}],145:[function(require,module,exports){
+arguments[4][18][0].apply(exports,arguments)
+},{"dup":18}],146:[function(require,module,exports){
+arguments[4][18][0].apply(exports,arguments)
+},{"dup":18}],147:[function(require,module,exports){
 "use strict";
 
 /* istanbul ignore next */
@@ -1644,19 +1745,19 @@ var err = window['err'];
 
 log = log("[ri/shadow]");
 err = err("[ri/shadow]");
-},{"utilise/client":147,"utilise/err":148,"utilise/log":150}],147:[function(require,module,exports){
-arguments[4][9][0].apply(exports,arguments)
-},{"dup":9}],148:[function(require,module,exports){
-arguments[4][11][0].apply(exports,arguments)
-},{"dup":11,"utilise/owner":151,"utilise/to":152}],149:[function(require,module,exports){
-arguments[4][19][0].apply(exports,arguments)
-},{"dup":19}],150:[function(require,module,exports){
-arguments[4][23][0].apply(exports,arguments)
-},{"dup":23,"utilise/is":149,"utilise/owner":151,"utilise/to":152}],151:[function(require,module,exports){
-arguments[4][25][0].apply(exports,arguments)
-},{"dup":25,"utilise/client":147}],152:[function(require,module,exports){
-arguments[4][31][0].apply(exports,arguments)
-},{"dup":31}],153:[function(require,module,exports){
+},{"utilise/client":148,"utilise/err":149,"utilise/log":151}],148:[function(require,module,exports){
+arguments[4][10][0].apply(exports,arguments)
+},{"dup":10}],149:[function(require,module,exports){
+arguments[4][12][0].apply(exports,arguments)
+},{"dup":12,"utilise/owner":152,"utilise/to":153}],150:[function(require,module,exports){
+arguments[4][20][0].apply(exports,arguments)
+},{"dup":20}],151:[function(require,module,exports){
+arguments[4][24][0].apply(exports,arguments)
+},{"dup":24,"utilise/is":150,"utilise/owner":152,"utilise/to":153}],152:[function(require,module,exports){
+arguments[4][26][0].apply(exports,arguments)
+},{"dup":26,"utilise/client":148}],153:[function(require,module,exports){
+arguments[4][32][0].apply(exports,arguments)
+},{"dup":32}],154:[function(require,module,exports){
 "use strict";
 
 /* istanbul ignore next */
@@ -1678,17 +1779,17 @@ var owner = window['owner'];
 var log = window['log'];
 
 log = log("[ri/singleton]");
-},{"utilise/log":156,"utilise/owner":157}],154:[function(require,module,exports){
-arguments[4][9][0].apply(exports,arguments)
-},{"dup":9}],155:[function(require,module,exports){
-arguments[4][19][0].apply(exports,arguments)
-},{"dup":19}],156:[function(require,module,exports){
-arguments[4][23][0].apply(exports,arguments)
-},{"dup":23,"utilise/is":155,"utilise/owner":157,"utilise/to":158}],157:[function(require,module,exports){
-arguments[4][25][0].apply(exports,arguments)
-},{"dup":25,"utilise/client":154}],158:[function(require,module,exports){
-arguments[4][31][0].apply(exports,arguments)
-},{"dup":31}],159:[function(require,module,exports){
+},{"utilise/log":157,"utilise/owner":158}],155:[function(require,module,exports){
+arguments[4][10][0].apply(exports,arguments)
+},{"dup":10}],156:[function(require,module,exports){
+arguments[4][20][0].apply(exports,arguments)
+},{"dup":20}],157:[function(require,module,exports){
+arguments[4][24][0].apply(exports,arguments)
+},{"dup":24,"utilise/is":156,"utilise/owner":158,"utilise/to":159}],158:[function(require,module,exports){
+arguments[4][26][0].apply(exports,arguments)
+},{"dup":26,"utilise/client":155}],159:[function(require,module,exports){
+arguments[4][32][0].apply(exports,arguments)
+},{"dup":32}],160:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -1743,7 +1844,7 @@ function change(ripple) {
       var d = key(k)(deltas),
           name = req.name,
           body = res.body,
-          index = k.replace(/_/g, ""),
+          index = k.replace(/(^|\.)_/g, "$1"),
           type = d.length == 1 ? "push" : d.length == 2 ? "update" : d[2] === 0 ? "remove" : "",
           value = type == "update" ? d[1] : d[0],
           next = types[type];
@@ -1896,55 +1997,55 @@ var diff = require("jsondiffpatch").diff;
 log = log("[ri/sync]");
 err = err("[ri/sync]");
 var types = { push: push, remove: remove, update: update };
-},{"jsondiffpatch":1,"socket.io":1,"socket.io-client":1,"utilise/by":160,"utilise/client":161,"utilise/err":163,"utilise/flatten":164,"utilise/header":167,"utilise/identity":168,"utilise/is":169,"utilise/key":170,"utilise/keys":171,"utilise/log":172,"utilise/noop":173,"utilise/not":174,"utilise/prepend":176,"utilise/replace":177,"utilise/str":179,"utilise/values":181}],160:[function(require,module,exports){
-arguments[4][8][0].apply(exports,arguments)
-},{"dup":8,"utilise/is":169,"utilise/key":170}],161:[function(require,module,exports){
+},{"jsondiffpatch":1,"socket.io":1,"socket.io-client":1,"utilise/by":161,"utilise/client":162,"utilise/err":164,"utilise/flatten":165,"utilise/header":168,"utilise/identity":169,"utilise/is":170,"utilise/key":171,"utilise/keys":172,"utilise/log":173,"utilise/noop":174,"utilise/not":175,"utilise/prepend":177,"utilise/replace":178,"utilise/str":180,"utilise/values":182}],161:[function(require,module,exports){
 arguments[4][9][0].apply(exports,arguments)
-},{"dup":9}],162:[function(require,module,exports){
+},{"dup":9,"utilise/is":170,"utilise/key":171}],162:[function(require,module,exports){
 arguments[4][10][0].apply(exports,arguments)
-},{"dup":10,"utilise/sel":178}],163:[function(require,module,exports){
+},{"dup":10}],163:[function(require,module,exports){
 arguments[4][11][0].apply(exports,arguments)
-},{"dup":11,"utilise/owner":175,"utilise/to":180}],164:[function(require,module,exports){
-arguments[4][13][0].apply(exports,arguments)
-},{"dup":13,"utilise/is":169}],165:[function(require,module,exports){
+},{"dup":11,"utilise/sel":179}],164:[function(require,module,exports){
+arguments[4][12][0].apply(exports,arguments)
+},{"dup":12,"utilise/owner":176,"utilise/to":181}],165:[function(require,module,exports){
 arguments[4][14][0].apply(exports,arguments)
-},{"dup":14,"utilise/datum":162,"utilise/key":170}],166:[function(require,module,exports){
+},{"dup":14,"utilise/is":170}],166:[function(require,module,exports){
 arguments[4][15][0].apply(exports,arguments)
-},{"dup":15}],167:[function(require,module,exports){
+},{"dup":15,"utilise/datum":163,"utilise/key":171}],167:[function(require,module,exports){
 arguments[4][16][0].apply(exports,arguments)
-},{"dup":16,"utilise/has":166}],168:[function(require,module,exports){
+},{"dup":16}],168:[function(require,module,exports){
 arguments[4][17][0].apply(exports,arguments)
-},{"dup":17}],169:[function(require,module,exports){
-arguments[4][19][0].apply(exports,arguments)
-},{"dup":19}],170:[function(require,module,exports){
+},{"dup":17,"utilise/has":167}],169:[function(require,module,exports){
+arguments[4][18][0].apply(exports,arguments)
+},{"dup":18}],170:[function(require,module,exports){
 arguments[4][20][0].apply(exports,arguments)
-},{"dup":20,"utilise/is":169,"utilise/str":179}],171:[function(require,module,exports){
+},{"dup":20}],171:[function(require,module,exports){
 arguments[4][21][0].apply(exports,arguments)
-},{"dup":21}],172:[function(require,module,exports){
-arguments[4][23][0].apply(exports,arguments)
-},{"dup":23,"utilise/is":169,"utilise/owner":175,"utilise/to":180}],173:[function(require,module,exports){
+},{"dup":21,"utilise/is":170,"utilise/str":180}],172:[function(require,module,exports){
+arguments[4][22][0].apply(exports,arguments)
+},{"dup":22}],173:[function(require,module,exports){
 arguments[4][24][0].apply(exports,arguments)
-},{"dup":24}],174:[function(require,module,exports){
-arguments[4][55][0].apply(exports,arguments)
-},{"dup":55}],175:[function(require,module,exports){
+},{"dup":24,"utilise/is":170,"utilise/owner":176,"utilise/to":181}],174:[function(require,module,exports){
 arguments[4][25][0].apply(exports,arguments)
-},{"dup":25,"utilise/client":161}],176:[function(require,module,exports){
+},{"dup":25}],175:[function(require,module,exports){
+arguments[4][56][0].apply(exports,arguments)
+},{"dup":56}],176:[function(require,module,exports){
 arguments[4][26][0].apply(exports,arguments)
-},{"dup":26}],177:[function(require,module,exports){
+},{"dup":26,"utilise/client":162}],177:[function(require,module,exports){
+arguments[4][27][0].apply(exports,arguments)
+},{"dup":27}],178:[function(require,module,exports){
 module.exports = function replace(from, to){
   return function(d){
     return d.replace(from, to)
   }
 }
-},{}],178:[function(require,module,exports){
-arguments[4][29][0].apply(exports,arguments)
-},{"dup":29}],179:[function(require,module,exports){
+},{}],179:[function(require,module,exports){
 arguments[4][30][0].apply(exports,arguments)
-},{"dup":30,"utilise/is":169}],180:[function(require,module,exports){
+},{"dup":30}],180:[function(require,module,exports){
 arguments[4][31][0].apply(exports,arguments)
-},{"dup":31}],181:[function(require,module,exports){
+},{"dup":31,"utilise/is":170}],181:[function(require,module,exports){
 arguments[4][32][0].apply(exports,arguments)
-},{"dup":32,"utilise/from":165,"utilise/keys":171}],182:[function(require,module,exports){
+},{"dup":32}],182:[function(require,module,exports){
+arguments[4][33][0].apply(exports,arguments)
+},{"dup":33,"utilise/from":166,"utilise/keys":172}],183:[function(require,module,exports){
 "use strict";
 
 /* istanbul ignore next */
@@ -2019,4 +2120,4 @@ function create(opts) {
 
   return ripple;
 }
-},{"rijs.components":2,"rijs.core":34,"rijs.css":36,"rijs.data":43,"rijs.db":58,"rijs.delay":59,"rijs.fn":67,"rijs.html":75,"rijs.mysql":82,"rijs.offline":83,"rijs.precss":105,"rijs.prehtml":118,"rijs.reactive":130,"rijs.resdir":143,"rijs.serve":144,"rijs.sessions":145,"rijs.shadow":146,"rijs.singleton":153,"rijs.sync":159,"utilise/client":1}]},{},[182]);
+},{"rijs.components":3,"rijs.core":35,"rijs.css":37,"rijs.data":44,"rijs.db":59,"rijs.delay":60,"rijs.fn":68,"rijs.html":76,"rijs.mysql":83,"rijs.offline":84,"rijs.precss":106,"rijs.prehtml":119,"rijs.reactive":131,"rijs.resdir":144,"rijs.serve":145,"rijs.sessions":146,"rijs.shadow":147,"rijs.singleton":154,"rijs.sync":160,"utilise/client":1}]},{},[183]);
