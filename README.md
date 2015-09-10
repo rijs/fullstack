@@ -1,14 +1,21 @@
-# [Ripple](https://github.com/pemrouz/ripple)
+# [Ripple v0.3](https://github.com/pemrouz/ripple)
 
 Ripple is a modular fullstack framework. In the diverse and fast-moving world of JavaScript, this makes it easy to opt-out of an experimental module, swap a module in a particular use case for a more performant one, or simply bolt-on a new module, without having to migrate to a whole new framework.
 
+## Features TL;DR
+
+* Everything is **reactive** and **realtime by default** for a richer user experience. 
+* Leverages functional paradigm and offline caching for **instant startup times**
+* The plumbing is abstracted to drastically improve **developer productivity**. 
+* Embraces and built around **next-generation native standards**. 
+* **Time travel debugger** with persistent data structures.
+* Runs **universally** on server/client providing efficient **server-side rendering** out of the box and adaptors/extension points. The philosophy is that all changes ripple across the network to all other connected servers, clients and databases synchronising them in realtime where possible.
+
 * [Quick Start](https://github.com/rijs/docs/blob/master/quick-start.md)
-* [Primer](https://github.com/rijs/docs/blob/master/primer.md)
-* [Architecture](https://github.com/rijs/docs/blob/master/architecture.md)
-* [Comparisons](https://github.com/rijs/docs/blob/master/comparisons.md)
+* [Guide to Building Applications with Ripple](https://github.com/rijs/docs/blob/master/primer.md)
+* [Modules Architecture](https://github.com/rijs/docs/blob/master/architecture.md)
+* [Framework Comparisons](https://github.com/rijs/docs/blob/master/comparisons.md)
 * [Roadmap](https://github.com/rijs/docs/blob/master/roadmap.md)
 * [Tests](https://github.com/rijs/docs/blob/master/tests.md)
 * [API](https://github.com/rijs/docs/blob/master/api.md)
 * [Distributions](https://github.com/rijs/docs/blob/master/distributions.md)
- 
-Note: This library (v0.3) is currently under active development and is not advisable to use yet. For the last stable version and docs, [see (v0.2)](https://github.com/pemrouz/ripple/tree/3d750b53ed8b99347ae503bf300cafabd8491b84).
