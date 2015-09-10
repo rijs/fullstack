@@ -11,7 +11,7 @@ Ripple is a modular fullstack framework. In the diverse and fast-moving world of
 * **Time travel debugger** with persistent data structures.
 * Runs **universally** on server/client providing efficient **server-side rendering** out of the box and adaptors/extension points. The philosophy is that all changes ripple across the network to all other connected servers, clients and databases synchronising them in realtime where possible.
  
----
+## Documentation
 
 * [Quick Start](https://github.com/rijs/docs/blob/master/quick-start.md)
 * [Guide to Building Applications with Ripple](https://github.com/rijs/docs/blob/master/primer.md)
