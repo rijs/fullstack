@@ -29,12 +29,13 @@
     "browserify": "^9.0.3",
     "chai": "^2.3.0",
     "coveralls": "^2.11.2",
+    "glob": "^5.0.14",
     "istanbul": "^0.3.13",
     "mocha": "^2.2.4",
     "mocha-lcov-reporter": "0.0.2",
-    "uglify-js": "^2.4.16",
-    "glob": "^5.0.14",
-    "popper": "*"
+    "mockery": "^1.4.0",
+    "popper": "*",
+    "uglify-js": "^2.4.16"
   },
   "dependencies": {
     "utilise": "*",

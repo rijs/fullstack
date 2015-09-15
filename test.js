@@ -1,15 +1,20 @@
 var expect = require('chai').expect
   , ripple 
+  , temp
 
 describe('Ripple', function() {
 
   before(function(){
     ripple = require('./')()
   })
-
+  
   beforeEach(function(done){
     ripple.io.emit('beforeEach')
     ripple.io.once('done', debounce(done))
+  })
+
+  afterEach(function(){
+    temp && ripple.io.off('change', temp)
   })
 
   it('should create initialise ripple and modules', function(){  
@@ -58,6 +63,14 @@ describe('Ripple', function() {
       done()
     }, 1000)
 
+  })
+
+  // background: 
+  // server-side specific headers related to database should
+  // not appear on the client
+  it('should not send/receive fields/table header', function(){
+    expect(ripple.resources.dbres.headers.fields).to.not.be.ok
+    expect(ripple.resources.dbres.headers.table).to.not.be.ok
   })
 
 })

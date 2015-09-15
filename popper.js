@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 var uglify     = require('uglify-js').minify
   , browserify = require('browserify')
+  , identity   = require('utilise/identity')
   , pause      = require('utilise/pause')
   , via        = require('utilise/via')
+  , mockery    = require('mockery')
   , popper     = require('popper')
   , glob       = require('glob')
+  , sql, fn
 
 popper = popper({ 
   watch: '.'
@@ -14,18 +17,43 @@ popper = popper({
 , browsers: browsers()
 })
 
+before()
+
 popper.io.on('connection', function(socket){
   socket.on('beforeEach', function(){
+    popper('dbres')
     popper('foo'         , 'bar', headers())
+    popper('my-component', component, headers())
     popper('object'      , { a:0 , b:1, c:2 }, headers())
     popper('array'       , [{i:0}, {i:1},{i:2}], headers())
     popper('proxy'       , [{i:0}, {i:1},{i:2}], 
           { to: to, from: from, 'cache-control': 'no-cache', silent: true, reactive: false })
-    popper('my-component', component, headers())
     popper.sync(socket)()
     socket.emit('done')
   })
 })
+
+function before(){
+  mockery.enable({
+    warnOnReplace: false,
+    warnOnUnregistered: false
+  })
+
+  mockery.registerMock('mysql', { 
+    createPool: function(){ 
+      return { 
+        escape: identity
+      , query: function(sql, then){ 
+          if (sql == 'SHOW COLUMNS FROM dbres') return then(null, [{ Field: 'name' }, { Field: 'id' }])
+          if (sql == 'SELECT * FROM dbres') return then(null, [1,2,3])
+        }
+      }
+    }
+  })
+
+  popper.db('mysql://user:password@host:port/database')
+
+}
 
 function headers(argument) {
   return { silent: true, 'cache-control': 'no-cache' }
