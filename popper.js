@@ -76,7 +76,7 @@ function component(data) {  }
 
 function from(val, body, key) {
   if (key != 'length') return;
-  for (var i = 0; i < +val; i++) body[i] = { i: i }
+  for (var i = 0; i < +val; i++) popper('proxy')[i] = { i: i }
   return true
 }
 
