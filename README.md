@@ -1,4 +1,4 @@
-# [Ripple v0.3](https://github.com/pemrouz/ripple)
+# [Ripple v0.4](https://github.com/pemrouz/ripple)
 
 Ripple is a modular fullstack framework. In the diverse and fast-moving world of JavaScript, this makes it easy to opt-out of an experimental module, swap a module in a particular use case for a more performant one, or simply bolt-on a new module, without having to migrate to a whole new framework.
 
@@ -7,6 +7,7 @@ Ripple is a modular fullstack framework. In the diverse and fast-moving world of
 * Everything is **reactive** and **realtime by default** for a richer user experience. 
 * Leverages functional paradigm and offline caching for **instant startup times**
 * The plumbing is abstracted to drastically improve **developer productivity**. 
+* **Backpressure on clients** to only send necessary resources and updates.
 * Embraces and built around **next-generation native standards**.
 * **Time travel debugger** with persistent data structures.
 * Runs **universally** on server/client providing efficient **server-side rendering** out of the box and adaptors/extension points. The philosophy is that all changes ripple across the network to all other connected servers, clients and databases synchronising them in realtime where possible.

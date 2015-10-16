@@ -1,4 +1,6 @@
+import backpressure from 'rijs.backpressure'
 import components from 'rijs.components'
+import hypermedia from 'rijs.hypermedia'
 import singleton from 'rijs.singleton'
 import sessions from 'rijs.sessions'
 import reactive from 'rijs.reactive'
@@ -27,22 +29,24 @@ export default function create(opts){
   // enrich..
   singleton(ripple)      // exposes a single instance
   data(ripple)           // register data types
+  hypermedia(ripple)     // register hypermedia types
   html(ripple)           // register html types
   css(ripple)            // register css types
   fn(ripple)             // register fn types
-  db(ripple)             // enable external connections
+  mysql(ripple)          // adds mysql adaptor crud hooks
+  db(ripple, opts)       // enable external connections
   components(ripple)     // invoke web components, fn.call(<el>, data)
   reactive(ripple)       // react to changes in resources
   precss(ripple)         // preapplies scoped css 
   prehtml(ripple)        // preapplies html templates
   shadow(ripple)         // encapsulates with shadow dom or closes gap
   delay(ripple)          // async rendering delay 
-  mysql(ripple)          // adds mysql adaptor crud hooks
   serve(opts)            // serve client libraries
   sync(ripple, opts)     // syncs resources between server/client
+  backpressure(ripple)   // restricts broadcast to clients based on need
   sessions(ripple, opts) // populates sessionid on each connection
-  resdir(ripple, opts)   // loads from resources folder
   offline(ripple)        // loads/saves from/to localstorage
+  resdir(ripple, opts)   // loads from resources folder
 
   return ripple
 }

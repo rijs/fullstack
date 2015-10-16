@@ -39,6 +39,8 @@
   },
   "dependencies": {
     "utilise": "*",
+    "rijs.backpressure": "*",
+    "rijs.hypermedia": "*",
     "rijs.components": "*",
     "rijs.singleton": "*",
     "rijs.reactive": "*",

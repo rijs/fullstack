@@ -15,12 +15,13 @@ popper = popper({
 , tests: tests
 , globals: globals() 
 , browsers: browsers()
+, opts: opts()
 })
 
-before()
 
 popper.io.on('connection', function(socket){
   socket.on('beforeEach', function(){
+    popper.io.of('/').sockets.forEach(function(s){ s.deps = {} })
     popper('dbres')
     popper('foo'         , 'bar', headers())
     popper('my-component', component, headers())
@@ -28,12 +29,15 @@ popper.io.on('connection', function(socket){
     popper('array'       , [{i:0}, {i:1},{i:2}], headers())
     popper('proxy'       , [{i:0}, {i:1},{i:2}], 
           { to: to, from: from, 'cache-control': 'no-cache', silent: true, reactive: false })
+    popper('some.css'    , '* { color: red }', headers())
+    popper('shadow-el'   , shadowEl, headers())
+    popper('my-component', component, headers())
     popper.sync(socket)()
     socket.emit('done')
   })
 })
 
-function before(){
+function opts(){
   mockery.enable({
     warnOnReplace: false,
     warnOnUnregistered: false
@@ -51,20 +55,24 @@ function before(){
     }
   })
 
-  popper.db('mysql://user:password@host:port/database')
-
+  return { db: 'mysql://user:password@host:port/database' }
 }
 
 function headers(argument) {
   return { silent: true, 'cache-control': 'no-cache' }
 }
 
-function minify(d){
+function minify(d){ console.log('minify', d)
   return uglify(d.toString(), { fromString: true }).code
 }
 
 function replace(d){
   return d.replace(/require\('chai'\)/g, 'window.chai')
+}
+
+function envvars(d){
+  return d.replace(/process.env.GITHUB_USERNAME/g, '"' + process.env.GITHUB_USERNAME + '"')
+          .replace(/process.env.GITHUB_PASSWORD/g, '"' + process.env.GITHUB_PASSWORD + '"')
 }
 
 function globals(){
@@ -73,6 +81,8 @@ function globals(){
 }
 
 function component(data) {  }
+
+function shadowEl(d){ this.innerHTML = '<my-component data="array" css="some.css"></my-component>' }
 
 function from(val, body, key) {
   if (key != 'length') return;
@@ -98,7 +108,8 @@ function browsers() {
 
 function tests() {
   return pause(browserify()
-    .add(glob.sync('./{,node_modules/rijs.*/}test.js'))
+    .add(glob.sync('./test.js'))
+    // .add(glob.sync('./{,node_modules/rijs.*/}test.js'))
     .ignore('chai')
     .ignore('jsdom')
     .ignore('express')
@@ -108,5 +119,6 @@ function tests() {
     .ignore('socket.io-client')
     .bundle())
     .pipe(via(replace))
-    .pipe(via(minify))
+    .pipe(via(envvars))
+    // .pipe(via(minify))
 }
