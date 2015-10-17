@@ -1,6 +1,6 @@
 {
   "name": "rijs",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "main": "dist",
   "author": "Pedram Emrouznejad (https://github.com/pemrouz)",
   "description": "Ripple",
@@ -19,7 +19,7 @@
     "gzip": "gzip -c dist/ripple.min.js > dist/ripple.min.js.gz && gzip -c dist/ripple.pure.min.js > dist/ripple.pure.min.js.gz",
     "build": "npm run clean && npm run babel && npm run ignore && npm run build:pure && npm run bundle && npm run minify && npm run gzip",
     "build:pure": "npm run bundle:pure && npm run minify:pure",
-    "version": "rm -f npm-shrinkwrap.json && rm -rf node_modules && npm install && npm prune && npm run build && npm shrinkwrap && git add -A",
+    "version": "rm -f npm-shrinkwrap.json && npm prune && npm run build && npm shrinkwrap && git add -A",
     "postversion": "git push && git push --tags",
     "test": "popper"
   },
