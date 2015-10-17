@@ -1,6 +1,6 @@
 {
   "name": "rijs",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "dependencies": {
     "abbrev": {
       "version": "1.0.7",
@@ -2337,8 +2337,8 @@
       "from": "rijs.resdir@0.1.0"
     },
     "rijs.serve": {
-      "version": "0.0.12",
-      "from": "rijs.serve@0.0.12"
+      "version": "0.0.13",
+      "from": "rijs.serve@0.0.13"
     },
     "rijs.sessions": {
       "version": "0.0.3",
