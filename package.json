@@ -12,6 +12,8 @@
     "ignore": "find ./dist -type f -exec sed -i \"s/var _interopRequire/\\/* istanbul ignore next *\\/\\nvar _interopRequire/g\" {} ;",
     "clean": "rm -rf dist && mkdir dist",
     "babel": "babel src -d dist",
+    "link": "ls -alF node_modules/ | grep rijs | sed \"s/.*rijs/npm ln rijs/g\" | sed \"s/\\///g\" | sh",
+    "unlink": "ls -alF node_modules/ | grep rijs | sed \"s/.*rijs/rmdir node_modules\\/rijs/g\" | sh",
     "bundle": "browserify dist/index.js -o dist/ripple.js -i socket.io -i mysql -i jsondiffpatch",
     "bundle:pure": "browserify dist/index.js -o dist/ripple.pure.js -i socket.io -i mysql -i jsondiffpatch -i socket.io-client -i **/utilise/**/*.js && sed -i -E \"s/(= _interopRequire\\(require\\(\\\"utilise\\/)(.+)(\\\"\\)\\))/= window['\\2']/\" dist/ripple.pure.js",
     "minify": "uglifyjs dist/ripple.js -m -c drop_console,dead_code -d debug=false -o dist/ripple.min.js",
@@ -19,7 +21,7 @@
     "gzip": "gzip -c dist/ripple.min.js > dist/ripple.min.js.gz && gzip -c dist/ripple.pure.min.js > dist/ripple.pure.min.js.gz",
     "build": "npm run clean && npm run babel && npm run ignore && npm run build:pure && npm run bundle && npm run minify && npm run gzip",
     "build:pure": "npm run bundle:pure && npm run minify:pure",
-    "version": "npm run build && git add -A",
+    "version": "npm update && npm run build && npm prune && npm shrinkwrap && git add -A",
     "postversion": "git push && git push --tags",
     "test": "popper"
   },
