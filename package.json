@@ -19,14 +19,14 @@
     "gzip": "gzip -c dist/ripple.min.js > dist/ripple.min.js.gz && gzip -c dist/ripple.pure.min.js > dist/ripple.pure.min.js.gz",
     "build": "npm run clean && npm run babel && npm run ignore && npm run build:pure && npm run bundle && npm run minify && npm run gzip",
     "build:pure": "npm run bundle:pure && npm run minify:pure",
-    "version": "rm -f npm-shrinkwrap.json && npm prune && npm run build && npm shrinkwrap && git add -A",
+    "version": "rm -f npm-shrinkwrap.json && npm update && npm run build && npm prune && npm shrinkwrap && git add -A",
     "postversion": "git push && git push --tags",
     "test": "popper"
   },
   "license": "pemrouz.mit-license.org",
   "devDependencies": {
     "babel": "^4.6.3",
-    "browserify": "^9.0.3",
+    "browserify": "10.2.1",
     "chai": "^2.3.0",
     "coveralls": "^2.11.2",
     "glob": "^5.0.14",
