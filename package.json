@@ -1,6 +1,6 @@
 {
   "name": "rijs",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "main": "dist",
   "author": "Pedram Emrouznejad (https://github.com/pemrouz)",
   "license": "pemrouz.mit-license.org",
@@ -60,7 +60,6 @@
     "mocha-lcov-reporter": "*",
     "uglify-js": "*",
     "glob": "*",
-    "mockery": "*",
-    "popper": "*"
+    "mockery": "*"
   }
 }
