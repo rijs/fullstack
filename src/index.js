@@ -1,11 +1,12 @@
 import backpressure from 'rijs.backpressure'
 import components from 'rijs.components'
-import hypermedia from 'rijs.hypermedia'
+// import hypermedia from 'rijs.hypermedia'
 import singleton from 'rijs.singleton'
 import sessions from 'rijs.sessions'
 import reactive from 'rijs.reactive'
 import prehtml from 'rijs.prehtml'
 import offline from 'rijs.offline'
+import helpers from 'rijs.helpers'
 import precss from 'rijs.precss'
 import shadow from 'rijs.shadow'
 import resdir from 'rijs.resdir'
@@ -29,10 +30,11 @@ export default function create(opts){
   // enrich..
   singleton(ripple)      // exposes a single instance
   data(ripple)           // register data types
-  hypermedia(ripple)     // register hypermedia types
+  // hypermedia(ripple)     // register hypermedia types
   html(ripple)           // register html types
   css(ripple)            // register css types
   fn(ripple)             // register fn types
+  helpers(ripple)        // expose helper functions and constants
   mysql(ripple)          // adds mysql adaptor crud hooks
   db(ripple, opts)       // enable external connections
   components(ripple)     // invoke web components, fn.call(<el>, data)

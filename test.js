@@ -5,7 +5,7 @@ var expect = require('chai').expect
 describe('Ripple', function() {
 
   before(function(){
-    ripple = require('./')()
+    ripple = require('./').default()
   })
   
   beforeEach(function(done){
@@ -34,10 +34,10 @@ describe('Ripple', function() {
     expect(window.ripple).to.be.a('function')
     expect(window.ripple.resources).to.be.a('object')
 
-    var ripple1 = require('./')()
+    var ripple1 = require('./').default()
     expect(ripple != ripple1).to.be.ok
 
-    var ripple2 = require('./')()
+    var ripple2 = require('./').default()
     expect(ripple1 != ripple2).to.be.ok
   })
 

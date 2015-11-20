@@ -3,6 +3,7 @@ var uglify     = require('uglify-js').minify
   , browserify = require('browserify')
   , identity   = require('utilise/identity')
   , pause      = require('utilise/pause')
+  , keys       = require('utilise/keys')
   , via        = require('utilise/via')
   , mockery    = require('mockery')
   , popper     = require('popper')
@@ -21,7 +22,17 @@ popper = popper({
 
 popper.io.on('connection', function(socket){
   socket.on('beforeEach', function(){
-    popper.io.of('/').sockets.forEach(function(s){ s.deps = {} })
+    socket.deps = { 
+      'dbres': 1
+    , 'foo': 1
+    , 'my-component': 1
+    , 'object': 1
+    , 'array': 1
+    , 'proxy': 1
+    , 'some.css': 1
+    , 'shadow-el': 1
+    , 'my-component': 1
+    }
     popper('dbres')
     popper('foo'         , 'bar', headers())
     popper('my-component', component, headers())
