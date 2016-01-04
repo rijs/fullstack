@@ -4,6 +4,482 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.default = features;
+
+
+
+var _header = require('utilise/header');
+
+var _header2 = _interopRequireDefault(_header);
+
+var _append = require('utilise/append');
+
+var _append2 = _interopRequireDefault(_append);
+
+var _attr = require('utilise/attr');
+
+var _attr2 = _interopRequireDefault(_attr);
+
+var _from = require('utilise/from');
+
+var _from2 = _interopRequireDefault(_from);
+
+var _not = require('utilise/not');
+
+var _not2 = _interopRequireDefault(_not);
+
+var _str = require('utilise/str');
+
+var _str2 = _interopRequireDefault(_str);
+
+var _key = require('utilise/key');
+
+var _key2 = _interopRequireDefault(_key);
+
+var _by = require('utilise/by');
+
+var _by2 = _interopRequireDefault(_by);
+
+var _is = require('utilise/is');
+
+var _is2 = _interopRequireDefault(_is);
+
+/* istanbul ignore next */
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// -------------------------------------------
+// Extend Components with Features
+// -------------------------------------------
+function features(ripple) {
+  if (!true) return;
+  log('creating');
+  ripple.render = render(ripple)(ripple.render);
+  return ripple;
+}
+
+var render = function render(ripple) {
+  return function (next) {
+    return function (el) {
+      var features = (0, _str2.default)((0, _attr2.default)(el, 'is')).split(' ').map((0, _from2.default)(ripple.resources)).filter((0, _header2.default)('content-type', 'application/javascript')),
+          css = (0, _str2.default)((0, _attr2.default)('css')(el)).split(' ');
+
+      features.filter((0, _by2.default)('headers.needs', includes('[css]'))).map((0, _key2.default)('name')).map((0, _append2.default)('.css')).filter((0, _not2.default)(_is2.default.in(css))).map(function (d) {
+        return (0, _attr2.default)('css', ((0, _str2.default)((0, _attr2.default)('css')(el)) + ' ' + d).trim())(el);
+      });
+
+      var node = next(el);
+
+      return !node ? undefined : features.map((0, _key2.default)('body')).map(function (d) {
+        return d.call(node, node.state);
+      });
+    };
+  };
+};
+
+var log = require('utilise/log')('[ri/features]');
+},{"utilise/append":2,"utilise/attr":3,"utilise/by":4,"utilise/from":6,"utilise/header":8,"utilise/is":9,"utilise/key":10,"utilise/log":11,"utilise/not":12,"utilise/str":15}],2:[function(require,module,exports){
+module.exports = function append(v) {
+  return function(d){
+    return d+v
+  }
+}
+},{}],3:[function(require,module,exports){
+var is = require('utilise/is')
+
+module.exports = function attr(d, name, value) {
+  d = d.node ? d.node() : d
+  d = d.host || d
+  var args = arguments.length
+
+  if (is.str(d)) return function(el){ 
+    var node = this.nodeName || this.node ? this : el
+    return attr.apply(this, args > 1 ? [node, d, name] : [node, d]) 
+  }
+
+  return args > 2 && value === false ? d.removeAttribute(name)
+       : args > 2                    ? (d.setAttribute(name, value), value)
+       : d.attributes.getNamedItem(name) 
+      && d.attributes.getNamedItem(name).value
+}
+
+},{"utilise/is":9}],4:[function(require,module,exports){
+var key = require('utilise/key')
+  , is  = require('utilise/is')
+
+module.exports = function by(k, v){
+  var exists = arguments.length == 1
+  return function(o){
+    var d = key(k)(o)
+    
+    return d && v && d.toLowerCase && v.toLowerCase ? d.toLowerCase() === v.toLowerCase()
+         : exists ? Boolean(d)
+         : is.fn(v) ? v(d)
+         : d == v
+  }
+}
+},{"utilise/is":9,"utilise/key":10}],5:[function(require,module,exports){
+var sel = require('utilise/sel')
+
+module.exports = function datum(node){
+  return sel(node).datum()
+}
+},{"utilise/sel":14}],6:[function(require,module,exports){
+var datum = require('utilise/datum')
+  , key = require('utilise/key')
+
+module.exports = from
+from.parent = fromParent
+
+function from(o){
+  return function(k){
+    return key(k)(o)
+  }
+}
+
+function fromParent(k){
+  return datum(this.parentNode)[k]
+}
+},{"utilise/datum":5,"utilise/key":10}],7:[function(require,module,exports){
+module.exports = function has(o, k) {
+  return k in o
+}
+},{}],8:[function(require,module,exports){
+var has = require('utilise/has')
+
+module.exports = function header(header, value) {
+  var getter = arguments.length == 1
+  return function(d){ 
+    return !d                      ? null
+         : !has(d, 'headers')      ? null
+         : !has(d.headers, header) ? null
+         : getter                  ? d['headers'][header]
+                                   : d['headers'][header] == value
+  }
+}
+},{"utilise/has":7}],9:[function(require,module,exports){
+module.exports = is
+is.fn     = isFunction
+is.str    = isString
+is.num    = isNumber
+is.obj    = isObject
+is.lit    = isLiteral
+is.bol    = isBoolean
+is.truthy = isTruthy
+is.falsy  = isFalsy
+is.arr    = isArray
+is.null   = isNull
+is.def    = isDef
+is.in     = isIn
+
+function is(v){
+  return function(d){
+    return d == v
+  }
+}
+
+function isFunction(d) {
+  return typeof d == 'function'
+}
+
+function isBoolean(d) {
+  return typeof d == 'boolean'
+}
+
+function isString(d) {
+  return typeof d == 'string'
+}
+
+function isNumber(d) {
+  return typeof d == 'number'
+}
+
+function isObject(d) {
+  return typeof d == 'object'
+}
+
+function isLiteral(d) {
+  return typeof d == 'object' 
+      && !(d instanceof Array)
+}
+
+function isTruthy(d) {
+  return !!d == true
+}
+
+function isFalsy(d) {
+  return !!d == false
+}
+
+function isArray(d) {
+  return d instanceof Array
+}
+
+function isNull(d) {
+  return d === null
+}
+
+function isDef(d) {
+  return typeof d !== 'undefined'
+}
+
+function isIn(set) {
+  return function(d){
+    return !set ? false  
+         : set.indexOf ? ~set.indexOf(d)
+         : d in set
+  }
+}
+},{}],10:[function(require,module,exports){
+var is = require('utilise/is')
+  , str = require('utilise/str')
+
+module.exports = function key(k, v){ 
+  var set = arguments.length > 1
+    , keys = str(k).split('.')
+    , root = keys.shift()
+
+  return function deep(o, i){
+    var masked = {}
+    return !o ? undefined 
+         : !k ? o
+         : is.arr(k) ? (k.map(copy), masked)
+         : o[k] || !keys.length ? (set ? ((o[k] = is.fn(v) ? v(o[k], i) : v), o)
+                                       :   o[k])
+                                : (set ? (key(keys.join('.'), v)(o[root] ? o[root] : (o[root] = {})), o)
+                                       : key(keys.join('.'))(o[root]))
+
+    function copy(k){
+      var val = key(k)(o)
+      ;(val != undefined) && key(k, val)(masked)
+    }
+  }
+}
+},{"utilise/is":9,"utilise/str":15}],11:[function(require,module,exports){
+var is = require('utilise/is')
+  , to = require('utilise/to')
+  , owner = require('utilise/owner')
+
+module.exports = function log(prefix){
+  return function(d){
+    if (!owner.console || !console.log.apply) return d;
+    is.arr(arguments[2]) && (arguments[2] = arguments[2].length)
+    var args = to.arr(arguments)
+    args.unshift(prefix.grey ? prefix.grey : prefix)
+    return console.log.apply(console, args), d
+  }
+}
+},{"utilise/is":9,"utilise/owner":13,"utilise/to":16}],12:[function(require,module,exports){
+module.exports = function not(fn){
+  return function(){
+    return !fn.apply(this, arguments)
+  }
+}
+},{}],13:[function(require,module,exports){
+(function (global){
+module.exports = true ? /* istanbul ignore next */ window : global
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],14:[function(require,module,exports){
+module.exports = function sel(el){
+  return el.node ? el : d3.select(el)
+}
+},{}],15:[function(require,module,exports){
+var is = require('utilise/is') 
+
+module.exports = function str(d){
+  return d === 0 ? '0'
+       : !d ? ''
+       : is.fn(d) ? '' + d
+       : is.obj(d) ? JSON.stringify(d)
+       : String(d)
+}
+},{"utilise/is":9}],16:[function(require,module,exports){
+module.exports = { 
+  arr: toArray
+, obj: toObject
+}
+
+function toArray(d){
+  return Array.prototype.slice.call(d, 0)
+}
+
+function toObject(d) {
+  var by = 'id'
+    , o = {}
+
+  return arguments.length == 1 
+    ? (by = d, reduce)
+    : reduce.apply(this, arguments)
+
+  function reduce(p,v,i){
+    if (i === 0) p = {}
+    p[v[by]] = v
+    return p
+  }
+}
+},{}],17:[function(require,module,exports){
+'use strict';
+
+var _slicedToArray = (function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; })();
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = needs;
+
+var _includes = require('utilise/includes');
+
+var _includes2 = _interopRequireDefault(_includes);
+
+var _replace = require('utilise/replace');
+
+var _replace2 = _interopRequireDefault(_replace);
+
+
+
+var _split = require('utilise/split');
+
+var _split2 = _interopRequireDefault(_split);
+
+var _attr = require('utilise/attr');
+
+var _attr2 = _interopRequireDefault(_attr);
+
+var _key = require('utilise/key');
+
+var _key2 = _interopRequireDefault(_key);
+
+var _lo = require('utilise/lo');
+
+var _lo2 = _interopRequireDefault(_lo);
+
+var _is = require('utilise/is');
+
+var _is2 = _interopRequireDefault(_is);
+
+/* istanbul ignore next */
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// -------------------------------------------
+// Define Default Attributes for Components
+// -------------------------------------------
+function needs(ripple) {
+  if (!true) return;
+  log('creating');
+  ripple.render = render(ripple)(ripple.render);
+  return ripple;
+}
+
+function render(ripple) {
+  return function (next) {
+    return function (el) {
+      var component = (0, _lo2.default)(el.nodeName);
+      if (!(component in ripple.resources)) return;
+
+      var headers = ripple.resources[component].headers,
+          attrs = headers.attrs = headers.attrs || parse(headers.needs, component);
+
+      return attrs.map(function (_ref) {
+        var _ref2 = _slicedToArray(_ref, 2);
+
+        var name = _ref2[0];
+        var values = _ref2[1];
+
+        return values.some(function (v, i) {
+          var from = (0, _attr2.default)(el, name) || '';
+          return (0, _includes2.default)(v)(from) ? false : (0, _attr2.default)(el, name, (from + ' ' + v).trim());
+        });
+      }).some(Boolean) ? el.draw() : next(el);
+    };
+  };
+}
+
+function parse() {
+  var attrs = arguments.length <= 0 || arguments[0] === undefined ? '' : arguments[0];
+  var component = arguments[1];
+
+  return attrs.split('[').slice(1).map((0, _replace2.default)(']', '')).map((0, _split2.default)('=')).map(function (_ref3) {
+    var _ref4 = _slicedToArray(_ref3, 2);
+
+    var k = _ref4[0];
+    var v = _ref4[1];
+    return v ? [k, v.split(' ')] : k == 'css' ? [k, [component + '.css']] : [k, []];
+  });
+}
+
+var log = require('utilise/log')('[ri/needs]'),
+    err = require('utilise/err')('[ri/needs]');
+},{"utilise/attr":18,"utilise/err":19,"utilise/includes":20,"utilise/is":21,"utilise/key":22,"utilise/lo":23,"utilise/log":24,"utilise/replace":26,"utilise/split":27}],18:[function(require,module,exports){
+var is = require('utilise/is')
+
+module.exports = function attr(d, name, value) {
+  d = d.node ? d.node() : d
+  var args = arguments.length
+
+  if (is.str(d)) return function(el){ 
+    var node = this.nodeName || this.node ? this : el
+    return attr.apply(this, args > 1 ? [node, d, name] : [node, d]) 
+  }
+
+  return args > 2 && value === false ? d.removeAttribute(name)
+       : args > 2                    ? (d.setAttribute(name, value), value)
+       : d.attributes.getNamedItem(name) 
+      && d.attributes.getNamedItem(name).value
+}
+
+},{"utilise/is":21}],19:[function(require,module,exports){
+var owner = require('utilise/owner')
+  , to = require('utilise/to')
+
+module.exports = function err(prefix){
+  return function(d){
+    if (!owner.console || !console.error.apply) return d;
+    var args = to.arr(arguments)
+    args.unshift(prefix.red ? prefix.red : prefix)
+    return console.error.apply(console, args), d
+  }
+}
+},{"utilise/owner":25,"utilise/to":29}],20:[function(require,module,exports){
+module.exports = function includes(pattern){
+  return function(d){
+    return d && d.indexOf && ~d.indexOf(pattern)
+  }
+}
+},{}],21:[function(require,module,exports){
+arguments[4][9][0].apply(exports,arguments)
+},{"dup":9}],22:[function(require,module,exports){
+arguments[4][10][0].apply(exports,arguments)
+},{"dup":10,"utilise/is":21,"utilise/str":28}],23:[function(require,module,exports){
+module.exports = function lo(d){
+  return (d || '').toLowerCase()
+}
+
+},{}],24:[function(require,module,exports){
+arguments[4][11][0].apply(exports,arguments)
+},{"dup":11,"utilise/is":21,"utilise/owner":25,"utilise/to":29}],25:[function(require,module,exports){
+arguments[4][13][0].apply(exports,arguments)
+},{"dup":13}],26:[function(require,module,exports){
+module.exports = function replace(from, to){
+  return function(d){
+    return d.replace(from, to)
+  }
+}
+},{}],27:[function(require,module,exports){
+module.exports = function split(delimiter){
+  return function(d){
+    return d.split(delimiter)
+  }
+}
+
+},{}],28:[function(require,module,exports){
+arguments[4][15][0].apply(exports,arguments)
+},{"dup":15,"utilise/is":21}],29:[function(require,module,exports){
+arguments[4][16][0].apply(exports,arguments)
+},{"dup":16}],30:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 exports.default = create;
 
 var _rijs = require('rijs.backpressure');
@@ -26,110 +502,2175 @@ var _rijs9 = require('rijs.reactive');
 
 var _rijs10 = _interopRequireDefault(_rijs9);
 
-var _rijs11 = require('rijs.prehtml');
+var _rijs11 = require('rijs.features');
 
 var _rijs12 = _interopRequireDefault(_rijs11);
 
-var _rijs13 = require('rijs.offline');
+var _rijs13 = require('rijs.prehtml');
 
 var _rijs14 = _interopRequireDefault(_rijs13);
 
-var _rijs15 = require('rijs.helpers');
+var _rijs15 = require('rijs.offline');
 
 var _rijs16 = _interopRequireDefault(_rijs15);
 
-var _rijs17 = require('rijs.precss');
+var _rijs17 = require('rijs.helpers');
 
 var _rijs18 = _interopRequireDefault(_rijs17);
 
-var _rijs19 = require('rijs.shadow');
+var _rijs19 = require('rijs.precss');
 
 var _rijs20 = _interopRequireDefault(_rijs19);
 
-var _rijs21 = require('rijs.resdir');
+var _rijs21 = require('rijs.shadow');
 
 var _rijs22 = _interopRequireDefault(_rijs21);
 
-var _rijs23 = require('rijs.mysql');
+var _rijs23 = require('rijs.resdir');
 
 var _rijs24 = _interopRequireDefault(_rijs23);
 
-var _rijs25 = require('rijs.serve');
+var _rijs25 = require('rijs.mysql');
 
 var _rijs26 = _interopRequireDefault(_rijs25);
 
-var _rijs27 = require('rijs.delay');
+var _rijs27 = require('rijs.serve');
 
 var _rijs28 = _interopRequireDefault(_rijs27);
 
-var _rijs29 = require('rijs.sync');
+var _rijs29 = require('rijs.delay');
 
 var _rijs30 = _interopRequireDefault(_rijs29);
 
-var _rijs31 = require('rijs.core');
+var _rijs31 = require('rijs.needs');
 
 var _rijs32 = _interopRequireDefault(_rijs31);
 
-var _rijs33 = require('rijs.data');
+var _rijs33 = require('rijs.sync');
 
 var _rijs34 = _interopRequireDefault(_rijs33);
 
-var _rijs35 = require('rijs.html');
+var _rijs35 = require('rijs.core');
 
 var _rijs36 = _interopRequireDefault(_rijs35);
 
-var _rijs37 = require('rijs.css');
+var _rijs37 = require('rijs.data');
 
 var _rijs38 = _interopRequireDefault(_rijs37);
 
-var _rijs39 = require('rijs.fn');
+var _rijs39 = require('rijs.html');
 
 var _rijs40 = _interopRequireDefault(_rijs39);
 
-var _rijs41 = require('rijs.db');
+var _rijs41 = require('rijs.css');
 
 var _rijs42 = _interopRequireDefault(_rijs41);
 
-var _client = require('utilise/client');
+var _rijs43 = require('rijs.fn');
 
-var _client2 = _interopRequireDefault(_client);
+var _rijs44 = _interopRequireDefault(_rijs43);
+
+var _rijs45 = require('rijs.db');
+
+var _rijs46 = _interopRequireDefault(_rijs45);
+
+
 
 /* istanbul ignore next */
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-// import hypermedia from 'rijs.hypermedia'
-
-_client2.default && !window.ripple && create();
+true && !window.ripple && create();
 
 function create(opts) {
-  var ripple = (0, _rijs32.default)(); // empty base collection of resources
+  var ripple = (0, _rijs36.default)(); // empty base collection of resources
 
   // enrich..
   (0, _rijs6.default)(ripple); // exposes a single instance
-  (0, _rijs34.default)(ripple); // register data types
-  // hypermedia(ripple)     // register hypermedia types
-  (0, _rijs36.default)(ripple); // register html types
-  (0, _rijs38.default)(ripple); // register css types
-  (0, _rijs40.default)(ripple); // register fn types
-  (0, _rijs16.default)(ripple); // expose helper functions and constants
-  (0, _rijs24.default)(ripple); // adds mysql adaptor crud hooks
-  (0, _rijs42.default)(ripple, opts); // enable external connections
+  (0, _rijs38.default)(ripple); // register data types
+  (0, _rijs40.default)(ripple); // register html types
+  (0, _rijs42.default)(ripple); // register css types
+  (0, _rijs44.default)(ripple); // register fn types
+  (0, _rijs18.default)(ripple); // expose helper functions and constants
+  (0, _rijs26.default)(ripple); // adds mysql adaptor crud hooks
+  (0, _rijs46.default)(ripple, opts); // enable external connections
   (0, _rijs4.default)(ripple); // invoke web components, fn.call(<el>, data)
+  (0, _rijs32.default)(ripple); // define default attrs for components
   (0, _rijs10.default)(ripple); // react to changes in resources
-  (0, _rijs18.default)(ripple); // preapplies scoped css
-  (0, _rijs12.default)(ripple); // preapplies html templates
-  (0, _rijs20.default)(ripple); // encapsulates with shadow dom or closes gap
-  (0, _rijs28.default)(ripple); // async rendering delay
-  (0, _rijs26.default)(opts); // serve client libraries
-  (0, _rijs30.default)(ripple, opts); // syncs resources between server/client
+  (0, _rijs20.default)(ripple); // preapplies scoped css
+  (0, _rijs14.default)(ripple); // preapplies html templates
+  (0, _rijs22.default)(ripple); // encapsulates with shadow dom or closes gap
+  (0, _rijs30.default)(ripple); // async rendering delay
+  (0, _rijs12.default)(ripple); // extend components with features
+  (0, _rijs28.default)(opts); // serve client libraries
+  (0, _rijs34.default)(ripple, opts); // syncs resources between server/client
   (0, _rijs2.default)(ripple); // restricts broadcast to clients based on need
   (0, _rijs8.default)(ripple, opts); // populates sessionid on each connection
-  (0, _rijs14.default)(ripple); // loads/saves from/to localstorage
-  (0, _rijs22.default)(ripple, opts); // loads from resources folder
+  (0, _rijs16.default)(ripple); // loads/saves from/to localstorage
+  (0, _rijs24.default)(ripple, opts); // loads from resources folder
 
   return ripple;
 }
-},{"rijs.backpressure":37,"rijs.components":38,"rijs.core":41,"rijs.css":43,"rijs.data":44,"rijs.db":117,"rijs.delay":45,"rijs.fn":46,"rijs.helpers":47,"rijs.html":48,"rijs.mysql":117,"rijs.offline":49,"rijs.precss":50,"rijs.prehtml":51,"rijs.reactive":52,"rijs.resdir":117,"rijs.serve":117,"rijs.sessions":117,"rijs.shadow":53,"rijs.singleton":54,"rijs.sync":55,"utilise/client":74}],2:[function(require,module,exports){
+},{"rijs.backpressure":76,"rijs.components":77,"rijs.core":80,"rijs.css":82,"rijs.data":83,"rijs.db":52,"rijs.delay":84,"rijs.features":1,"rijs.fn":85,"rijs.helpers":86,"rijs.html":87,"rijs.mysql":52,"rijs.needs":17,"rijs.offline":88,"rijs.precss":89,"rijs.prehtml":90,"rijs.reactive":91,"rijs.resdir":52,"rijs.serve":52,"rijs.sessions":52,"rijs.shadow":92,"rijs.singleton":93,"rijs.sync":94}],31:[function(require,module,exports){
+
+},{}],32:[function(require,module,exports){
+var to = require('utilise/to')
+
+module.exports = function all(selector, doc){
+  var prefix = !doc && document.head.createShadowRoot ? 'html /deep/ ' : ''
+  return to.arr((doc || document).querySelectorAll(prefix+selector))
+}
+},{"utilise/to":71}],33:[function(require,module,exports){
+arguments[4][3][0].apply(exports,arguments)
+},{"dup":3,"utilise/is":54}],34:[function(require,module,exports){
+module.exports = function body(ripple){
+  return function(name){
+    var res = ripple.resources[name]
+    return res && res.body
+  }
+}
+},{}],35:[function(require,module,exports){
+arguments[4][4][0].apply(exports,arguments)
+},{"dup":4,"utilise/is":54,"utilise/key":55}],36:[function(require,module,exports){
+module.exports = function chainable(fn) {
+  return function(){
+    return fn.apply(this, arguments), fn
+  }
+}
+},{}],37:[function(require,module,exports){
+var parse = require('utilise/parse')
+  , str = require('utilise/str')
+  , is = require('utilise/is')
+
+module.exports = function clone(d) {
+  return !is.fn(d) && !is.str(d)
+       ? parse(str(d))
+       : d
+}
+
+},{"utilise/is":54,"utilise/parse":62,"utilise/str":70}],38:[function(require,module,exports){
+var client = true
+  , colors = !client && require('colors')
+  , has = require('utilise/has')
+  , is = require('utilise/is')
+
+module.exports = colorfill()
+
+function colorfill(){
+  /* istanbul ignore next */
+  ['red', 'green', 'bold', 'grey', 'strip'].forEach(function(color) {
+    !is.str(String.prototype[color]) && Object.defineProperty(String.prototype, color, {
+      get: function() {
+        return String(this)
+      } 
+    })
+  })
+}
+
+
+},{"colors":31,"utilise/has":50,"utilise/is":54}],39:[function(require,module,exports){
+module.exports = function copy(from, to){ 
+  return function(d){ 
+    return to[d] = from[d], d
+  }
+}
+},{}],40:[function(require,module,exports){
+arguments[4][5][0].apply(exports,arguments)
+},{"dup":5,"utilise/sel":68}],41:[function(require,module,exports){
+var is = require('utilise/is')
+
+module.exports = function debounce(d){
+  var pending, wait = is.num(d) ? d : 100
+
+  return is.fn(d) 
+       ? next(d)
+       : next
+
+  function next(fn){
+    return function(){
+      var ctx = this, args = arguments
+      pending && clearTimeout(pending)
+      pending = setTimeout(function(){ fn.apply(ctx, args) }, wait)
+    }
+  }
+  
+}
+},{"utilise/is":54}],42:[function(require,module,exports){
+var has = require('utilise/has')
+
+module.exports = function def(o, p, v, w){
+  !has(o, p) && Object.defineProperty(o, p, { value: v, writable: w })
+  return o[p]
+}
+
+},{"utilise/has":50}],43:[function(require,module,exports){
+var err  = require('utilise/err')('[emitterify]')
+  , keys = require('utilise/keys')
+  , def  = require('utilise/def')
+  , not  = require('utilise/not')
+  , is   = require('utilise/is')
+  
+module.exports = function emitterify(body) {
+  return def(body, 'on', on, 1)
+       , def(body, 'once', once, 1)
+       , def(body, 'emit', emit, 1)
+       , body
+
+  function emit(type, param, filter) {
+    var ns = type.split('.')[1]
+      , id = type.split('.')[0]
+      , li = body.on[id] || []
+      , tt = li.length-1
+      , pm = is.arr(param) ? param : [param || body]
+
+    if (ns) return invoke(li, ns, pm), body
+
+    for (var i = li.length; i >=0; i--)
+      invoke(li, i, pm)
+
+    keys(li)
+      .filter(not(isFinite))
+      .filter(filter || Boolean)
+      .map(function(n){ return invoke(li, n, pm) })
+
+    return body
+  }
+
+  function invoke(o, k, p){
+    if (!o[k]) return
+    var fn = o[k]
+    o[k].once && (isFinite(k) ? o.splice(k, 1) : delete o[k])
+    try { fn.apply(body, p) } catch(e) { err(e, e.stack)  }
+   }
+
+  function on(type, callback) {
+    var ns = type.split('.')[1]
+      , id = type.split('.')[0]
+
+    body.on[id] = body.on[id] || []
+    return !callback && !ns ? (body.on[id])
+         : !callback &&  ns ? (body.on[id][ns])
+         :  ns              ? (body.on[id][ns] = callback, body)
+                            : (body.on[id].push(callback), body)
+  }
+
+  function once(type, callback){
+    return callback.once = true, body.on(type, callback), body
+  }
+}
+},{"utilise/def":42,"utilise/err":44,"utilise/is":54,"utilise/keys":56,"utilise/not":60}],44:[function(require,module,exports){
+arguments[4][19][0].apply(exports,arguments)
+},{"dup":19,"utilise/owner":61,"utilise/to":71}],45:[function(require,module,exports){
+var is = require('utilise/is')
+  , not = require('utilise/not')
+  , keys = require('utilise/keys')
+  , copy = require('utilise/copy')
+
+module.exports = function extend(to){ 
+  return function(from){
+    keys(from)
+      .filter(not(is.in(to)))
+      .map(copy(from, to))
+
+    return to
+  }
+}
+},{"utilise/copy":39,"utilise/is":54,"utilise/keys":56,"utilise/not":60}],46:[function(require,module,exports){
+var is = require('utilise/is')  
+
+module.exports = function flatten(p,v){ 
+  is.arr(v) && (v = v.reduce(flatten, []))
+  return (p = p || []), p.concat(v) 
+}
+
+},{"utilise/is":54}],47:[function(require,module,exports){
+var is = require('utilise/is')
+
+module.exports = function fn(candid){
+  return is.fn(candid) ? candid
+       : (new Function("return " + candid))()
+}
+},{"utilise/is":54}],48:[function(require,module,exports){
+arguments[4][6][0].apply(exports,arguments)
+},{"dup":6,"utilise/datum":40,"utilise/key":55}],49:[function(require,module,exports){
+var client = true
+  , owner = require('utilise/owner')
+  , noop = require('utilise/noop')
+
+module.exports = function group(prefix, fn){
+  if (!owner.console) return fn()
+  if (!console.groupCollapsed) polyfill()
+  console.groupCollapsed(prefix)
+  var ret = fn()
+  console.groupEnd(prefix)
+  return ret
+}
+
+function polyfill() {
+  console.groupCollapsed = console.groupEnd = function(d){
+    (console.log || noop)('*****', d, '*****')
+  }
+}
+},{"utilise/noop":59,"utilise/owner":61}],50:[function(require,module,exports){
+arguments[4][7][0].apply(exports,arguments)
+},{"dup":7}],51:[function(require,module,exports){
+arguments[4][8][0].apply(exports,arguments)
+},{"dup":8,"utilise/has":50}],52:[function(require,module,exports){
+module.exports = function identity(d) {
+  return d
+}
+},{}],53:[function(require,module,exports){
+arguments[4][20][0].apply(exports,arguments)
+},{"dup":20}],54:[function(require,module,exports){
+arguments[4][9][0].apply(exports,arguments)
+},{"dup":9}],55:[function(require,module,exports){
+arguments[4][10][0].apply(exports,arguments)
+},{"dup":10,"utilise/is":54,"utilise/str":70}],56:[function(require,module,exports){
+module.exports = function keys(o) {
+  return Object.keys(o || {})
+}
+},{}],57:[function(require,module,exports){
+arguments[4][23][0].apply(exports,arguments)
+},{"dup":23}],58:[function(require,module,exports){
+arguments[4][11][0].apply(exports,arguments)
+},{"dup":11,"utilise/is":54,"utilise/owner":61,"utilise/to":71}],59:[function(require,module,exports){
+module.exports = function noop(){}
+},{}],60:[function(require,module,exports){
+arguments[4][12][0].apply(exports,arguments)
+},{"dup":12}],61:[function(require,module,exports){
+arguments[4][13][0].apply(exports,arguments)
+},{"dup":13}],62:[function(require,module,exports){
+module.exports = function parse(d){
+  return d && JSON.parse(d)
+}
+},{}],63:[function(require,module,exports){
+module.exports = function prepend(v) {
+  return function(d){
+    return v+d
+  }
+}
+},{}],64:[function(require,module,exports){
+var is = require('utilise/is')
+  , identity = require('utilise/identity')
+
+module.exports = function proxy(fn, ret, ctx){ 
+  return function(){
+    var result = (fn || identity).apply(ctx || this, arguments)
+    return is.fn(ret) ? ret.call(ctx || this, result) : ret || result
+  }
+}
+},{"utilise/identity":52,"utilise/is":54}],65:[function(require,module,exports){
+module.exports = function raw(selector, doc){
+  var prefix = !doc && document.head.createShadowRoot ? 'html /deep/ ' : ''
+  return (doc ? doc : document).querySelector(prefix+selector)
+}
+},{}],66:[function(require,module,exports){
+module.exports = function(target, source) {
+  var i = 1, n = arguments.length, method
+  while (++i < n) target[method = arguments[i]] = rebind(target, source, source[method])
+  return target
+}
+
+function rebind(target, source, method) {
+  return function() {
+    var value = method.apply(source, arguments)
+    return value === source ? target : value
+  }
+}
+},{}],67:[function(require,module,exports){
+arguments[4][26][0].apply(exports,arguments)
+},{"dup":26}],68:[function(require,module,exports){
+arguments[4][14][0].apply(exports,arguments)
+},{"dup":14}],69:[function(require,module,exports){
+arguments[4][27][0].apply(exports,arguments)
+},{"dup":27}],70:[function(require,module,exports){
+arguments[4][15][0].apply(exports,arguments)
+},{"dup":15,"utilise/is":54}],71:[function(require,module,exports){
+arguments[4][16][0].apply(exports,arguments)
+},{"dup":16}],72:[function(require,module,exports){
+var is = require('utilise/is')
+
+module.exports = function unique(d, i){
+  if (!i) unique.matched = []
+  return !is.in(unique.matched)(d) 
+       ? unique.matched.push(d)
+       : false 
+}
+
+},{"utilise/is":54}],73:[function(require,module,exports){
+var keys = require('utilise/keys')
+  , from = require('utilise/from')
+
+module.exports = function values(o) {
+  return !o ? [] : keys(o).map(from(o))
+}
+},{"utilise/from":48,"utilise/keys":56}],74:[function(require,module,exports){
+module.exports = function wrap(d){
+  return function(){
+    return d
+  }
+}
+},{}],75:[function(require,module,exports){
+var key = require('utilise/key')
+
+module.exports = function za(k) {
+  return function(a, b){
+    var ka = key(k)(a) || ''
+      , kb = key(k)(b) || ''
+
+    return ka > kb ? -1 
+         : ka < kb ?  1 
+                   :  0
+  }
+}
+
+},{"utilise/key":55}],76:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = backpressure;
+
+var _from = require('utilise/from');
+
+var _from2 = _interopRequireDefault(_from);
+
+var _includes = require('utilise/includes');
+
+var _includes2 = _interopRequireDefault(_includes);
+
+var _debounce = require('utilise/debounce');
+
+var _debounce2 = _interopRequireDefault(_debounce);
+
+var _flatten = require('utilise/flatten');
+
+var _flatten2 = _interopRequireDefault(_flatten);
+
+var _unique = require('utilise/unique');
+
+var _unique2 = _interopRequireDefault(_unique);
+
+var _values = require('utilise/values');
+
+var _values2 = _interopRequireDefault(_values);
+
+
+
+var _proxy = require('utilise/proxy');
+
+var _proxy2 = _interopRequireDefault(_proxy);
+
+var _group = require('utilise/group');
+
+var _group2 = _interopRequireDefault(_group);
+
+var _parse = require('utilise/parse');
+
+var _parse2 = _interopRequireDefault(_parse);
+
+var _split = require('utilise/split');
+
+var _split2 = _interopRequireDefault(_split);
+
+var _attr = require('utilise/attr');
+
+var _attr2 = _interopRequireDefault(_attr);
+
+var _noop = require('utilise/noop');
+
+var _noop2 = _interopRequireDefault(_noop);
+
+var _not = require('utilise/not');
+
+var _not2 = _interopRequireDefault(_not);
+
+var _all = require('utilise/all');
+
+var _all2 = _interopRequireDefault(_all);
+
+var _key = require('utilise/key');
+
+var _key2 = _interopRequireDefault(_key);
+
+var _is = require('utilise/is');
+
+var _is2 = _interopRequireDefault(_is);
+
+var _by = require('utilise/by');
+
+var _by2 = _interopRequireDefault(_by);
+
+var _to = require('utilise/to');
+
+var _to2 = _interopRequireDefault(_to);
+
+var _lo = require('utilise/lo');
+
+var _lo2 = _interopRequireDefault(_lo);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// -------------------------------------------
+// API: Applies backpressure on the flow of streams
+// -------------------------------------------
+function backpressure(ripple) {
+  log('creating');
+
+  if (!ripple.io) return ripple;
+  if (true) return ripple.draw = draw(ripple)(ripple.draw), ripple.render = loaded(ripple)(ripple.render), ripple.deps = deps, start(ripple);
+
+  (0, _values2.default)(ripple.types).map(function (type) {
+    return type.to = (0, _proxy2.default)(type.to, limit);
+  });
+  (0, _values2.default)(ripple.types).map(function (type) {
+    return type.from = (0, _proxy2.default)(type.from, track(ripple));
+  });
+  ripple.io.use(function (socket, next) {
+    socket.deps = {}, next();
+  });
+  return ripple;
+}
+
+function draw(ripple) {
+  var refresh = function refresh(d) {
+    return (0, _all2.default)(':unresolved').filter((0, _not2.default)((0, _key2.default)('requested'))).map((0, _key2.default)('requested', true)).map(ripple.draw);
+  };
+
+  return function (next) {
+    return function (thing) {
+      var everything = !thing && (!this || !this.nodeName && !this.node),
+          ret = next.apply(this, arguments);
+      if (shadows || customs && everything) raf(refresh);
+      return ret;
+    };
+  };
+}
+
+function start(ripple) {
+  load(ripple);
+  ready(ripple.draw);
+  if (customs) ready(polytop(ripple));else ready(function (d) {
+    return (0, _all2.default)('*').filter((0, _by2.default)('nodeName', (0, _includes2.default)('-'))).map(ripple.draw);
+  });
+  return ripple;
+}
+
+function polytop(ripple) {
+  var muto = new MutationObserver(drawNodes(ripple));
+  return function (d) {
+    return muto.observe(document.body, { childList: true, subtree: true });
+  };
+}
+
+function drawNodes(ripple) {
+  return function (mutations) {
+    return mutations.map((0, _key2.default)('addedNodes')).map(_to2.default.arr).reduce(_flatten2.default, []).filter((0, _by2.default)('nodeName', (0, _includes2.default)('-'))).map(ripple.draw);
+  };
+}
+
+function track(ripple) {
+  return function (_ref) {
+    var name = _ref.name;
+    var body = _ref.body;
+    var headers = _ref.headers;
+
+    var exists = name in this.deps;
+    this.deps[name] = 1;
+    if (!exists) ripple.sync(this)(name);
+    return !headers.pull;
+  };
+}
+
+function load(ripple) {
+  (0, _group2.default)('pulling cache', function (fn) {
+    return ((0, _parse2.default)(localStorage.ripple) || []).map(function (_ref2) {
+      var name = _ref2.name;
+      return log(name);
+    }).map(function (name) {
+      return ripple.io.emit('change', { name: name, headers: headers });
+    });
+  });
+}
+
+function untrack(ripple) {
+  return function (names) {
+    delete this[name];
+  };
+}
+
+function limit(res) {
+  return res.name in this.deps ? res : false;
+}
+
+function deps(el) {
+  return format([(0, _key2.default)('nodeName'), (0, _attr2.default)('data'), (0, _attr2.default)('css')])(el);
+}
+
+function format(arr) {
+  return function (el) {
+    return arr.map(function (fn) {
+      return fn(el);
+    }).filter(Boolean).map(_lo2.default).map((0, _split2.default)(' ')).reduce(_flatten2.default, []).filter(_unique2.default);
+  };
+}
+
+function loaded(ripple) {
+  return function (render) {
+    return function (el) {
+      var deps = ripple.deps(el);
+
+      return deps.filter((0, _not2.default)(_is2.default.in(ripple.resources))).map(function (name) {
+        return debug('pulling', name), name;
+      }).map(function (name) {
+        return ripple.io.emit('change', { name: name, headers: headers });
+      }).length ? false : render(el);
+    };
+  };
+}
+
+function ready(fn) {
+  return document.body ? fn() : document.addEventListener('DOMContentLoaded', function (d) {
+    return fn();
+  });
+}
+
+var log = require('utilise/log')('[ri/backpressure]'),
+    err = require('utilise/err')('[ri/backpressure]'),
+    shadows = true && !!document.head.createShadowRoot,
+    customs = true && !!document.registerElement,
+    raf = true && requestAnimationFrame,
+    pull = true,
+    headers = { 'content-type': 'text/plain', pull: pull },
+    debug = _noop2.default;
+},{"utilise/all":32,"utilise/attr":33,"utilise/by":35,"utilise/debounce":41,"utilise/err":44,"utilise/flatten":46,"utilise/from":48,"utilise/group":49,"utilise/includes":53,"utilise/is":54,"utilise/key":55,"utilise/lo":57,"utilise/log":58,"utilise/noop":59,"utilise/not":60,"utilise/parse":62,"utilise/proxy":64,"utilise/split":69,"utilise/to":71,"utilise/unique":72,"utilise/values":73}],77:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = components;
+
+var _emitterify = require('utilise/emitterify');
+
+var _emitterify2 = _interopRequireDefault(_emitterify);
+
+var _includes = require('utilise/includes');
+
+var _includes2 = _interopRequireDefault(_includes);
+
+var _identity = require('utilise/identity');
+
+var _identity2 = _interopRequireDefault(_identity);
+
+var _flatten = require('utilise/flatten');
+
+var _flatten2 = _interopRequireDefault(_flatten);
+
+var _prepend = require('utilise/prepend');
+
+var _prepend2 = _interopRequireDefault(_prepend);
+
+var _header = require('utilise/header');
+
+var _header2 = _interopRequireDefault(_header);
+
+
+
+var _values = require('utilise/values');
+
+var _values2 = _interopRequireDefault(_values);
+
+var _proxy = require('utilise/proxy');
+
+var _proxy2 = _interopRequireDefault(_proxy);
+
+var _attr = require('utilise/attr');
+
+var _attr2 = _interopRequireDefault(_attr);
+
+var _body = require('utilise/body');
+
+var _body2 = _interopRequireDefault(_body);
+
+var _noop = require('utilise/noop');
+
+var _noop2 = _interopRequireDefault(_noop);
+
+var _wrap = require('utilise/wrap');
+
+var _wrap2 = _interopRequireDefault(_wrap);
+
+var _copy = require('utilise/copy');
+
+var _copy2 = _interopRequireDefault(_copy);
+
+var _key = require('utilise/key');
+
+var _key2 = _interopRequireDefault(_key);
+
+var _all = require('utilise/all');
+
+var _all2 = _interopRequireDefault(_all);
+
+var _is = require('utilise/is');
+
+var _is2 = _interopRequireDefault(_is);
+
+var _by = require('utilise/by');
+
+var _by2 = _interopRequireDefault(_by);
+
+var _lo = require('utilise/lo');
+
+var _lo2 = _interopRequireDefault(_lo);
+
+var _to = require('utilise/to');
+
+var _to2 = _interopRequireDefault(_to);
+
+var _data = require('./types/data');
+
+var _data2 = _interopRequireDefault(_data);
+
+var _fn = require('./types/fn');
+
+var _fn2 = _interopRequireDefault(_fn);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// -------------------------------------------
+// API: Renders specific nodes, resources or everything
+// -------------------------------------------
+// ripple.draw()                 - redraw all components on page
+// ripple.draw(element)          - redraw specific element
+// ripple.draw.call(element)     - redraw specific element
+// ripple.draw.call(selection)   - redraw D3 selection
+// ripple.draw('name')           - redraw elements that depend on resource
+// ripple.draw({ ... })          - redraw elements that depend on resource
+// MutationObserver(ripple.draw) - redraws element being observed
+
+function components(ripple) {
+  if (!true) return ripple;
+  log('creating');
+
+  if (!customs) ready(polyfill(ripple));
+  (0, _values2.default)(ripple.types).map(function (type) {
+    return type.parse = (0, _proxy2.default)(type.parse || _identity2.default, clean(ripple));
+  });
+  (0, _key2.default)('types.application/javascript.render', (0, _wrap2.default)((0, _fn2.default)(ripple)))(ripple);
+  (0, _key2.default)('types.application/data.render', (0, _wrap2.default)((0, _data2.default)(ripple)))(ripple);
+  ripple.draw = draw(ripple);
+  ripple.render = render(ripple);
+  ripple.on('change', ripple.draw);
+  return ripple;
+}
+
+// public draw api
+function draw(ripple) {
+  return function (thing) {
+    return this && this.nodeName ? invoke(ripple)(this) : this && this.node ? invoke(ripple)(this.node()) : !thing ? everything(ripple) : thing instanceof mutation ? invoke(ripple)(thing.target) : thing[0] instanceof mutation ? invoke(ripple)(thing[0].target) : thing.nodeName ? invoke(ripple)(thing) : thing.node ? invoke(ripple)(thing.node()) : thing.name ? resource(ripple)(thing.name) : _is2.default.str(thing) ? resource(ripple)(thing) : err('could not update', thing);
+  };
+}
+
+// render all components
+function everything(ripple) {
+  var selector = (0, _values2.default)(ripple.resources).filter((0, _header2.default)('content-type', 'application/javascript')).map((0, _key2.default)('name')).join(',');
+
+  return !selector ? [] : (0, _all2.default)(selector).map(invoke(ripple));
+}
+
+// render all elements that depend on the resource
+function resource(ripple) {
+  return function (name) {
+    var res = ripple.resources[name],
+        type = (0, _header2.default)('content-type')(res);
+
+    return (ripple.types[type].render || _noop2.default)(res);
+  };
+}
+
+// batch renders on render frames
+function batch(ripple) {
+  return function (el) {
+    return !el.pending && (el.pending = requestAnimationFrame(function (d) {
+      return delete el.pending, ripple.render(el);
+    }));
+  };
+}
+
+// main function to render a particular custom element with any data it needs
+function invoke(ripple) {
+  return function (el) {
+    if (el.nodeName == '#document-fragment') return invoke(ripple)(el.host);
+    if (el.nodeName == '#text') return invoke(ripple)(el.parentNode);
+    if (!el.matches(isAttached)) return;
+    if ((0, _attr2.default)(el, 'inert') != null) return;
+    if (!el.on) (0, _emitterify2.default)(el);
+    if (!el.draw) el.draw = function (d) {
+      return ripple.draw(el);
+    };
+    return batch(ripple)(el), el;
+  };
+}
+
+function render(ripple) {
+  return function (el) {
+    var name = (0, _lo2.default)(el.tagName),
+        deps = (0, _attr2.default)(el, 'data'),
+        fn = (0, _body2.default)(ripple)(name),
+        data = bodies(ripple)(deps);
+
+    if (!fn) return el;
+    if (deps && !data) return el;
+
+    try {
+      fn.call(el.shadowRoot || el, defaults(el, data));
+    } catch (e) {
+      err(e, e.stack);
+    }
+
+    return el;
+  };
+}
+
+// polyfill
+function polyfill(ripple) {
+  return function () {
+    if (typeof MutationObserver == 'undefined') return;
+    if (document.body.muto) document.body.muto.disconnect();
+    var muto = document.body.muto = new MutationObserver(drawCustomEls(ripple)),
+        conf = { childList: true, subtree: true, attributes: true, attributeOldValue: true };
+
+    muto.observe(document.body, conf);
+  };
+}
+
+function drawCustomEls(ripple) {
+  return function (mutations) {
+    drawNodes(ripple)(mutations);
+    drawAttrs(ripple)(mutations);
+  };
+}
+
+// clean local headers for transport
+function clean(ripple) {
+  return function (res) {
+    delete res.headers.pending;
+    return res;
+  };
+}
+
+// helpers
+function defaults(el, data) {
+  el.state = el.state || {};
+  overwrite(el.state)(data);
+  overwrite(el.state)(el.__data__);
+  el.__data__ = el.state;
+  return el.state;
+}
+
+function overwrite(to) {
+  return function (from) {
+    return keys(from).map((0, _copy2.default)(from, to));
+  };
+}
+
+function onlyIfDifferent(m) {
+  return (0, _attr2.default)(m.target, m.attributeName) != m.oldValue;
+}
+
+function ready(fn) {
+  return document.body ? fn() : document.addEventListener('DOMContentLoaded', fn);
+}
+
+function drawAttrs(ripple) {
+  return function (mutations) {
+    return mutations.filter((0, _key2.default)('attributeName')).filter((0, _by2.default)('target.nodeName', (0, _includes2.default)('-'))).filter(onlyIfDifferent).map(ripple.draw);
+  };
+}
+
+function drawNodes(ripple) {
+  return function (mutations) {
+    return mutations.map((0, _key2.default)('addedNodes')).map(_to2.default.arr).reduce(_flatten2.default).filter((0, _by2.default)('nodeName', (0, _includes2.default)('-'))).map(ripple.draw);
+  };
+}
+
+function bodies(ripple) {
+  return function (deps) {
+    var o = {},
+        names = deps ? deps.split(' ') : [];
+
+    names.map(function (d) {
+      return o[d] = (0, _body2.default)(ripple)(d);
+    });
+
+    return !names.length ? undefined : (0, _values2.default)(o).some(_is2.default.falsy) ? undefined : o;
+  };
+}
+
+var log = require('utilise/log')('[ri/components]'),
+    err = require('utilise/err')('[ri/components]'),
+    mutation = true && window.MutationRecord || _noop2.default,
+    customs = true && !!document.registerElement,
+    isAttached = customs ? 'html *, :host-context(html) *' : 'html *';
+true && (Element.prototype.matches = Element.prototype.matches || Element.prototype.msMatchesSelector);
+},{"./types/data":78,"./types/fn":79,"utilise/all":32,"utilise/attr":33,"utilise/body":34,"utilise/by":35,"utilise/copy":39,"utilise/emitterify":43,"utilise/err":44,"utilise/flatten":46,"utilise/header":51,"utilise/identity":52,"utilise/includes":53,"utilise/is":54,"utilise/key":55,"utilise/lo":57,"utilise/log":58,"utilise/noop":59,"utilise/prepend":63,"utilise/proxy":64,"utilise/to":71,"utilise/values":73,"utilise/wrap":74}],78:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = data;
+
+var _all = require('utilise/all');
+
+var _all2 = _interopRequireDefault(_all);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// render all elements that require the specified data
+function data(ripple) {
+  return function (res) {
+    return (0, _all2.default)('[data~="' + res.name + '"]:not([inert])').map(ripple.draw);
+  };
+}
+},{"utilise/all":32}],79:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = fn;
+
+var _includes = require('utilise/includes');
+
+var _includes2 = _interopRequireDefault(_includes);
+
+var _header = require('utilise/header');
+
+var _header2 = _interopRequireDefault(_header);
+
+
+
+var _all = require('utilise/all');
+
+var _all2 = _interopRequireDefault(_all);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// register custom element prototype (render is automatic)
+function fn(ripple) {
+  return function (res) {
+    if (!customs || !customEl(res) || registered(res)) return (0, _all2.default)(res.name + ':not([inert])\n                 ,[is="' + res.name + '"]:not([inert])').map(ripple.draw);
+
+    var proto = Object.create(HTMLElement.prototype),
+        opts = { prototype: proto },
+        extend = res.headers['extends'];
+
+    extend && (opts.extends = extend);
+    proto.attachedCallback = ripple.draw;
+    document.registerElement(res.name, opts);
+  };
+}
+
+function registered(res) {
+  var extend = (0, _header2.default)('extends')(res);
+
+  return extend ? document.createElement(extend, res.name).attachedCallback : document.createElement(res.name).attachedCallback;
+}
+
+var customs = true && !!document.registerElement,
+    customEl = function customEl(d) {
+  return (0, _includes2.default)('-')(d.name);
+};
+},{"utilise/all":32,"utilise/header":51,"utilise/includes":53}],80:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = core;
+
+var _emitterify = require('utilise/emitterify');
+
+var _emitterify2 = _interopRequireDefault(_emitterify);
+
+var _colorfill = require('utilise/colorfill');
+
+var _colorfill2 = _interopRequireDefault(_colorfill);
+
+var _chainable = require('utilise/chainable');
+
+var _chainable2 = _interopRequireDefault(_chainable);
+
+var _identity = require('utilise/identity');
+
+var _identity2 = _interopRequireDefault(_identity);
+
+var _rebind = require('utilise/rebind');
+
+var _rebind2 = _interopRequireDefault(_rebind);
+
+var _header = require('utilise/header');
+
+var _header2 = _interopRequireDefault(_header);
+
+var _values = require('utilise/values');
+
+var _values2 = _interopRequireDefault(_values);
+
+var _is = require('utilise/is');
+
+var _is2 = _interopRequireDefault(_is);
+
+var _to = require('utilise/to');
+
+var _to2 = _interopRequireDefault(_to);
+
+var _za = require('utilise/za');
+
+var _za2 = _interopRequireDefault(_za);
+
+var _text = require('./types/text');
+
+var _text2 = _interopRequireDefault(_text);
+
+/* istanbul ignore next */
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// -------------------------------------------
+// API: Gets or sets a resource
+// -------------------------------------------
+// ripple('name')     - returns the resource body if it exists
+// ripple('name')     - creates & returns resource if it doesn't exist
+// ripple('name', {}) - creates & returns resource, with specified name and body
+// ripple({ ... })    - creates & returns resource, with specified name, body and headers
+// ripple.resources   - returns raw resources
+// ripple.resource    - alias for ripple, returns ripple instead of resource for method chaining
+// ripple.register    - alias for ripple
+// ripple.on          - event listener for changes - all resources
+// ripple('name').on  - event listener for changes - resource-specific
+
+function core() {
+  log('creating');
+
+  var resources = {};
+  ripple.resources = resources;
+  ripple.resource = (0, _chainable2.default)(ripple);
+  ripple.register = ripple;
+  ripple.types = types();
+  return (0, _emitterify2.default)(ripple);
+
+  function ripple(name, body, headers) {
+    return !name ? ripple : _is2.default.arr(name) ? name.map(ripple) : _is2.default.obj(name) && !name.name ? ripple : _is2.default.fn(name) && name.resources ? ripple((0, _values2.default)(name.resources)) : _is2.default.str(name) && !body && resources[name] ? resources[name].body : _is2.default.str(name) && !body && !resources[name] ? register(ripple)({ name: name }) : _is2.default.str(name) && body ? register(ripple)({ name: name, body: body, headers: headers }) : _is2.default.obj(name) && !_is2.default.arr(name) ? register(ripple)(name) : (err('could not find or create resource', name), false);
+  }
+}
+
+function register(ripple) {
+  return function (_ref) {
+    var name = _ref.name;
+    var body = _ref.body;
+    var _ref$headers = _ref.headers;
+    var headers = _ref$headers === undefined ? {} : _ref$headers;
+
+    log('registering', name);
+    var res = normalise(ripple)({ name: name, body: body, headers: headers }),
+        type = !ripple.resources[name] ? 'load' : '';
+
+    if (!res) return err('failed to register', name), false;
+    ripple.resources[name] = res;
+    ripple.emit('change', [ripple.resources[name], { type: type }]);
+    return ripple.resources[name].body;
+  };
+}
+
+function normalise(ripple) {
+  return function (res) {
+    if (!(0, _header2.default)('content-type')(res)) (0, _values2.default)(ripple.types).sort((0, _za2.default)('priority')).some(contentType(res));
+    if (!(0, _header2.default)('content-type')(res)) return err('could not understand resource', res), false;
+    return parse(ripple)(res);
+  };
+}
+
+function parse(ripple) {
+  return function (res) {
+    var type = (0, _header2.default)('content-type')(res);
+    if (!ripple.types[type]) return err('could not understand type', type), false;
+    return (ripple.types[type].parse || _identity2.default)(res);
+  };
+}
+
+function contentType(res) {
+  return function (type) {
+    return type.check(res) && (res.headers['content-type'] = type.header);
+  };
+}
+
+function types() {
+  return [_text2.default].reduce(_to2.default.obj('header'), 1);
+}
+
+var err = require('utilise/err')('[ri/core]'),
+    log = require('utilise/log')('[ri/core]');
+},{"./types/text":81,"utilise/chainable":36,"utilise/colorfill":38,"utilise/emitterify":43,"utilise/err":44,"utilise/header":51,"utilise/identity":52,"utilise/is":54,"utilise/log":58,"utilise/rebind":66,"utilise/to":71,"utilise/values":73,"utilise/za":75}],81:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _includes = require('utilise/includes');
+
+var _includes2 = _interopRequireDefault(_includes);
+
+var _is = require('utilise/is');
+
+var _is2 = _interopRequireDefault(_is);
+
+/* istanbul ignore next */
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+exports.default = {
+  header: 'text/plain',
+  check: function check(res) {
+    return !(0, _includes2.default)('.html')(res.name) && !(0, _includes2.default)('.css')(res.name) && _is2.default.str(res.body);
+  }
+};
+},{"utilise/includes":53,"utilise/is":54}],82:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = css;
+
+var _includes = require('utilise/includes');
+
+var _includes2 = _interopRequireDefault(_includes);
+
+/* istanbul ignore next */
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// -------------------------------------------
+// Exposes a convenient global instance
+// -------------------------------------------
+function css(ripple) {
+  log('creating');
+  ripple.types['text/css'] = {
+    header: 'text/css',
+    check: function check(res) {
+      return (0, _includes2.default)('.css')(res.name);
+    }
+  };
+
+  return ripple;
+}
+
+var log = require('utilise/log')('[ri/types/css]');
+},{"utilise/includes":53,"utilise/log":58}],83:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = data;
+
+var _emitterify = require('utilise/emitterify');
+
+var _emitterify2 = _interopRequireDefault(_emitterify);
+
+var _header = require('utilise/header');
+
+var _header2 = _interopRequireDefault(_header);
+
+var _extend = require('utilise/extend');
+
+var _extend2 = _interopRequireDefault(_extend);
+
+var _not = require('utilise/not');
+
+var _not2 = _interopRequireDefault(_not);
+
+var _is = require('utilise/is');
+
+var _is2 = _interopRequireDefault(_is);
+
+var _to = require('utilise/to');
+
+var _to2 = _interopRequireDefault(_to);
+
+/* istanbul ignore next */
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// -------------------------------------------
+// Adds support for data resources
+// -------------------------------------------
+function data(ripple) {
+  log('creating');
+  ripple.on('change.data', trickle(ripple));
+  ripple.types['application/data'] = {
+    header: 'application/data',
+    check: function check(res) {
+      return _is2.default.obj(res.body) || !res.body ? true : false;
+    },
+    parse: function parse(res) {
+      var existing = ripple.resources[res.name] || {};
+      delete res.headers.listeners;
+      (0, _extend2.default)(res.headers)(existing.headers);
+
+      !res.body && (res.body = []);
+      !res.body.on && (res.body = (0, _emitterify2.default)(res.body));
+      res.body.on.change = res.headers.listeners = res.headers.listeners || [];
+      res.body.on('change.bubble', function () {
+        return ripple.emit('change', [res], (0, _not2.default)(_is2.default.in(['data'])));
+      });
+
+      return res;
+    }
+  };
+
+  return ripple;
+}
+
+function trickle(ripple) {
+  return function (res) {
+    var args = [arguments[0].body, arguments[1]];
+    return (0, _header2.default)('content-type', 'application/data')(res) && ripple.resources[res.name].body.emit('change', _to2.default.arr(args), (0, _not2.default)(_is2.default.in(['bubble'])));
+  };
+}
+
+var log = require('utilise/log')('[ri/types/data]');
+},{"utilise/emitterify":43,"utilise/extend":45,"utilise/header":51,"utilise/is":54,"utilise/log":58,"utilise/not":60,"utilise/to":71}],84:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = delay;
+
+
+
+var _attr = require('utilise/attr');
+
+var _attr2 = _interopRequireDefault(_attr);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// -------------------------------------------
+// API: Delays the rendering of a component [delay=ms]
+// -------------------------------------------
+function delay(ripple) {
+  if (!true) return ripple;
+  log('creating');
+  ripple.render = render(ripple.render);
+  return ripple;
+}
+
+var render = function render(next) {
+  return function (el) {
+    var delay = (0, _attr2.default)('delay')(el);
+    delay != null ? ((0, _attr2.default)('inert', '')(el), (0, _attr2.default)('delay', false)(el), time(+delay, function (d) {
+      return (0, _attr2.default)('inert', false)(el), el.draw();
+    })) : next(el);
+  };
+};
+
+var log = require('utilise/log')('[ri/delay]'),
+    err = require('utilise/err')('[ri/delay]');
+},{"utilise/attr":33,"utilise/err":44,"utilise/log":58}],85:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = fnc;
+
+var _includes = require('utilise/includes');
+
+var _includes2 = _interopRequireDefault(_includes);
+
+var _is = require('utilise/is');
+
+var _is2 = _interopRequireDefault(_is);
+
+var _fn = require('utilise/fn');
+
+var _fn2 = _interopRequireDefault(_fn);
+
+/* istanbul ignore next */
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// -------------------------------------------
+// Exposes a convenient global instance
+// -------------------------------------------
+function fnc(ripple) {
+  log('creating');
+  ripple.types['application/javascript'] = {
+    header: 'application/javascript',
+    check: function check(res) {
+      return _is2.default.fn(res.body);
+    },
+    parse: function parse(res) {
+      return res.body = (0, _fn2.default)(res.body), res;
+    }
+  };
+
+  return ripple;
+}
+
+var log = require('utilise/log')('[ri/types/fn]');
+},{"utilise/fn":47,"utilise/includes":53,"utilise/is":54,"utilise/log":58}],86:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = helpers;
+
+var _values = require('utilise/values');
+
+var _values2 = _interopRequireDefault(_values);
+
+var _proxy = require('utilise/proxy');
+
+var _proxy2 = _interopRequireDefault(_proxy);
+
+var _keys = require('utilise/keys');
+
+var _keys2 = _interopRequireDefault(_keys);
+
+var _key = require('utilise/key');
+
+var _key2 = _interopRequireDefault(_key);
+
+var _def = require('utilise/def');
+
+var _def2 = _interopRequireDefault(_def);
+
+var _str = require('utilise/str');
+
+var _str2 = _interopRequireDefault(_str);
+
+var _by = require('utilise/by');
+
+var _by2 = _interopRequireDefault(_by);
+
+var _is = require('utilise/is');
+
+var _is2 = _interopRequireDefault(_is);
+
+var _fn = require('utilise/fn');
+
+var _fn2 = _interopRequireDefault(_fn);
+
+/* istanbul ignore next */
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// -------------------------------------------
+// Attach Helper Functions for Resources
+// -------------------------------------------
+function helpers(ripple) {
+  log('creating');
+
+  (0, _values2.default)(ripple.types).filter((0, _by2.default)('header', 'application/data')).filter(function (type) {
+    return type.parse = (0, _proxy2.default)(type.parse, attach);
+  }).filter(function (type) {
+    return type.to = (0, _proxy2.default)(type.to, serialise);
+  });
+
+  return ripple;
+}
+
+function attach(res) {
+  var helpers = res.headers.helpers;
+
+  (0, _keys2.default)(helpers).map(function (name) {
+    return helpers[name] = (0, _fn2.default)(helpers[name]), name;
+  }).map(function (name) {
+    return (0, _def2.default)(res.body, name, helpers[name]);
+  });
+
+  return res;
+}
+
+function serialise(res) {
+  var helpers = res.headers.helpers;
+
+  (0, _keys2.default)(helpers).filter(function (name) {
+    return _is2.default.fn(helpers[name]);
+  }).map(function (name) {
+    return helpers[name] = (0, _str2.default)(helpers[name]);
+  });
+
+  return res;
+}
+
+var log = require('utilise/log')('[ri/helpers]');
+},{"utilise/by":35,"utilise/def":42,"utilise/fn":47,"utilise/is":54,"utilise/key":55,"utilise/keys":56,"utilise/log":58,"utilise/proxy":64,"utilise/str":70,"utilise/values":73}],87:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = html;
+
+var _includes = require('utilise/includes');
+
+var _includes2 = _interopRequireDefault(_includes);
+
+/* istanbul ignore next */
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// -------------------------------------------
+// Exposes a convenient global instance
+// -------------------------------------------
+function html(ripple) {
+  log('creating');
+  ripple.types['text/html'] = {
+    header: 'text/html',
+    check: function check(res) {
+      return (0, _includes2.default)('.html')(res.name);
+    }
+  };
+
+  return ripple;
+}
+
+var log = require('utilise/log')('[ri/types/html]');
+},{"utilise/includes":53,"utilise/log":58}],88:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = offline;
+
+var _debounce = require('utilise/debounce');
+
+var _debounce2 = _interopRequireDefault(_debounce);
+
+var _header = require('utilise/header');
+
+var _header2 = _interopRequireDefault(_header);
+
+
+
+var _values = require('utilise/values');
+
+var _values2 = _interopRequireDefault(_values);
+
+var _clone = require('utilise/clone');
+
+var _clone2 = _interopRequireDefault(_clone);
+
+var _parse = require('utilise/parse');
+
+var _parse2 = _interopRequireDefault(_parse);
+
+var _group = require('utilise/group');
+
+var _group2 = _interopRequireDefault(_group);
+
+var _proxy = require('utilise/proxy');
+
+var _proxy2 = _interopRequireDefault(_proxy);
+
+var _not = require('utilise/not');
+
+var _not2 = _interopRequireDefault(_not);
+
+var _str = require('utilise/str');
+
+var _str2 = _interopRequireDefault(_str);
+
+var _key = require('utilise/key');
+
+var _key2 = _interopRequireDefault(_key);
+
+var _is = require('utilise/is');
+
+var _is2 = _interopRequireDefault(_is);
+
+/* istanbul ignore next */
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// -------------------------------------------
+// API: Pre-applies Scoped CSS [css=name]
+// -------------------------------------------
+function offline(ripple) {
+  if (!true || !window.localStorage) return;
+  log('creating');
+  load(ripple);
+  ripple.on('change.cache', (0, _debounce2.default)(1000)(cache(ripple)));
+  return ripple;
+}
+
+function load(ripple) {
+  (0, _group2.default)('loading cache', function () {
+    ((0, _parse2.default)(localStorage.ripple) || []).forEach(silent(ripple));
+  });
+}
+
+function cache(ripple) {
+  return function (res) {
+    log('cached');
+    var cachable = (0, _values2.default)((0, _clone2.default)(ripple.resources)).filter((0, _not2.default)((0, _header2.default)('cache-control', 'no-store')));
+
+    cachable.filter((0, _header2.default)('content-type', 'application/javascript')).map(function (d) {
+      return d.body = (0, _str2.default)(ripple.resources[d.name].body);
+    });
+
+    localStorage.ripple = (0, _str2.default)(cachable);
+  };
+}
+
+function silent(ripple) {
+  return function (res) {
+    return res.headers.silent = true, ripple(res);
+  };
+}
+
+var log = require('utilise/log')('[ri/offline]'),
+    err = require('utilise/err')('[ri/offline]');
+},{"utilise/clone":37,"utilise/debounce":41,"utilise/err":44,"utilise/group":49,"utilise/header":51,"utilise/is":54,"utilise/key":55,"utilise/log":58,"utilise/not":60,"utilise/parse":62,"utilise/proxy":64,"utilise/str":70,"utilise/values":73}],89:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = precss;
+
+var _identity = require('utilise/identity');
+
+var _identity2 = _interopRequireDefault(_identity);
+
+
+
+var _attr = require('utilise/attr');
+
+var _attr2 = _interopRequireDefault(_attr);
+
+var _wrap = require('utilise/wrap');
+
+var _wrap2 = _interopRequireDefault(_wrap);
+
+var _all = require('utilise/all');
+
+var _all2 = _interopRequireDefault(_all);
+
+var _raw = require('utilise/raw');
+
+var _raw2 = _interopRequireDefault(_raw);
+
+var _key = require('utilise/key');
+
+var _key2 = _interopRequireDefault(_key);
+
+/* istanbul ignore next */
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// -------------------------------------------
+// API: Pre-applies Scoped CSS [css=name]
+// -------------------------------------------
+function precss(ripple) {
+  if (!true) return;
+  log('creating');
+
+  ripple.render = render(ripple)(ripple.render);
+
+  values(ripple.types).filter(by('header', 'text/css')).map(function (type) {
+    return type.render = proxy(type.render, css(ripple));
+  });
+
+  return ripple;
+}
+
+function render(ripple) {
+  return function (next) {
+    return function (host) {
+      var css = str((0, _attr2.default)(host, 'css')).split(' ').filter(Boolean),
+          root = host.shadowRoot || host,
+          head = document.head,
+          shadow = head.createShadowRoot && host.shadowRoot,
+          styles;
+
+      // this host does not have a css dep, continue with rest of rendering pipeline
+      if (!css.length) return next(host);
+
+      // this host has a css dep, but it is not loaded yet - stop rendering this host
+      if (css.some(not(is.in(ripple.resources)))) return;
+
+      // retrieve styles
+      styles = css.map(from(ripple.resources)).map((0, _key2.default)('body')).map(scope(host, shadow, css));
+
+      // reuse or create style tag
+      css.map(function (d) {
+        return (0, _raw2.default)('style[resource="' + d + '"]', shadow ? root : head) || el('style[resource=' + d + ']');
+      }).map((0, _key2.default)('innerHTML', function (d, i) {
+        return styles[i];
+      })).filter(not(by('parentNode'))).map(function (d) {
+        return shadow ? root.insertBefore(d, root.firstChild) : head.appendChild(d);
+      });
+
+      // continue with rest of the rendering pipeline
+      return next(host);
+    };
+  };
+}
+
+function scope(el, shadow, names) {
+  return shadow ? _identity2.default : function (styles, i) {
+    var prefix = '[css~="' + names[i] + '"]',
+        escaped = '\\[css~="' + names[i] + '"\\]';
+
+    return styles.replace(/^(?!.*:host)([^@%\n]*){/gim, function ($1) {
+      return prefix + ' ' + $1;
+    }) // ... {      -> tag ... {
+    .replace(/^(?!.*:host)(.*?),\s*$/gim, function ($1) {
+      return prefix + ' ' + $1;
+    }) // ... ,      -> tag ... ,
+    .replace(/:host\((.*?)\)/gi, function ($1, $2) {
+      return prefix + $2;
+    }) // :host(...) -> tag...
+    .replace(/:host /gi, prefix + " ") // :host      -> tag
+    .replace(/\/deep\/ /gi, '') // /deep/     ->
+    .replace(/^.*:host-context\((.*)\)/gim, function ($1, $2) {
+      return $2 + " " + prefix;
+    }); // :host(...) -> tag...
+  };
+}
+
+function css(ripple) {
+  return function (res) {
+    return (0, _all2.default)('[css~="' + res.name + '"]:not([inert])').map(ripple.draw);
+  };
+}
+
+var log = require('utilise/log')('[ri/precss]'),
+    err = require('utilise/err')('[ri/precss]');
+},{"utilise/all":32,"utilise/attr":33,"utilise/err":44,"utilise/identity":52,"utilise/key":55,"utilise/log":58,"utilise/raw":65,"utilise/wrap":74}],90:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = prehtml;
+
+
+
+var _attr = require('utilise/attr');
+
+var _attr2 = _interopRequireDefault(_attr);
+
+var _wrap = require('utilise/wrap');
+
+var _wrap2 = _interopRequireDefault(_wrap);
+
+var _all = require('utilise/all');
+
+var _all2 = _interopRequireDefault(_all);
+
+var _key = require('utilise/key');
+
+var _key2 = _interopRequireDefault(_key);
+
+/* istanbul ignore next */
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// -------------------------------------------
+// API: Pre-applies HTML Templates [template=name]
+// -------------------------------------------
+function prehtml(ripple) {
+  if (!true) return;
+  log('creating');
+
+  var render = ripple.render;
+
+  (0, _key2.default)('types.text/html.render', (0, _wrap2.default)(html(ripple)))(ripple);
+
+  ripple.render = function (el) {
+    var div,
+        html = (0, _attr2.default)(el, 'template');
+    if (!html) return render.apply(this, arguments);
+    if (html && !ripple(html)) return;
+    div = document.createElement('div');
+    div.innerHTML = ripple(html);(el.shadowRoot || el).innerHTML = div.innerHTML;
+    return render(el);
+  };
+
+  return ripple;
+}
+
+function html(ripple) {
+  return function (res) {
+    return (0, _all2.default)('[template="' + res.name + '"]:not([inert])').map(ripple.draw);
+  };
+}
+
+var log = require('utilise/log')('[ri/prehtml]'),
+    err = require('utilise/err')('[ri/prehtml]');
+},{"utilise/all":32,"utilise/attr":33,"utilise/err":44,"utilise/key":55,"utilise/log":58,"utilise/wrap":74}],91:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = reactive;
+
+var _header = require('utilise/header');
+
+var _header2 = _interopRequireDefault(_header);
+
+var _keys = require('utilise/keys');
+
+var _keys2 = _interopRequireDefault(_keys);
+
+var _str = require('utilise/str');
+
+var _str2 = _interopRequireDefault(_str);
+
+var _not = require('utilise/not');
+
+var _not2 = _interopRequireDefault(_not);
+
+var _def = require('utilise/def');
+
+var _def2 = _interopRequireDefault(_def);
+
+var _has = require('utilise/has');
+
+var _has2 = _interopRequireDefault(_has);
+
+var _is = require('utilise/is');
+
+var _is2 = _interopRequireDefault(_is);
+
+/* istanbul ignore next */
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// -------------------------------------------
+// API: React to data changes - deprecates explicit .emit('change')
+// -------------------------------------------
+function reactive(ripple) {
+  log('creating');
+  ripple.on('change.reactive', react(ripple));
+  return ripple;
+}
+
+function react(ripple) {
+  return function (res) {
+    if (!_is2.default.obj(res.body)) return;
+    if ((0, _header2.default)('reactive', false)(res)) return;
+    if (res.body.observer) return;
+    if (!Object.observe) return polyfill(ripple)(res);
+
+    Array.observe(res.body, (0, _def2.default)(res.body, 'observer', changed(ripple)(res)));
+
+    _is2.default.arr(res.body) && res.body.forEach(observe(ripple)(res));
+  };
+}
+
+function observe(ripple) {
+  return function (res) {
+    return function (d) {
+      if (!_is2.default.obj(d)) return;
+      if (d.observer) return;
+      var fn = child(ripple)(res);
+      (0, _def2.default)(d, 'observer', fn);
+      Object.observe(d, fn);
+    };
+  };
+}
+
+function child(ripple) {
+  return function (res) {
+    return function (changes) {
+      var key = res.body.indexOf(changes[0].object),
+          value = res.body[key],
+          type = 'update',
+          change = { key: key, value: value, type: type };
+
+      log('changed (c)'.green, res.name.bold, (0, _str2.default)(key).grey, debug ? changes : '');
+      ripple.emit('change', [res, change], (0, _not2.default)(_is2.default.in(['reactive'])));
+    };
+  };
+}
+
+function changed(ripple) {
+  return function (res) {
+    return function (changes) {
+      changes.map(normalize).filter(Boolean).map(function (change) {
+        return log('changed (p)'.green, res.name.bold, change.key.grey), change;
+      }).map(function (change) {
+        return _is2.default.arr(res.body) && change.type == 'push' && observe(ripple)(res)(change.value), change;
+      }).map(function (change) {
+        return ripple.emit('change', [res, change], (0, _not2.default)(_is2.default.in(['reactive'])));
+      });
+    };
+  };
+}
+
+function polyfill(ripple) {
+  return function (res) {
+    if (!ripple.observer) ripple.observer = setInterval(check(ripple), 100);
+    if (!ripple.cache) ripple.cache = {};
+    ripple.cache[res.name] = (0, _str2.default)(res.body);
+  };
+}
+
+function check(ripple) {
+  return function () {
+    if (!ripple || !ripple.resources) return clearInterval(ripple.observer);
+    (0, _keys2.default)(ripple.cache).forEach(function (name) {
+      var res = ripple.resources[name];
+      if (ripple.cache[name] != (0, _str2.default)(res.body)) {
+        log('changed (x)', name);
+        ripple.cache[name] = (0, _str2.default)(res.body);
+        ripple.emit('change', [res], (0, _not2.default)(_is2.default.in(['reactive'])));
+      }
+    });
+  };
+}
+
+// normalize a change
+function normalize(change) {
+  var type = change.type,
+      removed = type == 'delete' ? change.oldValue : change.removed && change.removed[0],
+      data = change.object,
+      key = change.name || (0, _str2.default)(change.index),
+      value = data[key],
+      skip = type == 'update' && (0, _str2.default)(value) == (0, _str2.default)(change.oldValue),
+      details = {
+    key: key,
+    value: removed || value,
+    type: type == 'update' ? 'update' : type == 'delete' ? 'remove' : type == 'splice' && removed ? 'remove' : type == 'splice' && !removed ? 'push' : type == 'add' ? 'push' : false
+  };
+
+  if (skip) return log('skipping update'), false;
+  return details;
+}
+
+var log = require('utilise/log')('[ri/reactive]'),
+    err = require('utilise/err')('[ri/reactive]'),
+    debug = false;
+},{"utilise/def":42,"utilise/err":44,"utilise/has":50,"utilise/header":51,"utilise/is":54,"utilise/keys":56,"utilise/log":58,"utilise/not":60,"utilise/str":70}],92:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = shadow;
+
+
+
+/* istanbul ignore next */
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// -------------------------------------------
+// API: Mixes Shadow DOM Encapsulation into rendering pipeline
+// -------------------------------------------
+function shadow(ripple) {
+  if (!true) return;
+  log('creating', document.head.createShadowRoot ? 'encapsulation' : 'closing gap');
+  ripple.render = render(ripple.render);
+  return ripple;
+}
+
+var render = function render(next) {
+  return function (el) {
+    el.createShadowRoot ? !el.shadowRoot && el.createShadowRoot() && (reflect(el), retarget(el)) : (el.shadowRoot = el, el.shadowRoot.host = el);
+
+    return next(el);
+  };
+};
+
+var reflect = function reflect(el) {
+  return el.shadowRoot.innerHTML = el.innerHTML;
+};
+
+var retarget = function retarget(el) {
+  return keys(el).concat(['on', 'once', 'emit', 'classList', 'getAttribute', 'setAttribute']).map(function (d) {
+    return el.shadowRoot[d] = is.fn(el[d]) ? el[d].bind(el) : el[d];
+  });
+};
+
+var log = require('utilise/log')('[ri/shadow]'),
+    err = require('utilise/err')('[ri/shadow]');
+},{"utilise/err":44,"utilise/log":58}],93:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = singleton;
+
+var _owner = require('utilise/owner');
+
+var _owner2 = _interopRequireDefault(_owner);
+
+/* istanbul ignore next */
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// -------------------------------------------
+// Exposes a convenient global instance
+// -------------------------------------------
+function singleton(ripple) {
+  log('creating');
+  if (!_owner2.default.ripple) _owner2.default.ripple = ripple;
+  return ripple;
+}
+
+var log = require('utilise/log')('[ri/singleton]');
+},{"utilise/log":58,"utilise/owner":61}],94:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = sync;
+
+var _identity = require('utilise/identity');
+
+var _identity2 = _interopRequireDefault(_identity);
+
+var _replace = require('utilise/replace');
+
+var _replace2 = _interopRequireDefault(_replace);
+
+var _prepend = require('utilise/prepend');
+
+var _prepend2 = _interopRequireDefault(_prepend);
+
+var _flatten = require('utilise/flatten');
+
+var _flatten2 = _interopRequireDefault(_flatten);
+
+var _values = require('utilise/values');
+
+var _values2 = _interopRequireDefault(_values);
+
+var _header = require('utilise/header');
+
+var _header2 = _interopRequireDefault(_header);
+
+
+
+var _noop = require('utilise/noop');
+
+var _noop2 = _interopRequireDefault(_noop);
+
+var _keys = require('utilise/keys');
+
+var _keys2 = _interopRequireDefault(_keys);
+
+var _key = require('utilise/key');
+
+var _key2 = _interopRequireDefault(_key);
+
+var _str = require('utilise/str');
+
+var _str2 = _interopRequireDefault(_str);
+
+var _not = require('utilise/not');
+
+var _not2 = _interopRequireDefault(_not);
+
+var _by = require('utilise/by');
+
+var _by2 = _interopRequireDefault(_by);
+
+var _is = require('utilise/is');
+
+var _is2 = _interopRequireDefault(_is);
+
+var _jsondiffpatch = require('jsondiffpatch');
+
+/* istanbul ignore next */
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// -------------------------------------------
+// API: Synchronises resources between server/client
+// -------------------------------------------
+function sync(ripple, server) {
+  log('creating');
+
+  if (!true && !server) return;
+  (0, _values2.default)(ripple.types).map(headers(ripple));
+  ripple.sync = emit(ripple);
+  ripple.io = io(server);
+  ripple.on('change', function (res) {
+    return emit(ripple)()(res.name);
+  });
+  ripple.io.on('change', silent(ripple));
+  ripple.io.on('connection', function (s) {
+    return s.on('change', change(ripple));
+  });
+  ripple.io.on('connection', function (s) {
+    return emit(ripple)(s)();
+  });
+  ripple.io.use(setIP);
+  return ripple;
+}
+
+function change(ripple) {
+  return function (req) {
+    log('receiving', req.name);
+
+    var socket = this,
+        res = ripple.resources[req.name],
+        check = type(ripple)(req).from || _identity2.default;
+
+    if (!res) return log('no resource', req.name);
+    if (!check.call(this, req)) return debug('type skip', req.name);
+    if (!_is2.default.obj(res.body)) return silent(ripple)(req);
+
+    var to = (0, _header2.default)('proxy-to')(res) || _identity2.default,
+        from = (0, _header2.default)('proxy-from')(res),
+        body = to.call(socket, (0, _key2.default)('body')(res)),
+        deltas = (0, _jsondiffpatch.diff)(body, req.body);
+
+    if (_is2.default.arr(deltas)) return delta('') && res.body.emit('change');
+
+    (0, _keys2.default)(deltas).reverse().filter((0, _not2.default)((0, _is2.default)('_t'))).map(paths(deltas)).reduce(_flatten2.default, []).map(delta).some(Boolean) && res.body.emit('change');
+
+    function delta(k) {
+      var d = (0, _key2.default)(k)(deltas),
+          name = req.name
+      // , body  = res.body
+      ,
+          index = k.replace(/(^|\.)_/g, '$1'),
+          type = d.length == 1 ? 'push' : d.length == 2 ? 'update' : d[2] === 0 ? 'remove' : '',
+          value = type == 'update' ? d[1] : d[0],
+          next = types[type];
+
+      if (!type) return false;
+      if (!from || from.call(socket, value, body, index, type, name, next)) {
+        !index ? silent(ripple)(req) : next(index, value, body, name, res);
+        return true;
+      }
+    }
+  };
+}
+
+function paths(base) {
+  return function (k) {
+    var d = (0, _key2.default)(k)(base);
+    k = _is2.default.arr(k) ? k : [k];
+
+    return _is2.default.arr(d) ? k.join('.') : (0, _keys2.default)(d).map((0, _prepend2.default)(k.join('.') + '.')).map(paths(base));
+  };
+}
+
+function push(k, value, body, name) {
+  var path = k.split('.'),
+      tail = path.pop(),
+      o = (0, _key2.default)(path.join('.'))(body) || body;
+
+  _is2.default.arr(o) ? o.splice(tail, 0, value) : (0, _key2.default)(k, value)(body);
+}
+
+function remove(k, value, body, name) {
+  var path = k.split('.'),
+      tail = path.pop(),
+      o = (0, _key2.default)(path.join('.'))(body) || body;
+
+  _is2.default.arr(o) ? o.splice(tail, 1) : delete o[tail];
+}
+
+function update(k, value, body, name) {
+  (0, _key2.default)(k, value)(body);
+}
+
+function headers(ripple) {
+  return function (type) {
+    var parse = type.parse || _noop2.default;
+    type.parse = function (res) {
+      if (true) return parse.apply(this, arguments), res;
+      var existing = ripple.resources[res.name],
+          from = (0, _header2.default)('proxy-from')(existing),
+          to = (0, _header2.default)('proxy-to')(existing);
+
+      res.headers['proxy-from'] = (0, _header2.default)('proxy-from')(res) || (0, _header2.default)('from')(res) || from;
+      res.headers['proxy-to'] = (0, _header2.default)('proxy-to')(res) || (0, _header2.default)('to')(res) || to;
+      return parse.apply(this, arguments), res;
+    };
+  };
+}
+
+function silent(ripple) {
+  return function (res) {
+    return res.headers.silent = true, ripple(res);
+  };
+}
+
+function io(opts) {
+  var r = !true ? require('socket.io')(opts.server || opts) : window.io ? window.io() : _is2.default.fn(require('socket.io-client')) ? require('socket.io-client')() : { on: _noop2.default, emit: _noop2.default };
+  r.use = r.use || _noop2.default;
+  return r;
+}
+
+// emit all or some resources, to all or some clients
+function emit(ripple) {
+  return function (socket) {
+    return function (name) {
+      if (arguments.length && !name) return;
+      if (!name) return (0, _values2.default)(ripple.resources).map((0, _key2.default)('name')).map(emit(ripple)(socket)), ripple;
+
+      var res = ripple.resources[name],
+          sockets = true ? [ripple.io] : ripple.io.of('/').sockets,
+          lgt = stats(sockets.length, name),
+          silent = (0, _header2.default)('silent', true)(res);
+
+      return silent ? delete res.headers.silent : !res ? log('no resource to emit: ', name) : _is2.default.str(socket) ? lgt(sockets.filter((0, _by2.default)('sessionID', socket)).map(to(ripple)(res))) : !socket ? lgt(sockets.map(to(ripple)(res))) : lgt([to(ripple)(res)(socket)]);
+    };
+  };
+}
+
+function to(ripple) {
+  return function (res) {
+    return function (socket) {
+      var body = _is2.default.fn(res.body) ? '' + res.body : res.body,
+          rep,
+          fn = {
+        type: type(ripple)(res).to || _identity2.default,
+        res: res.headers['proxy-to'] || _identity2.default
+      };
+
+      body = fn.res.call(socket, body);
+      if (!body) return false;
+
+      rep = fn.type.call(socket, { name: res.name, body: body, headers: res.headers });
+      if (!rep) return false;
+
+      socket.emit('change', rep);
+      return true;
+    };
+  };
+}
+
+function stats(total, name) {
+  return function (results) {
+    log((0, _str2.default)(results.filter(Boolean).length).green.bold + '/' + (0, _str2.default)(total).green, 'sending', name);
+  };
+}
+
+function setIP(socket, next) {
+  socket.ip = socket.request.headers['x-forwarded-for'] || socket.request.connection.remoteAddress;
+  next();
+}
+
+function type(ripple) {
+  return function (res) {
+    return ripple.types[(0, _header2.default)('content-type')(res)];
+  };
+}
+
+var log = require('utilise/log')('[ri/sync]'),
+    err = require('utilise/err')('[ri/sync]'),
+    debug = _noop2.default,
+    types = { push: push, remove: remove, update: update };
+},{"jsondiffpatch":31,"socket.io":31,"socket.io-client":129,"utilise/by":35,"utilise/err":44,"utilise/flatten":46,"utilise/header":51,"utilise/identity":52,"utilise/is":54,"utilise/key":55,"utilise/keys":56,"utilise/log":58,"utilise/noop":59,"utilise/not":60,"utilise/prepend":63,"utilise/replace":67,"utilise/str":70,"utilise/values":73}],95:[function(require,module,exports){
 module.exports = after
 
 function after(count, callback, err_cb) {
@@ -159,7 +2700,7 @@ function after(count, callback, err_cb) {
 
 function noop() {}
 
-},{}],3:[function(require,module,exports){
+},{}],96:[function(require,module,exports){
 /**
  * An abstraction for slicing an arraybuffer even when
  * ArrayBuffer.prototype.slice is not supported
@@ -190,7 +2731,7 @@ module.exports = function(arraybuffer, start, end) {
   return result.buffer;
 };
 
-},{}],4:[function(require,module,exports){
+},{}],97:[function(require,module,exports){
 
 /**
  * Expose `Backoff`.
@@ -277,7 +2818,7 @@ Backoff.prototype.setJitter = function(jitter){
 };
 
 
-},{}],5:[function(require,module,exports){
+},{}],98:[function(require,module,exports){
 /*
  * base64-arraybuffer
  * https://github.com/niklasvh/base64-arraybuffer
@@ -338,7 +2879,7 @@ Backoff.prototype.setJitter = function(jitter){
   };
 })("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
 
-},{}],6:[function(require,module,exports){
+},{}],99:[function(require,module,exports){
 (function (global){
 /**
  * Create a blob builder even when vendor prefixes exist
@@ -438,9 +2979,7 @@ module.exports = (function() {
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],7:[function(require,module,exports){
-
-},{}],8:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 /**
  * Slice reference.
  */
@@ -465,7 +3004,7 @@ module.exports = function(obj, fn){
   }
 };
 
-},{}],9:[function(require,module,exports){
+},{}],101:[function(require,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -631,7 +3170,7 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],10:[function(require,module,exports){
+},{}],102:[function(require,module,exports){
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -639,11 +3178,11 @@ module.exports = function(a, b){
   a.prototype = new fn;
   a.prototype.constructor = a;
 };
-},{}],11:[function(require,module,exports){
+},{}],103:[function(require,module,exports){
 
 module.exports =  require('./lib/');
 
-},{"./lib/":12}],12:[function(require,module,exports){
+},{"./lib/":104}],104:[function(require,module,exports){
 
 module.exports = require('./socket');
 
@@ -655,7 +3194,7 @@ module.exports = require('./socket');
  */
 module.exports.parser = require('engine.io-parser');
 
-},{"./socket":13,"engine.io-parser":24}],13:[function(require,module,exports){
+},{"./socket":105,"engine.io-parser":116}],105:[function(require,module,exports){
 (function (global){
 /**
  * Module dependencies.
@@ -1364,7 +3903,7 @@ Socket.prototype.filterUpgrades = function (upgrades) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./transport":14,"./transports":15,"component-emitter":9,"debug":21,"engine.io-parser":24,"indexof":29,"parsejson":34,"parseqs":35,"parseuri":23}],14:[function(require,module,exports){
+},{"./transport":106,"./transports":107,"component-emitter":101,"debug":113,"engine.io-parser":116,"indexof":121,"parsejson":126,"parseqs":127,"parseuri":115}],106:[function(require,module,exports){
 /**
  * Module dependencies.
  */
@@ -1525,7 +4064,7 @@ Transport.prototype.onClose = function () {
   this.emit('close');
 };
 
-},{"component-emitter":9,"engine.io-parser":24}],15:[function(require,module,exports){
+},{"component-emitter":101,"engine.io-parser":116}],107:[function(require,module,exports){
 (function (global){
 /**
  * Module dependencies
@@ -1582,7 +4121,7 @@ function polling(opts){
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./polling-jsonp":16,"./polling-xhr":17,"./websocket":19,"xmlhttprequest":20}],16:[function(require,module,exports){
+},{"./polling-jsonp":108,"./polling-xhr":109,"./websocket":111,"xmlhttprequest":112}],108:[function(require,module,exports){
 (function (global){
 
 /**
@@ -1819,7 +4358,7 @@ JSONPPolling.prototype.doWrite = function (data, fn) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./polling":18,"component-inherit":10}],17:[function(require,module,exports){
+},{"./polling":110,"component-inherit":102}],109:[function(require,module,exports){
 (function (global){
 /**
  * Module requirements.
@@ -2207,7 +4746,7 @@ function unloadHandler() {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./polling":18,"component-emitter":9,"component-inherit":10,"debug":21,"xmlhttprequest":20}],18:[function(require,module,exports){
+},{"./polling":110,"component-emitter":101,"component-inherit":102,"debug":113,"xmlhttprequest":112}],110:[function(require,module,exports){
 /**
  * Module dependencies.
  */
@@ -2454,7 +4993,7 @@ Polling.prototype.uri = function(){
   return schema + '://' + this.hostname + port + this.path + query;
 };
 
-},{"../transport":14,"component-inherit":10,"debug":21,"engine.io-parser":24,"parseqs":35,"xmlhttprequest":20}],19:[function(require,module,exports){
+},{"../transport":106,"component-inherit":102,"debug":113,"engine.io-parser":116,"parseqs":127,"xmlhttprequest":112}],111:[function(require,module,exports){
 /**
  * Module dependencies.
  */
@@ -2694,7 +5233,7 @@ WS.prototype.check = function(){
   return !!WebSocket && !('__initialize' in WebSocket && this.name === WS.prototype.name);
 };
 
-},{"../transport":14,"component-inherit":10,"debug":21,"engine.io-parser":24,"parseqs":35,"ws":116}],20:[function(require,module,exports){
+},{"../transport":106,"component-inherit":102,"debug":113,"engine.io-parser":116,"parseqs":127,"ws":142}],112:[function(require,module,exports){
 // browser shim for xmlhttprequest module
 var hasCORS = require('has-cors');
 
@@ -2732,7 +5271,7 @@ module.exports = function(opts) {
   }
 }
 
-},{"has-cors":28}],21:[function(require,module,exports){
+},{"has-cors":120}],113:[function(require,module,exports){
 
 /**
  * This is the web browser implementation of `debug()`.
@@ -2881,7 +5420,7 @@ function load() {
 
 exports.enable(load());
 
-},{"./debug":22}],22:[function(require,module,exports){
+},{"./debug":114}],114:[function(require,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -3080,7 +5619,7 @@ function coerce(val) {
   return val;
 }
 
-},{"ms":32}],23:[function(require,module,exports){
+},{"ms":124}],115:[function(require,module,exports){
 /**
  * Parses an URI
  *
@@ -3121,7 +5660,7 @@ module.exports = function parseuri(str) {
     return uri;
 };
 
-},{}],24:[function(require,module,exports){
+},{}],116:[function(require,module,exports){
 (function (global){
 /**
  * Module dependencies.
@@ -3719,7 +6258,7 @@ exports.decodePayloadAsBinary = function (data, binaryType, callback) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./keys":25,"after":2,"arraybuffer.slice":3,"base64-arraybuffer":5,"blob":6,"has-binary":27,"utf8":68}],25:[function(require,module,exports){
+},{"./keys":117,"after":95,"arraybuffer.slice":96,"base64-arraybuffer":98,"blob":99,"has-binary":119,"utf8":141}],117:[function(require,module,exports){
 
 /**
  * Gets the keys for an object.
@@ -3740,7 +6279,7 @@ module.exports = Object.keys || function keys (obj){
   return arr;
 };
 
-},{}],26:[function(require,module,exports){
+},{}],118:[function(require,module,exports){
 
 /**
  * Returns `this`. Execute this without a "context" (i.e. without it being
@@ -3750,7 +6289,7 @@ module.exports = Object.keys || function keys (obj){
 
 module.exports = (function () { return this; })();
 
-},{}],27:[function(require,module,exports){
+},{}],119:[function(require,module,exports){
 (function (global){
 
 /*
@@ -3812,7 +6351,7 @@ function hasBinary(data) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"isarray":30}],28:[function(require,module,exports){
+},{"isarray":122}],120:[function(require,module,exports){
 
 /**
  * Module dependencies.
@@ -3837,7 +6376,7 @@ try {
   module.exports = false;
 }
 
-},{"global":26}],29:[function(require,module,exports){
+},{"global":118}],121:[function(require,module,exports){
 
 var indexOf = [].indexOf;
 
@@ -3848,12 +6387,12 @@ module.exports = function(arr, obj){
   }
   return -1;
 };
-},{}],30:[function(require,module,exports){
+},{}],122:[function(require,module,exports){
 module.exports = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
 };
 
-},{}],31:[function(require,module,exports){
+},{}],123:[function(require,module,exports){
 /*! JSON v3.2.6 | http://bestiejs.github.io/json3 | Copyright 2012-2013, Kit Cambridge | http://kit.mit-license.org */
 ;(function (window) {
   // Convenience aliases.
@@ -4716,7 +7255,7 @@ module.exports = Array.isArray || function (arr) {
   }
 }(this));
 
-},{}],32:[function(require,module,exports){
+},{}],124:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -4829,7 +7368,7 @@ function plural(ms, n, name) {
   return Math.ceil(ms / n) + ' ' + name + 's';
 }
 
-},{}],33:[function(require,module,exports){
+},{}],125:[function(require,module,exports){
 
 /**
  * HOP ref.
@@ -4914,7 +7453,7 @@ exports.length = function(obj){
 exports.isEmpty = function(obj){
   return 0 == exports.length(obj);
 };
-},{}],34:[function(require,module,exports){
+},{}],126:[function(require,module,exports){
 (function (global){
 /**
  * JSON parse.
@@ -4949,7 +7488,7 @@ module.exports = function parsejson(data) {
   }
 };
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],35:[function(require,module,exports){
+},{}],127:[function(require,module,exports){
 /**
  * Compiles a querystring
  * Returns string representation of the object
@@ -4988,7 +7527,7 @@ exports.decode = function(qs){
   return qry;
 };
 
-},{}],36:[function(require,module,exports){
+},{}],128:[function(require,module,exports){
 /**
  * Parses an URI
  *
@@ -5015,1728 +7554,11 @@ module.exports = function parseuri(str) {
   return uri;
 };
 
-},{}],37:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = backpressure;
-
-var _from = require('utilise/from');
-
-var _from2 = _interopRequireDefault(_from);
-
-var _includes = require('utilise/includes');
-
-var _includes2 = _interopRequireDefault(_includes);
-
-var _debounce = require('utilise/debounce');
-
-var _debounce2 = _interopRequireDefault(_debounce);
-
-var _flatten = require('utilise/flatten');
-
-var _flatten2 = _interopRequireDefault(_flatten);
-
-var _unique = require('utilise/unique');
-
-var _unique2 = _interopRequireDefault(_unique);
-
-var _values = require('utilise/values');
-
-var _values2 = _interopRequireDefault(_values);
-
-var _client = require('utilise/client');
-
-var _client2 = _interopRequireDefault(_client);
-
-var _proxy = require('utilise/proxy');
-
-var _proxy2 = _interopRequireDefault(_proxy);
-
-var _group = require('utilise/group');
-
-var _group2 = _interopRequireDefault(_group);
-
-var _parse = require('utilise/parse');
-
-var _parse2 = _interopRequireDefault(_parse);
-
-var _split = require('utilise/split');
-
-var _split2 = _interopRequireDefault(_split);
-
-var _attr = require('utilise/attr');
-
-var _attr2 = _interopRequireDefault(_attr);
-
-var _noop = require('utilise/noop');
-
-var _noop2 = _interopRequireDefault(_noop);
-
-var _not = require('utilise/not');
-
-var _not2 = _interopRequireDefault(_not);
-
-var _all = require('utilise/all');
-
-var _all2 = _interopRequireDefault(_all);
-
-var _key = require('utilise/key');
-
-var _key2 = _interopRequireDefault(_key);
-
-var _is = require('utilise/is');
-
-var _is2 = _interopRequireDefault(_is);
-
-var _by = require('utilise/by');
-
-var _by2 = _interopRequireDefault(_by);
-
-var _to = require('utilise/to');
-
-var _to2 = _interopRequireDefault(_to);
-
-var _lo = require('utilise/lo');
-
-var _lo2 = _interopRequireDefault(_lo);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// -------------------------------------------
-// API: Applies backpressure on the flow of streams
-// -------------------------------------------
-function backpressure(ripple) {
-  log('creating');
-
-  if (!ripple.io) return ripple;
-  if (_client2.default) return ripple.draw = draw(ripple)(ripple.draw), ripple.render = loaded(ripple)(ripple.render), ripple.deps = deps, start(ripple);
-
-  (0, _values2.default)(ripple.types).map(function (type) {
-    return type.to = (0, _proxy2.default)(type.to, limit);
-  });
-  (0, _values2.default)(ripple.types).map(function (type) {
-    return type.from = (0, _proxy2.default)(type.from, track(ripple));
-  });
-  ripple.io.use(function (socket, next) {
-    socket.deps = {}, next();
-  });
-  return ripple;
-}
-
-function draw(ripple) {
-  var refresh = (0, _debounce2.default)(10)(function (d) {
-    return (0, _all2.default)(':unresolved').map(ripple.draw);
-  });
-  return function (d) {
-    return function (thing) {
-      var everything = !thing && (!this || !this.nodeName && !this.node);
-      if (shadows || customs && everything) refresh();
-      return d.apply(this, arguments);
-    };
-  };
-}
-
-function start(ripple) {
-  load(ripple);
-  ready(ripple.draw);
-  if (customs) ready(polytop(ripple));else ready(function (d) {
-    return (0, _all2.default)('*').filter((0, _by2.default)('nodeName', (0, _includes2.default)('-'))).map(ripple.draw);
-  });
-  return ripple;
-}
-
-function polytop(ripple) {
-  var muto = new MutationObserver(drawNodes(ripple));
-  return function (d) {
-    return muto.observe(document.body, { childList: true, subtree: true });
-  };
-}
-
-function drawNodes(ripple) {
-  return function (mutations) {
-    return mutations.map((0, _key2.default)('addedNodes')).map(_to2.default.arr).reduce(_flatten2.default, []).filter((0, _by2.default)('nodeName', (0, _includes2.default)('-'))).map(ripple.draw);
-  };
-}
-
-function track(ripple) {
-  return function (_ref) {
-    var name = _ref.name;
-    var body = _ref.body;
-
-    var exists = name in this.deps;
-    this.deps[name] = 1;
-    if (!exists) ripple.sync(this)(name);
-    if (body.loading) return false;
-    return true;
-  };
-}
-
-function load(ripple) {
-  (0, _group2.default)('pulling cache', function (fn) {
-    return ((0, _parse2.default)(localStorage.ripple) || []).map(function (_ref2) {
-      var name = _ref2.name;
-      return ripple(name, { loading: loading });
-    });
-  });
-}
-
-function untrack(ripple) {
-  return function (names) {
-    delete this[name];
-  };
-}
-
-function limit(res) {
-  return res.name in this.deps ? res : false;
-}
-
-function deps(el) {
-  return format([(0, _key2.default)('nodeName'), (0, _attr2.default)('data'), (0, _attr2.default)('css')])(el);
-}
-
-function format(arr) {
-  return function (el) {
-    return arr.map(function (fn) {
-      return fn(el);
-    }).filter(Boolean).map(_lo2.default).map((0, _split2.default)(' ')).reduce(_flatten2.default, []).filter(_unique2.default);
-  };
-}
-
-function loaded(ripple) {
-  return function (render) {
-    return function (el) {
-      var deps = ripple.deps(el);
-
-      deps.filter((0, _not2.default)(_is2.default.in(ripple.resources))).map(function (name) {
-        return debug('pulling', name), name;
-      }).map(function (name) {
-        return ripple(name, { loading: loading });
-      });
-
-      return deps.map((0, _from2.default)(ripple.resources)).every((0, _not2.default)((0, _key2.default)('body.loading'))) ? render(el) : false;
-    };
-  };
-}
-
-function ready(fn) {
-  return document.body ? fn() : document.addEventListener('DOMContentLoaded', function (d) {
-    return fn();
-  });
-}
-
-var log = require('utilise/log')('[ri/backpressure]'),
-    err = require('utilise/err')('[ri/backpressure]'),
-    shadows = _client2.default && !!document.head.createShadowRoot,
-    customs = _client2.default && !!document.registerElement,
-    loading = true,
-    debug = _noop2.default;
-},{"utilise/all":69,"utilise/attr":70,"utilise/by":72,"utilise/client":74,"utilise/debounce":79,"utilise/err":82,"utilise/flatten":85,"utilise/from":87,"utilise/group":88,"utilise/includes":92,"utilise/is":93,"utilise/key":94,"utilise/lo":96,"utilise/log":97,"utilise/noop":98,"utilise/not":99,"utilise/parse":101,"utilise/proxy":103,"utilise/split":109,"utilise/to":111,"utilise/unique":112,"utilise/values":113}],38:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = components;
-
-var _emitterify = require('utilise/emitterify');
-
-var _emitterify2 = _interopRequireDefault(_emitterify);
-
-var _resourcify = require('utilise/resourcify');
-
-var _resourcify2 = _interopRequireDefault(_resourcify);
-
-var _includes = require('utilise/includes');
-
-var _includes2 = _interopRequireDefault(_includes);
-
-var _identity = require('utilise/identity');
-
-var _identity2 = _interopRequireDefault(_identity);
-
-var _flatten = require('utilise/flatten');
-
-var _flatten2 = _interopRequireDefault(_flatten);
-
-var _prepend = require('utilise/prepend');
-
-var _prepend2 = _interopRequireDefault(_prepend);
-
-var _header = require('utilise/header');
-
-var _header2 = _interopRequireDefault(_header);
-
-var _client = require('utilise/client');
-
-var _client2 = _interopRequireDefault(_client);
-
-var _values = require('utilise/values');
-
-var _values2 = _interopRequireDefault(_values);
-
-var _proxy = require('utilise/proxy');
-
-var _proxy2 = _interopRequireDefault(_proxy);
-
-var _attr = require('utilise/attr');
-
-var _attr2 = _interopRequireDefault(_attr);
-
-var _body = require('utilise/body');
-
-var _body2 = _interopRequireDefault(_body);
-
-var _noop = require('utilise/noop');
-
-var _noop2 = _interopRequireDefault(_noop);
-
-var _wrap = require('utilise/wrap');
-
-var _wrap2 = _interopRequireDefault(_wrap);
-
-var _key = require('utilise/key');
-
-var _key2 = _interopRequireDefault(_key);
-
-var _all = require('utilise/all');
-
-var _all2 = _interopRequireDefault(_all);
-
-var _is = require('utilise/is');
-
-var _is2 = _interopRequireDefault(_is);
-
-var _by = require('utilise/by');
-
-var _by2 = _interopRequireDefault(_by);
-
-var _lo = require('utilise/lo');
-
-var _lo2 = _interopRequireDefault(_lo);
-
-var _to = require('utilise/to');
-
-var _to2 = _interopRequireDefault(_to);
-
-var _data = require('./types/data');
-
-var _data2 = _interopRequireDefault(_data);
-
-var _fn = require('./types/fn');
-
-var _fn2 = _interopRequireDefault(_fn);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// -------------------------------------------
-// API: Renders specific nodes, resources or everything
-// -------------------------------------------
-// ripple.draw()                 - redraw all components on page
-// ripple.draw(element)          - redraw specific element
-// ripple.draw.call(element)     - redraw specific element
-// ripple.draw.call(selection)   - redraw D3 selection
-// ripple.draw('name')           - redraw elements that depend on resource
-// ripple.draw({ ... })          - redraw elements that depend on resource
-// MutationObserver(ripple.draw) - redraws element being observed
-
-function components(ripple) {
-  if (!_client2.default) return ripple;
-  log('creating');
-
-  if (!customs) ready(polyfill(ripple));
-  (0, _values2.default)(ripple.types).map(function (type) {
-    return type.parse = (0, _proxy2.default)(type.parse || _identity2.default, clean(ripple));
-  });
-  (0, _key2.default)('types.application/javascript.render', (0, _wrap2.default)((0, _fn2.default)(ripple)))(ripple);
-  (0, _key2.default)('types.application/data.render', (0, _wrap2.default)((0, _data2.default)(ripple)))(ripple);
-  ripple.draw = draw(ripple);
-  ripple.render = render(ripple);
-  ripple.on('change', raf(ripple));
-  return ripple;
-}
-
-// public draw api
-function draw(ripple) {
-  return function (thing) {
-    return this && this.nodeName ? invoke(ripple)(this) : this && this.node ? invoke(ripple)(this.node()) : !thing ? everything(ripple) : thing instanceof mutation ? invoke(ripple)(thing.target) : thing[0] instanceof mutation ? invoke(ripple)(thing[0].target) : thing.nodeName ? invoke(ripple)(thing) : thing.node ? invoke(ripple)(thing.node()) : thing.name ? resource(ripple)(thing.name) : _is2.default.str(thing) ? resource(ripple)(thing) : err('could not update', thing);
-  };
-}
-
-// render all components
-function everything(ripple) {
-  var selector = (0, _values2.default)(ripple.resources).filter((0, _header2.default)('content-type', 'application/javascript')).map((0, _key2.default)('name')).join(',');
-
-  return !selector ? [] : (0, _all2.default)(selector).map(invoke(ripple));
-}
-
-// render all elements that depend on the resource
-function resource(ripple) {
-  return function (name) {
-    var res = ripple.resources[name],
-        type = (0, _header2.default)('content-type')(res);
-
-    return (ripple.types[type].render || _noop2.default)(res);
-  };
-}
-
-// batch renders on render frames
-function raf(ripple) {
-  return function (res) {
-    return !(0, _header2.default)('pending')(res) && (res.headers.pending = requestAnimationFrame(function () {
-      return delete ripple.resources[res.name].headers.pending, ripple.draw(res);
-    }));
-  };
-}
-
-// main function to render a particular custom element with any data it needs
-function invoke(ripple) {
-  return function (el) {
-    if (el.nodeName == '#document-fragment') return invoke(ripple)(el.host);
-    if (el.nodeName == '#text') return invoke(ripple)(el.parentNode);
-    if (!el.matches(isAttached)) return;
-    if ((0, _attr2.default)(el, 'inert') != null) return;
-    if (!el.on) (0, _emitterify2.default)(el);
-    if (!el.draw) el.draw = function (d) {
-      return ripple.draw(el);
-    };
-    return ripple.render(el);
-  };
-}
-
-function render(ripple) {
-  return function (el) {
-    var name = (0, _attr2.default)(el, 'is') || el.tagName.toLowerCase(),
-        deps = (0, _attr2.default)(el, 'data'),
-        fn = (0, _body2.default)(ripple)(name),
-        data = (0, _resourcify2.default)(ripple)(deps);
-
-    try {
-      fn && (!deps || data) && fn.call(el.shadowRoot || el, data);
-    } catch (e) {
-      err(e, e.stack);
-    }
-
-    return el;
-  };
-}
-
-// polyfill
-function polyfill(ripple) {
-  return function () {
-    if (typeof MutationObserver == 'undefined') return;
-    if (document.body.muto) document.body.muto.disconnect();
-    var muto = document.body.muto = new MutationObserver(drawCustomEls(ripple)),
-        conf = { childList: true, subtree: true, attributes: true, attributeOldValue: true };
-
-    muto.observe(document.body, conf);
-  };
-}
-
-function drawCustomEls(ripple) {
-  return function (mutations) {
-    drawNodes(ripple)(mutations);
-    drawAttrs(ripple)(mutations);
-  };
-}
-
-// clean local headers for transport
-function clean(ripple) {
-  return function (res) {
-    delete res.headers.pending;
-    return res;
-  };
-}
-
-// helpers
-function onlyIfDifferent(m) {
-  return (0, _attr2.default)(m.target, m.attributeName) != m.oldValue;
-}
-
-function ready(fn) {
-  return document.body ? fn() : document.addEventListener('DOMContentLoaded', fn);
-}
-
-function drawAttrs(ripple) {
-  return function (mutations) {
-    return mutations.filter((0, _key2.default)('attributeName')).filter((0, _by2.default)('target.nodeName', (0, _includes2.default)('-'))).filter(onlyIfDifferent).map(ripple.draw);
-  };
-}
-
-function drawNodes(ripple) {
-  return function (mutations) {
-    return mutations.map((0, _key2.default)('addedNodes')).map(_to2.default.arr).reduce(_flatten2.default).filter((0, _by2.default)('nodeName', (0, _includes2.default)('-'))).map(ripple.draw);
-  };
-}
-
-var log = require('utilise/log')('[ri/components]'),
-    err = require('utilise/err')('[ri/components]'),
-    mutation = _client2.default && window.MutationRecord || _noop2.default,
-    customs = _client2.default && !!document.registerElement,
-    isAttached = customs ? 'html *, :host-context(html) *' : 'html *';
-_client2.default && (Element.prototype.matches = Element.prototype.matches || Element.prototype.msMatchesSelector);
-},{"./types/data":39,"./types/fn":40,"utilise/all":69,"utilise/attr":70,"utilise/body":71,"utilise/by":72,"utilise/client":74,"utilise/emitterify":81,"utilise/err":82,"utilise/flatten":85,"utilise/header":90,"utilise/identity":91,"utilise/includes":92,"utilise/is":93,"utilise/key":94,"utilise/lo":96,"utilise/log":97,"utilise/noop":98,"utilise/prepend":102,"utilise/proxy":103,"utilise/resourcify":107,"utilise/to":111,"utilise/values":113,"utilise/wrap":114}],39:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = data;
-
-var _all = require('utilise/all');
-
-var _all2 = _interopRequireDefault(_all);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// render all elements that require the specified data
-function data(ripple) {
-  return function (res) {
-    return (0, _all2.default)('[data~="' + res.name + '"]:not([inert])').map(ripple.draw);
-  };
-}
-},{"utilise/all":69}],40:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = fn;
-
-var _header = require('utilise/header');
-
-var _header2 = _interopRequireDefault(_header);
-
-var _client = require('utilise/client');
-
-var _client2 = _interopRequireDefault(_client);
-
-var _all = require('utilise/all');
-
-var _all2 = _interopRequireDefault(_all);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// register custom element prototype (render is automatic)
-function fn(ripple) {
-  return function (res) {
-    if (!customs || registered(res)) return (0, _all2.default)(res.name + ':not([inert])\n                 ,[is="' + res.name + '"]:not([inert])').map(ripple.draw);
-
-    var proto = Object.create(HTMLElement.prototype),
-        opts = { prototype: proto },
-        extend = res.headers['extends'];
-
-    extend && (opts.extends = extend);
-    proto.attachedCallback = proto.attributeChangedCallback = ripple.draw;
-    document.registerElement(res.name, opts);
-  };
-}
-
-function registered(res) {
-  var extend = (0, _header2.default)('extends')(res);
-
-  return extend ? document.createElement(extend, res.name).attachedCallback : document.createElement(res.name).attachedCallback;
-}
-
-var customs = _client2.default && !!document.registerElement;
-},{"utilise/all":69,"utilise/client":74,"utilise/header":90}],41:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = core;
-
-var _emitterify = require('utilise/emitterify');
-
-var _emitterify2 = _interopRequireDefault(_emitterify);
-
-var _colorfill = require('utilise/colorfill');
-
-var _colorfill2 = _interopRequireDefault(_colorfill);
-
-var _chainable = require('utilise/chainable');
-
-var _chainable2 = _interopRequireDefault(_chainable);
-
-var _identity = require('utilise/identity');
-
-var _identity2 = _interopRequireDefault(_identity);
-
-var _rebind = require('utilise/rebind');
-
-var _rebind2 = _interopRequireDefault(_rebind);
-
-var _header = require('utilise/header');
-
-var _header2 = _interopRequireDefault(_header);
-
-var _values = require('utilise/values');
-
-var _values2 = _interopRequireDefault(_values);
-
-var _is = require('utilise/is');
-
-var _is2 = _interopRequireDefault(_is);
-
-var _to = require('utilise/to');
-
-var _to2 = _interopRequireDefault(_to);
-
-var _za = require('utilise/za');
-
-var _za2 = _interopRequireDefault(_za);
-
-var _text = require('./types/text');
-
-var _text2 = _interopRequireDefault(_text);
-
-/* istanbul ignore next */
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// -------------------------------------------
-// API: Gets or sets a resource
-// -------------------------------------------
-// ripple('name')     - returns the resource body if it exists
-// ripple('name')     - creates & returns resource if it doesn't exist
-// ripple('name', {}) - creates & returns resource, with specified name and body
-// ripple({ ... })    - creates & returns resource, with specified name, body and headers
-// ripple.resources   - returns raw resources
-// ripple.resource    - alias for ripple, returns ripple instead of resource for method chaining
-// ripple.register    - alias for ripple
-// ripple.on          - event listener for changes - all resources
-// ripple('name').on  - event listener for changes - resource-specific
-
-function core() {
-  log('creating');
-
-  var resources = {};
-  ripple.resources = resources;
-  ripple.resource = (0, _chainable2.default)(ripple);
-  ripple.register = ripple;
-  ripple.types = types();
-  return (0, _emitterify2.default)(ripple);
-
-  function ripple(name, body, headers) {
-    return !name ? ripple : _is2.default.arr(name) ? name.map(ripple) : _is2.default.obj(name) && !name.name ? ripple : _is2.default.fn(name) && name.resources ? ripple((0, _values2.default)(name.resources)) : _is2.default.str(name) && !body && resources[name] ? resources[name].body : _is2.default.str(name) && !body && !resources[name] ? register(ripple)({ name: name }) : _is2.default.str(name) && body ? register(ripple)({ name: name, body: body, headers: headers }) : _is2.default.obj(name) && !_is2.default.arr(name) ? register(ripple)(name) : (err('could not find or create resource', name), false);
-  }
-}
-
-function register(ripple) {
-  return function (_ref) {
-    var name = _ref.name;
-    var body = _ref.body;
-    var _ref$headers = _ref.headers;
-    var headers = _ref$headers === undefined ? {} : _ref$headers;
-
-    log('registering', name);
-    var res = normalise(ripple)({ name: name, body: body, headers: headers }),
-        type = !ripple.resources[name] ? 'load' : '';
-
-    if (!res) return err('failed to register', name), false;
-    ripple.resources[name] = res;
-    ripple.emit('change', [ripple.resources[name], { type: type }]);
-    return ripple.resources[name].body;
-  };
-}
-
-function normalise(ripple) {
-  return function (res) {
-    if (!(0, _header2.default)('content-type')(res)) (0, _values2.default)(ripple.types).sort((0, _za2.default)('priority')).some(contentType(res));
-    if (!(0, _header2.default)('content-type')(res)) return err('could not understand resource', res), false;
-    return parse(ripple)(res);
-  };
-}
-
-function parse(ripple) {
-  return function (res) {
-    var type = (0, _header2.default)('content-type')(res);
-    if (!ripple.types[type]) return err('could not understand type', type), false;
-    return (ripple.types[type].parse || _identity2.default)(res);
-  };
-}
-
-function contentType(res) {
-  return function (type) {
-    return type.check(res) && (res.headers['content-type'] = type.header);
-  };
-}
-
-function types() {
-  return [_text2.default].reduce(_to2.default.obj('header'), 1);
-}
-
-var err = require('utilise/err')('[ri/core]'),
-    log = require('utilise/log')('[ri/core]');
-},{"./types/text":42,"utilise/chainable":73,"utilise/colorfill":76,"utilise/emitterify":81,"utilise/err":82,"utilise/header":90,"utilise/identity":91,"utilise/is":93,"utilise/log":97,"utilise/rebind":105,"utilise/to":111,"utilise/values":113,"utilise/za":115}],42:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _includes = require('utilise/includes');
-
-var _includes2 = _interopRequireDefault(_includes);
-
-var _is = require('utilise/is');
-
-var _is2 = _interopRequireDefault(_is);
-
-/* istanbul ignore next */
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-exports.default = {
-  header: 'text/plain',
-  check: function check(res) {
-    return !(0, _includes2.default)('.html')(res.name) && !(0, _includes2.default)('.css')(res.name) && _is2.default.str(res.body);
-  }
-};
-},{"utilise/includes":92,"utilise/is":93}],43:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = css;
-
-var _includes = require('utilise/includes');
-
-var _includes2 = _interopRequireDefault(_includes);
-
-/* istanbul ignore next */
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// -------------------------------------------
-// Exposes a convenient global instance
-// -------------------------------------------
-function css(ripple) {
-  log('creating');
-  ripple.types['text/css'] = {
-    header: 'text/css',
-    check: function check(res) {
-      return (0, _includes2.default)('.css')(res.name);
-    }
-  };
-
-  return ripple;
-}
-
-var log = require('utilise/log')('[ri/types/css]');
-},{"utilise/includes":92,"utilise/log":97}],44:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = data;
-
-var _emitterify = require('utilise/emitterify');
-
-var _emitterify2 = _interopRequireDefault(_emitterify);
-
-var _header = require('utilise/header');
-
-var _header2 = _interopRequireDefault(_header);
-
-var _extend = require('utilise/extend');
-
-var _extend2 = _interopRequireDefault(_extend);
-
-var _not = require('utilise/not');
-
-var _not2 = _interopRequireDefault(_not);
-
-var _is = require('utilise/is');
-
-var _is2 = _interopRequireDefault(_is);
-
-var _to = require('utilise/to');
-
-var _to2 = _interopRequireDefault(_to);
-
-/* istanbul ignore next */
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// -------------------------------------------
-// Adds support for data resources
-// -------------------------------------------
-function data(ripple) {
-  log('creating');
-  ripple.on('change.data', trickle(ripple));
-  ripple.types['application/data'] = {
-    header: 'application/data',
-    check: function check(res) {
-      return _is2.default.obj(res.body) || !res.body ? true : false;
-    },
-    parse: function parse(res) {
-      var existing = ripple.resources[res.name] || {};
-      delete res.headers.listeners;
-      (0, _extend2.default)(res.headers)(existing.headers);
-
-      !res.body && (res.body = []);
-      !res.body.on && (res.body = (0, _emitterify2.default)(res.body));
-      res.body.on.change = res.headers.listeners = res.headers.listeners || [];
-      res.body.on('change.bubble', function () {
-        return ripple.emit('change', [res], (0, _not2.default)(_is2.default.in(['data'])));
-      });
-
-      return res;
-    }
-  };
-
-  return ripple;
-}
-
-function trickle(ripple) {
-  return function (res) {
-    var args = [arguments[0].body, arguments[1]];
-    return (0, _header2.default)('content-type', 'application/data')(res) && ripple.resources[res.name].body.emit('change', _to2.default.arr(args), (0, _not2.default)(_is2.default.in(['bubble'])));
-  };
-}
-
-var log = require('utilise/log')('[ri/types/data]');
-},{"utilise/emitterify":81,"utilise/extend":83,"utilise/header":90,"utilise/is":93,"utilise/log":97,"utilise/not":99,"utilise/to":111}],45:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = delay;
-
-var _client = require('utilise/client');
-
-var _client2 = _interopRequireDefault(_client);
-
-var _attr = require('utilise/attr');
-
-var _attr2 = _interopRequireDefault(_attr);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// -------------------------------------------
-// API: Delays the rendering of a component [delay=ms]
-// -------------------------------------------
-function delay(ripple) {
-  if (!_client2.default) return ripple;
-  log('creating');
-
-  var render = ripple.render;
-
-  ripple.render = function (el) {
-    var delay = (0, _attr2.default)('delay')(el);
-    return delay != null ? (el.setAttribute('inert', ''), el.removeAttribute('delay'), setTimeout(el.removeAttribute.bind(el, 'inert'), +delay)) : render(el);
-  };
-
-  return ripple;
-}
-
-var log = require('utilise/log')('[ri/delay]'),
-    err = require('utilise/err')('[ri/delay]');
-},{"utilise/attr":70,"utilise/client":74,"utilise/err":82,"utilise/log":97}],46:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = fnc;
-
-var _includes = require('utilise/includes');
-
-var _includes2 = _interopRequireDefault(_includes);
-
-var _is = require('utilise/is');
-
-var _is2 = _interopRequireDefault(_is);
-
-var _fn = require('utilise/fn');
-
-var _fn2 = _interopRequireDefault(_fn);
-
-/* istanbul ignore next */
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// -------------------------------------------
-// Exposes a convenient global instance
-// -------------------------------------------
-function fnc(ripple) {
-  log('creating');
-  ripple.types['application/javascript'] = {
-    header: 'application/javascript',
-    check: function check(res) {
-      return _is2.default.fn(res.body);
-    },
-    parse: function parse(res) {
-      return res.body = (0, _fn2.default)(res.body), res;
-    }
-  };
-
-  return ripple;
-}
-
-var log = require('utilise/log')('[ri/types/fn]');
-},{"utilise/fn":86,"utilise/includes":92,"utilise/is":93,"utilise/log":97}],47:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = helpers;
-
-var _values = require('utilise/values');
-
-var _values2 = _interopRequireDefault(_values);
-
-var _proxy = require('utilise/proxy');
-
-var _proxy2 = _interopRequireDefault(_proxy);
-
-var _keys = require('utilise/keys');
-
-var _keys2 = _interopRequireDefault(_keys);
-
-var _key = require('utilise/key');
-
-var _key2 = _interopRequireDefault(_key);
-
-var _def = require('utilise/def');
-
-var _def2 = _interopRequireDefault(_def);
-
-var _str = require('utilise/str');
-
-var _str2 = _interopRequireDefault(_str);
-
-var _by = require('utilise/by');
-
-var _by2 = _interopRequireDefault(_by);
-
-var _is = require('utilise/is');
-
-var _is2 = _interopRequireDefault(_is);
-
-var _fn = require('utilise/fn');
-
-var _fn2 = _interopRequireDefault(_fn);
-
-/* istanbul ignore next */
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// -------------------------------------------
-// Attach Helper Functions for Resources
-// -------------------------------------------
-function helpers(ripple) {
-  log('creating');
-
-  (0, _values2.default)(ripple.types).filter((0, _by2.default)('header', 'application/data')).filter(function (type) {
-    return type.parse = (0, _proxy2.default)(type.parse, attach);
-  }).filter(function (type) {
-    return type.to = (0, _proxy2.default)(type.to, serialise);
-  });
-
-  return ripple;
-}
-
-function attach(res) {
-  var helpers = res.headers.helpers;
-
-  (0, _keys2.default)(helpers).map(function (name) {
-    return helpers[name] = (0, _fn2.default)(helpers[name]), name;
-  }).map(function (name) {
-    return (0, _def2.default)(res.body, name, helpers[name]);
-  });
-
-  return res;
-}
-
-function serialise(res) {
-  var helpers = res.headers.helpers;
-
-  (0, _keys2.default)(helpers).filter(function (name) {
-    return _is2.default.fn(helpers[name]);
-  }).map(function (name) {
-    return helpers[name] = (0, _str2.default)(helpers[name]);
-  });
-
-  return res;
-}
-
-var log = require('utilise/log')('[ri/helpers]');
-},{"utilise/by":72,"utilise/def":80,"utilise/fn":86,"utilise/is":93,"utilise/key":94,"utilise/keys":95,"utilise/log":97,"utilise/proxy":103,"utilise/str":110,"utilise/values":113}],48:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = html;
-
-var _includes = require('utilise/includes');
-
-var _includes2 = _interopRequireDefault(_includes);
-
-/* istanbul ignore next */
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// -------------------------------------------
-// Exposes a convenient global instance
-// -------------------------------------------
-function html(ripple) {
-  log('creating');
-  ripple.types['text/html'] = {
-    header: 'text/html',
-    check: function check(res) {
-      return (0, _includes2.default)('.html')(res.name);
-    }
-  };
-
-  return ripple;
-}
-
-var log = require('utilise/log')('[ri/types/html]');
-},{"utilise/includes":92,"utilise/log":97}],49:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = offline;
-
-var _debounce = require('utilise/debounce');
-
-var _debounce2 = _interopRequireDefault(_debounce);
-
-var _header = require('utilise/header');
-
-var _header2 = _interopRequireDefault(_header);
-
-var _client = require('utilise/client');
-
-var _client2 = _interopRequireDefault(_client);
-
-var _values = require('utilise/values');
-
-var _values2 = _interopRequireDefault(_values);
-
-var _clone = require('utilise/clone');
-
-var _clone2 = _interopRequireDefault(_clone);
-
-var _parse = require('utilise/parse');
-
-var _parse2 = _interopRequireDefault(_parse);
-
-var _group = require('utilise/group');
-
-var _group2 = _interopRequireDefault(_group);
-
-var _proxy = require('utilise/proxy');
-
-var _proxy2 = _interopRequireDefault(_proxy);
-
-var _not = require('utilise/not');
-
-var _not2 = _interopRequireDefault(_not);
-
-var _str = require('utilise/str');
-
-var _str2 = _interopRequireDefault(_str);
-
-var _key = require('utilise/key');
-
-var _key2 = _interopRequireDefault(_key);
-
-var _is = require('utilise/is');
-
-var _is2 = _interopRequireDefault(_is);
-
-/* istanbul ignore next */
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// -------------------------------------------
-// API: Pre-applies Scoped CSS [css=name]
-// -------------------------------------------
-function offline(ripple) {
-  if (!_client2.default || !window.localStorage) return;
-  log('creating');
-  load(ripple);
-  ripple.on('change.cache', (0, _debounce2.default)(1000)(cache(ripple)));
-  return ripple;
-}
-
-function load(ripple) {
-  (0, _group2.default)('loading cache', function () {
-    ((0, _parse2.default)(localStorage.ripple) || []).forEach(silent(ripple));
-  });
-}
-
-function cache(ripple) {
-  return function (res) {
-    log('cached');
-    var cachable = (0, _values2.default)((0, _clone2.default)(ripple.resources)).filter((0, _not2.default)((0, _header2.default)('cache-control', 'no-store')));
-
-    cachable.filter((0, _header2.default)('content-type', 'application/javascript')).map(function (d) {
-      return d.body = (0, _str2.default)(ripple.resources[d.name].body);
-    });
-
-    localStorage.ripple = (0, _str2.default)(cachable);
-  };
-}
-
-function silent(ripple) {
-  return function (res) {
-    return res.headers.silent = true, ripple(res);
-  };
-}
-
-var log = require('utilise/log')('[ri/offline]'),
-    err = require('utilise/err')('[ri/offline]');
-},{"utilise/client":74,"utilise/clone":75,"utilise/debounce":79,"utilise/err":82,"utilise/group":88,"utilise/header":90,"utilise/is":93,"utilise/key":94,"utilise/log":97,"utilise/not":99,"utilise/parse":101,"utilise/proxy":103,"utilise/str":110,"utilise/values":113}],50:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = precss;
-
-var _identity = require('utilise/identity');
-
-var _identity2 = _interopRequireDefault(_identity);
-
-var _client = require('utilise/client');
-
-var _client2 = _interopRequireDefault(_client);
-
-var _attr = require('utilise/attr');
-
-var _attr2 = _interopRequireDefault(_attr);
-
-var _wrap = require('utilise/wrap');
-
-var _wrap2 = _interopRequireDefault(_wrap);
-
-var _all = require('utilise/all');
-
-var _all2 = _interopRequireDefault(_all);
-
-var _raw = require('utilise/raw');
-
-var _raw2 = _interopRequireDefault(_raw);
-
-var _key = require('utilise/key');
-
-var _key2 = _interopRequireDefault(_key);
-
-/* istanbul ignore next */
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// -------------------------------------------
-// API: Pre-applies Scoped CSS [css=name]
-// -------------------------------------------
-function precss(ripple) {
-  if (!_client2.default) return;
-  log('creating');
-
-  ripple.render = render(ripple)(ripple.render);
-
-  values(ripple.types).filter(by('header', 'text/css')).map(function (type) {
-    return type.render = proxy(type.render, css(ripple));
-  });
-
-  return ripple;
-}
-
-function render(ripple) {
-  return function (next) {
-    return function (host) {
-      var css = str((0, _attr2.default)(host, 'css')).split(' ').filter(Boolean),
-          root = host.shadowRoot || host,
-          head = document.head,
-          shadow = head.createShadowRoot && host.shadowRoot,
-          styles;
-
-      // this host does not have a css dep, continue with rest of rendering pipeline
-      if (!css.length) return next(host);
-
-      // this host has a css dep, but it is not loaded yet - stop rendering this host
-      if (css.some(not(is.in(ripple.resources)))) return;
-
-      // retrieve styles
-      styles = css.map(from(ripple.resources)).map((0, _key2.default)('body')).map(polyfill(host, shadow));
-
-      // reuse or create style tag
-      css.map(function (d) {
-        return (0, _raw2.default)('style[resource="' + d + '"]', shadow ? root : head) || el('style[resource=' + d + ']');
-      }).map(function (d, i) {
-        return d.innerHTML = styles[i], d;
-      }).filter(not(by('parentNode'))).map(function (d) {
-        return shadow ? root.insertBefore(d, root.firstChild) : head.appendChild(d), d;
-      });
-
-      // continue with rest of the rendering pipeline
-      return next(host);
-    };
-  };
-}
-
-function polyfill(el, shadow) {
-  return shadow ? _identity2.default : function (styles) {
-    var prefix = (0, _attr2.default)(el, 'is') ? '[is="' + (0, _attr2.default)(el, 'is') + '"]' : el.nodeName.toLowerCase(),
-        escaped = prefix.replace(/\[/g, '\\[').replace(/\]/g, '\\]');
-
-    return !prefix ? styles : styles.replace(/:host\((.+?)\)/gi, function ($1, $2) {
-      return prefix + $2;
-    }) // :host(...) -> tag...
-    .replace(/:host /gi, prefix + " ") // :host      -> tag
-    .replace(/^([^@%\n]*){/gim, function ($1) {
-      return prefix + ' ' + $1;
-    }) // ... {      -> tag ... {
-    .replace(/^(.*?),\s*$/gim, function ($1) {
-      return prefix + ' ' + $1;
-    }) // ... ,      -> tag ... ,
-    .replace(/\/deep\/ /gi, '') // /deep/     ->
-    .replace(/^.*:host-context\((.+)\)/gim, function ($1, $2) {
-      return $2 + " " + prefix;
-    }) // :host(...) -> tag...
-    .replace(new RegExp(escaped + '[\\s]*' + escaped, "g"), prefix); // tag tag    -> tag
-  };
-}
-
-function css(ripple) {
-  return function (res) {
-    return (0, _all2.default)('[css~="' + res.name + '"]:not([inert])').map(ripple.draw);
-  };
-}
-
-var log = require('utilise/log')('[ri/precss]'),
-    err = require('utilise/err')('[ri/precss]');
-},{"utilise/all":69,"utilise/attr":70,"utilise/client":74,"utilise/err":82,"utilise/identity":91,"utilise/key":94,"utilise/log":97,"utilise/raw":104,"utilise/wrap":114}],51:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = prehtml;
-
-var _client = require('utilise/client');
-
-var _client2 = _interopRequireDefault(_client);
-
-var _attr = require('utilise/attr');
-
-var _attr2 = _interopRequireDefault(_attr);
-
-var _wrap = require('utilise/wrap');
-
-var _wrap2 = _interopRequireDefault(_wrap);
-
-var _all = require('utilise/all');
-
-var _all2 = _interopRequireDefault(_all);
-
-var _key = require('utilise/key');
-
-var _key2 = _interopRequireDefault(_key);
-
-/* istanbul ignore next */
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// -------------------------------------------
-// API: Pre-applies HTML Templates [template=name]
-// -------------------------------------------
-function prehtml(ripple) {
-  if (!_client2.default) return;
-  log('creating');
-
-  var render = ripple.render;
-
-  (0, _key2.default)('types.text/html.render', (0, _wrap2.default)(html(ripple)))(ripple);
-
-  ripple.render = function (el) {
-    var div,
-        html = (0, _attr2.default)(el, 'template');
-    if (!html) return render.apply(this, arguments);
-    if (html && !ripple(html)) return;
-    div = document.createElement('div');
-    div.innerHTML = ripple(html);(el.shadowRoot || el).innerHTML = div.innerHTML;
-    return render(el);
-  };
-
-  return ripple;
-}
-
-function html(ripple) {
-  return function (res) {
-    return (0, _all2.default)('[template="' + res.name + '"]:not([inert])').map(ripple.draw);
-  };
-}
-
-var log = require('utilise/log')('[ri/prehtml]'),
-    err = require('utilise/err')('[ri/prehtml]');
-},{"utilise/all":69,"utilise/attr":70,"utilise/client":74,"utilise/err":82,"utilise/key":94,"utilise/log":97,"utilise/wrap":114}],52:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = reactive;
-
-var _header = require('utilise/header');
-
-var _header2 = _interopRequireDefault(_header);
-
-var _keys = require('utilise/keys');
-
-var _keys2 = _interopRequireDefault(_keys);
-
-var _str = require('utilise/str');
-
-var _str2 = _interopRequireDefault(_str);
-
-var _not = require('utilise/not');
-
-var _not2 = _interopRequireDefault(_not);
-
-var _def = require('utilise/def');
-
-var _def2 = _interopRequireDefault(_def);
-
-var _has = require('utilise/has');
-
-var _has2 = _interopRequireDefault(_has);
-
-var _is = require('utilise/is');
-
-var _is2 = _interopRequireDefault(_is);
-
-/* istanbul ignore next */
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// -------------------------------------------
-// API: React to data changes - deprecates explicit .emit('change')
-// -------------------------------------------
-function reactive(ripple) {
-  log('creating');
-  ripple.on('change.reactive', react(ripple));
-  return ripple;
-}
-
-function react(ripple) {
-  return function (res) {
-    if (!_is2.default.obj(res.body)) return;
-    if ((0, _header2.default)('reactive', false)(res)) return;
-    if (res.body.observer) return;
-    if (!Object.observe) return polyfill(ripple)(res);
-
-    Array.observe(res.body, (0, _def2.default)(res.body, 'observer', changed(ripple)(res)));
-
-    _is2.default.arr(res.body) && res.body.forEach(observe(ripple)(res));
-  };
-}
-
-function observe(ripple) {
-  return function (res) {
-    return function (d) {
-      if (!_is2.default.obj(d)) return;
-      if (d.observer) return;
-      var fn = child(ripple)(res);
-      (0, _def2.default)(d, 'observer', fn);
-      Object.observe(d, fn);
-    };
-  };
-}
-
-function child(ripple) {
-  return function (res) {
-    return function (changes) {
-      var key = res.body.indexOf(changes[0].object),
-          value = res.body[key],
-          type = 'update',
-          change = { key: key, value: value, type: type };
-
-      log('changed (c)'.green, res.name.bold, (0, _str2.default)(key).grey, debug ? changes : '');
-      ripple.emit('change', [res, change], (0, _not2.default)(_is2.default.in(['reactive'])));
-    };
-  };
-}
-
-function changed(ripple) {
-  return function (res) {
-    return function (changes) {
-      changes.map(normalize).filter(Boolean).map(function (change) {
-        return log('changed (p)'.green, res.name.bold, change.key.grey), change;
-      }).map(function (change) {
-        return _is2.default.arr(res.body) && change.type == 'push' && observe(ripple)(res)(change.value), change;
-      }).map(function (change) {
-        return ripple.emit('change', [res, change], (0, _not2.default)(_is2.default.in(['reactive'])));
-      });
-    };
-  };
-}
-
-function polyfill(ripple) {
-  return function (res) {
-    if (!ripple.observer) ripple.observer = setInterval(check(ripple), 100);
-    if (!ripple.cache) ripple.cache = {};
-    ripple.cache[res.name] = (0, _str2.default)(res.body);
-  };
-}
-
-function check(ripple) {
-  return function () {
-    if (!ripple || !ripple.resources) return clearInterval(ripple.observer);
-    (0, _keys2.default)(ripple.cache).forEach(function (name) {
-      var res = ripple.resources[name];
-      if (ripple.cache[name] != (0, _str2.default)(res.body)) {
-        log('changed (x)', name);
-        ripple.cache[name] = (0, _str2.default)(res.body);
-        ripple.emit('change', [res], (0, _not2.default)(_is2.default.in(['reactive'])));
-      }
-    });
-  };
-}
-
-// normalize a change
-function normalize(change) {
-  var type = change.type,
-      removed = type == 'delete' ? change.oldValue : change.removed && change.removed[0],
-      data = change.object,
-      key = change.name || (0, _str2.default)(change.index),
-      value = data[key],
-      skip = type == 'update' && (0, _str2.default)(value) == (0, _str2.default)(change.oldValue),
-      details = {
-    key: key,
-    value: removed || value,
-    type: type == 'update' ? 'update' : type == 'delete' ? 'remove' : type == 'splice' && removed ? 'remove' : type == 'splice' && !removed ? 'push' : type == 'add' ? 'push' : false
-  };
-
-  if (skip) return log('skipping update'), false;
-  return details;
-}
-
-var log = require('utilise/log')('[ri/reactive]'),
-    err = require('utilise/err')('[ri/reactive]'),
-    debug = false;
-},{"utilise/def":80,"utilise/err":82,"utilise/has":89,"utilise/header":90,"utilise/is":93,"utilise/keys":95,"utilise/log":97,"utilise/not":99,"utilise/str":110}],53:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = shadow;
-
-var _client = require('utilise/client');
-
-var _client2 = _interopRequireDefault(_client);
-
-/* istanbul ignore next */
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// -------------------------------------------
-// API: Mixes Shadow DOM Encapsulation into rendering pipeline
-// -------------------------------------------
-function shadow(ripple) {
-  if (!_client2.default) return;
-  log('creating', document.head.createShadowRoot ? 'encapsulation' : 'closing gap');
-
-  var render = ripple.render;
-
-  ripple.render = function (el) {
-    el.createShadowRoot ? !el.shadowRoot && el.createShadowRoot() && reflect(el) : (el.shadowRoot = el, el.shadowRoot.host = el);
-
-    return render(el);
-  };
-
-  return ripple;
-}
-
-function reflect(el) {
-  el.shadowRoot.innerHTML = el.innerHTML;
-}
-
-var log = require('utilise/log')('[ri/shadow]'),
-    err = require('utilise/err')('[ri/shadow]');
-},{"utilise/client":74,"utilise/err":82,"utilise/log":97}],54:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = singleton;
-
-var _owner = require('utilise/owner');
-
-var _owner2 = _interopRequireDefault(_owner);
-
-/* istanbul ignore next */
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// -------------------------------------------
-// Exposes a convenient global instance
-// -------------------------------------------
-function singleton(ripple) {
-  log('creating');
-  if (!_owner2.default.ripple) _owner2.default.ripple = ripple;
-  return ripple;
-}
-
-var log = require('utilise/log')('[ri/singleton]');
-},{"utilise/log":97,"utilise/owner":100}],55:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = sync;
-
-var _identity = require('utilise/identity');
-
-var _identity2 = _interopRequireDefault(_identity);
-
-var _replace = require('utilise/replace');
-
-var _replace2 = _interopRequireDefault(_replace);
-
-var _prepend = require('utilise/prepend');
-
-var _prepend2 = _interopRequireDefault(_prepend);
-
-var _flatten = require('utilise/flatten');
-
-var _flatten2 = _interopRequireDefault(_flatten);
-
-var _values = require('utilise/values');
-
-var _values2 = _interopRequireDefault(_values);
-
-var _header = require('utilise/header');
-
-var _header2 = _interopRequireDefault(_header);
-
-var _client = require('utilise/client');
-
-var _client2 = _interopRequireDefault(_client);
-
-var _noop = require('utilise/noop');
-
-var _noop2 = _interopRequireDefault(_noop);
-
-var _keys = require('utilise/keys');
-
-var _keys2 = _interopRequireDefault(_keys);
-
-var _key = require('utilise/key');
-
-var _key2 = _interopRequireDefault(_key);
-
-var _str = require('utilise/str');
-
-var _str2 = _interopRequireDefault(_str);
-
-var _not = require('utilise/not');
-
-var _not2 = _interopRequireDefault(_not);
-
-var _by = require('utilise/by');
-
-var _by2 = _interopRequireDefault(_by);
-
-var _is = require('utilise/is');
-
-var _is2 = _interopRequireDefault(_is);
-
-var _jsondiffpatch = require('jsondiffpatch');
-
-/* istanbul ignore next */
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// -------------------------------------------
-// API: Synchronises resources between server/client
-// -------------------------------------------
-function sync(ripple, server) {
-  log('creating');
-
-  if (!_client2.default && !server) return;
-  (0, _values2.default)(ripple.types).map(headers(ripple));
-  ripple.sync = emit(ripple);
-  ripple.io = io(server);
-  ripple.on('change', function (res) {
-    return emit(ripple)()(res.name);
-  });
-  ripple.io.on('change', silent(ripple));
-  ripple.io.on('connection', function (s) {
-    return s.on('change', change(ripple));
-  });
-  ripple.io.on('connection', function (s) {
-    return emit(ripple)(s)();
-  });
-  ripple.io.use(setIP);
-  return ripple;
-}
-
-function change(ripple) {
-  return function (req) {
-    log('receiving', req.name);
-
-    var socket = this,
-        res = ripple.resources[req.name],
-        check = type(ripple)(req).from || _identity2.default;
-
-    if (!res) return log('no resource', req.name);
-    if (!check.call(this, req)) return debug('type skip', req.name);
-    if (!_is2.default.obj(res.body)) return silent(ripple)(req);
-
-    var to = (0, _header2.default)('proxy-to')(res) || _identity2.default,
-        from = (0, _header2.default)('proxy-from')(res),
-        body = to.call(socket, (0, _key2.default)('body')(res)),
-        deltas = (0, _jsondiffpatch.diff)(body, req.body);
-
-    if (_is2.default.arr(deltas)) return delta('') && res.body.emit('change');
-
-    (0, _keys2.default)(deltas).reverse().filter((0, _not2.default)((0, _is2.default)('_t'))).map(paths(deltas)).reduce(_flatten2.default, []).map(delta).some(Boolean) && res.body.emit('change');
-
-    function delta(k) {
-      var d = (0, _key2.default)(k)(deltas),
-          name = req.name
-      // , body  = res.body
-      ,
-          index = k.replace(/(^|\.)_/g, '$1'),
-          type = d.length == 1 ? 'push' : d.length == 2 ? 'update' : d[2] === 0 ? 'remove' : '',
-          value = type == 'update' ? d[1] : d[0],
-          next = types[type];
-
-      if (!type) return false;
-      if (!from || from.call(socket, value, body, index, type, name, next)) {
-        !index ? silent(ripple)(req) : next(index, value, body, name, res);
-        return true;
-      }
-    }
-  };
-}
-
-function paths(base) {
-  return function (k) {
-    var d = (0, _key2.default)(k)(base);
-    k = _is2.default.arr(k) ? k : [k];
-
-    return _is2.default.arr(d) ? k.join('.') : (0, _keys2.default)(d).map((0, _prepend2.default)(k.join('.') + '.')).map(paths(base));
-  };
-}
-
-function push(k, value, body, name) {
-  var path = k.split('.'),
-      tail = path.pop(),
-      o = (0, _key2.default)(path.join('.'))(body) || body;
-
-  _is2.default.arr(o) ? o.splice(tail, 0, value) : (0, _key2.default)(k, value)(body);
-}
-
-function remove(k, value, body, name) {
-  var path = k.split('.'),
-      tail = path.pop(),
-      o = (0, _key2.default)(path.join('.'))(body) || body;
-
-  _is2.default.arr(o) ? o.splice(tail, 1) : delete o[tail];
-}
-
-function update(k, value, body, name) {
-  (0, _key2.default)(k, value)(body);
-}
-
-function headers(ripple) {
-  return function (type) {
-    var parse = type.parse || _noop2.default;
-    type.parse = function (res) {
-      if (_client2.default) return parse.apply(this, arguments), res;
-      var existing = ripple.resources[res.name],
-          from = (0, _header2.default)('proxy-from')(existing),
-          to = (0, _header2.default)('proxy-to')(existing);
-
-      res.headers['proxy-from'] = (0, _header2.default)('proxy-from')(res) || (0, _header2.default)('from')(res) || from;
-      res.headers['proxy-to'] = (0, _header2.default)('proxy-to')(res) || (0, _header2.default)('to')(res) || to;
-      return parse.apply(this, arguments), res;
-    };
-  };
-}
-
-function silent(ripple) {
-  return function (res) {
-    return res.headers.silent = true, ripple(res);
-  };
-}
-
-function io(opts) {
-  var r = !_client2.default ? require('socket.io')(opts.server || opts) : window.io ? window.io() : _is2.default.fn(require('socket.io-client')) ? require('socket.io-client')() : { on: _noop2.default, emit: _noop2.default };
-  r.use = r.use || _noop2.default;
-  return r;
-}
-
-// emit all or some resources, to all or some clients
-function emit(ripple) {
-  return function (socket) {
-    return function (name) {
-      if (arguments.length && !name) return;
-      if (!name) return (0, _values2.default)(ripple.resources).map((0, _key2.default)('name')).map(emit(ripple)(socket)), ripple;
-
-      var res = ripple.resources[name],
-          sockets = _client2.default ? [ripple.io] : ripple.io.of('/').sockets,
-          lgt = stats(sockets.length, name),
-          silent = (0, _header2.default)('silent', true)(res);
-
-      return silent ? delete res.headers.silent : !res ? log('no resource to emit: ', name) : _is2.default.str(socket) ? lgt(sockets.filter((0, _by2.default)('sessionID', socket)).map(to(ripple)(res))) : !socket ? lgt(sockets.map(to(ripple)(res))) : lgt([to(ripple)(res)(socket)]);
-    };
-  };
-}
-
-function to(ripple) {
-  return function (res) {
-    return function (socket) {
-      var body = _is2.default.fn(res.body) ? '' + res.body : res.body,
-          rep,
-          fn = {
-        type: type(ripple)(res).to || _identity2.default,
-        res: res.headers['proxy-to'] || _identity2.default
-      };
-
-      body = fn.res.call(socket, body);
-      if (!body) return false;
-
-      rep = fn.type.call(socket, { name: res.name, body: body, headers: res.headers });
-      if (!rep) return false;
-
-      socket.emit('change', rep);
-      return true;
-    };
-  };
-}
-
-function stats(total, name) {
-  return function (results) {
-    log((0, _str2.default)(results.filter(Boolean).length).green.bold + '/' + (0, _str2.default)(total).green, 'sending', name);
-  };
-}
-
-function setIP(socket, next) {
-  socket.ip = socket.request.headers['x-forwarded-for'] || socket.request.connection.remoteAddress;
-  next();
-}
-
-function type(ripple) {
-  return function (res) {
-    return ripple.types[(0, _header2.default)('content-type')(res)];
-  };
-}
-
-var log = require('utilise/log')('[ri/sync]'),
-    err = require('utilise/err')('[ri/sync]'),
-    debug = _noop2.default,
-    types = { push: push, remove: remove, update: update };
-},{"jsondiffpatch":7,"socket.io":7,"socket.io-client":56,"utilise/by":72,"utilise/client":74,"utilise/err":82,"utilise/flatten":85,"utilise/header":90,"utilise/identity":91,"utilise/is":93,"utilise/key":94,"utilise/keys":95,"utilise/log":97,"utilise/noop":98,"utilise/not":99,"utilise/prepend":102,"utilise/replace":106,"utilise/str":110,"utilise/values":113}],56:[function(require,module,exports){
+},{}],129:[function(require,module,exports){
 
 module.exports = require('./lib/');
 
-},{"./lib/":57}],57:[function(require,module,exports){
+},{"./lib/":130}],130:[function(require,module,exports){
 
 /**
  * Module dependencies.
@@ -6825,7 +7647,7 @@ exports.connect = lookup;
 exports.Manager = require('./manager');
 exports.Socket = require('./socket');
 
-},{"./manager":58,"./socket":60,"./url":61,"debug":62,"socket.io-parser":64}],58:[function(require,module,exports){
+},{"./manager":131,"./socket":133,"./url":134,"debug":135,"socket.io-parser":137}],131:[function(require,module,exports){
 
 /**
  * Module dependencies.
@@ -7330,7 +8152,7 @@ Manager.prototype.onreconnect = function(){
   this.emitAll('reconnect', attempt);
 };
 
-},{"./on":59,"./socket":60,"./url":61,"backo2":4,"component-bind":8,"component-emitter":9,"debug":62,"engine.io-client":11,"indexof":29,"object-component":33,"socket.io-parser":64}],59:[function(require,module,exports){
+},{"./on":132,"./socket":133,"./url":134,"backo2":97,"component-bind":100,"component-emitter":101,"debug":135,"engine.io-client":103,"indexof":121,"object-component":125,"socket.io-parser":137}],132:[function(require,module,exports){
 
 /**
  * Module exports.
@@ -7356,7 +8178,7 @@ function on(obj, ev, fn) {
   };
 }
 
-},{}],60:[function(require,module,exports){
+},{}],133:[function(require,module,exports){
 
 /**
  * Module dependencies.
@@ -7743,7 +8565,7 @@ Socket.prototype.disconnect = function(){
   return this;
 };
 
-},{"./on":59,"component-bind":8,"component-emitter":9,"debug":62,"has-binary":27,"socket.io-parser":64,"to-array":67}],61:[function(require,module,exports){
+},{"./on":132,"component-bind":100,"component-emitter":101,"debug":135,"has-binary":119,"socket.io-parser":137,"to-array":140}],134:[function(require,module,exports){
 (function (global){
 
 /**
@@ -7820,7 +8642,7 @@ function url(uri, loc){
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"debug":62,"parseuri":36}],62:[function(require,module,exports){
+},{"debug":135,"parseuri":128}],135:[function(require,module,exports){
 
 /**
  * Expose `debug()` as the module.
@@ -7959,7 +8781,7 @@ try {
   if (window.localStorage) debug.enable(localStorage.debug);
 } catch(e){}
 
-},{}],63:[function(require,module,exports){
+},{}],136:[function(require,module,exports){
 (function (global){
 /*global Blob,File*/
 
@@ -8104,7 +8926,7 @@ exports.removeBlobs = function(data, callback) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./is-buffer":65,"isarray":30}],64:[function(require,module,exports){
+},{"./is-buffer":138,"isarray":122}],137:[function(require,module,exports){
 
 /**
  * Module dependencies.
@@ -8506,7 +9328,7 @@ function error(data){
   };
 }
 
-},{"./binary":63,"./is-buffer":65,"component-emitter":9,"debug":66,"isarray":30,"json3":31}],65:[function(require,module,exports){
+},{"./binary":136,"./is-buffer":138,"component-emitter":101,"debug":139,"isarray":122,"json3":123}],138:[function(require,module,exports){
 (function (global){
 
 module.exports = isBuf;
@@ -8523,9 +9345,9 @@ function isBuf(obj) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],66:[function(require,module,exports){
-arguments[4][62][0].apply(exports,arguments)
-},{"dup":62}],67:[function(require,module,exports){
+},{}],139:[function(require,module,exports){
+arguments[4][135][0].apply(exports,arguments)
+},{"dup":135}],140:[function(require,module,exports){
 module.exports = toArray
 
 function toArray(list, index) {
@@ -8540,7 +9362,7 @@ function toArray(list, index) {
     return array
 }
 
-},{}],68:[function(require,module,exports){
+},{}],141:[function(require,module,exports){
 (function (global){
 /*! https://mths.be/utf8js v2.0.0 by @mathias */
 ;(function(root) {
@@ -8788,567 +9610,7 @@ function toArray(list, index) {
 }(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],69:[function(require,module,exports){
-var to = require('utilise/to')
-
-module.exports = function all(selector, doc){
-  var prefix = !doc && document.head.createShadowRoot ? 'html /deep/ ' : ''
-  return to.arr((doc || document).querySelectorAll(prefix+selector))
-}
-},{"utilise/to":111}],70:[function(require,module,exports){
-var is = require('utilise/is')
-
-module.exports = function attr(d, name, value) {
-  d = d.node ? d.node() : d
-  if (is.str(d)) return function(el){ return attr(this.nodeName || this.node ? this : el, d) }
-
-  return arguments.length > 2 && value === false ? d.removeAttribute(name)
-       : arguments.length > 2                    ? d.setAttribute(name, value)
-       : d.attributes.getNamedItem(name) 
-      && d.attributes.getNamedItem(name).value
-}
-
-},{"utilise/is":93}],71:[function(require,module,exports){
-var key = require('utilise/key')
-
-module.exports = function body(ripple){
-  return function(name){
-    var res = ripple.resources[name]
-    return res && res.body
-  }
-}
-},{"utilise/key":94}],72:[function(require,module,exports){
-var key = require('utilise/key')
-  , is  = require('utilise/is')
-
-module.exports = function by(k, v){
-  var exists = arguments.length == 1
-  return function(o){
-    var d = key(k)(o)
-    
-    return d && v && d.toLowerCase && v.toLowerCase ? d.toLowerCase() === v.toLowerCase()
-         : exists ? Boolean(d)
-         : is.fn(v) ? v(d)
-         : d == v
-  }
-}
-},{"utilise/is":93,"utilise/key":94}],73:[function(require,module,exports){
-module.exports = function chainable(fn) {
-  return function(){
-    return fn.apply(this, arguments), fn
-  }
-}
-},{}],74:[function(require,module,exports){
-module.exports = typeof window != 'undefined'
-},{}],75:[function(require,module,exports){
-var parse = require('utilise/parse')
-  , str = require('utilise/str')
-  , is = require('utilise/is')
-
-module.exports = function clone(d) {
-  return !is.fn(d) && !is.str(d)
-       ? parse(str(d))
-       : d
-}
-
-},{"utilise/is":93,"utilise/parse":101,"utilise/str":110}],76:[function(require,module,exports){
-var client = require('utilise/client')
-  , colors = !client && require('colors')
-  , has = require('utilise/has')
-  , is = require('utilise/is')
-
-module.exports = colorfill()
-
-function colorfill(){
-  /* istanbul ignore next */
-  ['red', 'green', 'bold', 'grey', 'strip'].forEach(function(color) {
-    !is.str(String.prototype[color]) && Object.defineProperty(String.prototype, color, {
-      get: function() {
-        return String(this)
-      } 
-    })
-  })
-}
-
-
-},{"colors":7,"utilise/client":74,"utilise/has":89,"utilise/is":93}],77:[function(require,module,exports){
-module.exports = function copy(from, to){ 
-  return function(d){ 
-    return to[d] = from[d], d
-  }
-}
-},{}],78:[function(require,module,exports){
-var sel = require('utilise/sel')
-
-module.exports = function datum(node){
-  return sel(node).datum()
-}
-},{"utilise/sel":108}],79:[function(require,module,exports){
-var is = require('utilise/is')
-
-module.exports = function debounce(d){
-  var pending, wait = is.num(d) ? d : 100
-
-  return is.fn(d) 
-       ? next(d)
-       : next
-
-  function next(fn){
-    return function(){
-      var ctx = this, args = arguments
-      pending && clearTimeout(pending)
-      pending = setTimeout(function(){ fn.apply(ctx, args) }, wait)
-    }
-  }
-  
-}
-},{"utilise/is":93}],80:[function(require,module,exports){
-var has = require('utilise/has')
-
-module.exports = function def(o, p, v, w){
-  !has(o, p) && Object.defineProperty(o, p, { value: v, writable: w })
-  return o[p]
-}
-
-},{"utilise/has":89}],81:[function(require,module,exports){
-var err  = require('utilise/err')('[emitterify]')
-  , keys = require('utilise/keys')
-  , def  = require('utilise/def')
-  , not  = require('utilise/not')
-  , is   = require('utilise/is')
-  
-module.exports = function emitterify(body) {
-  return def(body, 'on', on)
-       , def(body, 'once', once)
-       , def(body, 'emit', emit)
-       , body
-
-  function emit(type, param, filter) {
-    var ns = type.split('.')[1]
-      , id = type.split('.')[0]
-      , li = body.on[id] || []
-      , tt = li.length-1
-      , pm = is.arr(param) ? param : [param || body]
-
-    if (ns) return invoke(li, ns, pm), body
-
-    for (var i = li.length; i >=0; i--)
-      invoke(li, i, pm)
-
-    keys(li)
-      .filter(not(isFinite))
-      .filter(filter || Boolean)
-      .map(function(n){ return invoke(li, n, pm) })
-
-    return body
-  }
-
-  function invoke(o, k, p){
-    if (!o[k]) return
-    var fn = o[k]
-    o[k].once && (isFinite(k) ? o.splice(k, 1) : delete o[k])
-    try { fn.apply(body, p) } catch(e) { err(e, e.stack)  }
-   }
-
-  function on(type, callback) {
-    var ns = type.split('.')[1]
-      , id = type.split('.')[0]
-
-    body.on[id] = body.on[id] || []
-    return !callback && !ns ? (body.on[id])
-         : !callback &&  ns ? (body.on[id][ns])
-         :  ns              ? (body.on[id][ns] = callback, body)
-                            : (body.on[id].push(callback), body)
-  }
-
-  function once(type, callback){
-    return callback.once = true, body.on(type, callback), body
-  }
-}
-},{"utilise/def":80,"utilise/err":82,"utilise/is":93,"utilise/keys":95,"utilise/not":99}],82:[function(require,module,exports){
-var owner = require('utilise/owner')
-  , to = require('utilise/to')
-
-module.exports = function err(prefix){
-  return function(d){
-    if (!owner.console || !console.error.apply) return d;
-    var args = to.arr(arguments)
-    args.unshift(prefix.red ? prefix.red : prefix)
-    return console.error.apply(console, args), d
-  }
-}
-},{"utilise/owner":100,"utilise/to":111}],83:[function(require,module,exports){
-var is = require('utilise/is')
-  , not = require('utilise/not')
-  , keys = require('utilise/keys')
-  , copy = require('utilise/copy')
-
-module.exports = function extend(to){ 
-  return function(from){
-    keys(from)
-      .filter(not(is.in(to)))
-      .map(copy(from, to))
-
-    return to
-  }
-}
-},{"utilise/copy":77,"utilise/is":93,"utilise/keys":95,"utilise/not":99}],84:[function(require,module,exports){
-module.exports = function first(d){
-  return d[0]
-}
-},{}],85:[function(require,module,exports){
-var is = require('utilise/is')  
-
-module.exports = function flatten(p,v){ 
-  is.arr(v) && (v = v.reduce(flatten, []))
-  return (p = p || []), p.concat(v) 
-}
-
-},{"utilise/is":93}],86:[function(require,module,exports){
-var is = require('utilise/is')
-
-module.exports = function fn(candid){
-  return is.fn(candid) ? candid
-       : (new Function("return " + candid))()
-}
-},{"utilise/is":93}],87:[function(require,module,exports){
-var datum = require('utilise/datum')
-  , key = require('utilise/key')
-
-module.exports = from
-from.parent = fromParent
-
-function from(o){
-  return function(k){
-    return key(k)(o)
-  }
-}
-
-function fromParent(k){
-  return datum(this.parentNode)[k]
-}
-},{"utilise/datum":78,"utilise/key":94}],88:[function(require,module,exports){
-var client = require('utilise/client')
-  , owner = require('utilise/owner')
-
-module.exports = function group(prefix, fn){
-  if (!owner.console) return fn()
-  if (!console.groupCollapsed) polyfill()
-  console.groupCollapsed(prefix)
-  fn()
-  console.groupEnd(prefix)
-}
-
-function polyfill() {
-  console.groupCollapsed = console.groupEnd = function(d){
-    console.log('*****', d, '*****')
-  }
-}
-},{"utilise/client":74,"utilise/owner":100}],89:[function(require,module,exports){
-module.exports = function has(o, k) {
-  return k in o
-}
-},{}],90:[function(require,module,exports){
-var has = require('utilise/has')
-
-module.exports = function header(header, value) {
-  var getter = arguments.length == 1
-  return function(d){ 
-    return !d                      ? null
-         : !has(d, 'headers')      ? null
-         : !has(d.headers, header) ? null
-         : getter                  ? d['headers'][header]
-                                   : d['headers'][header] == value
-  }
-}
-},{"utilise/has":89}],91:[function(require,module,exports){
-module.exports = function identity(d) {
-  return d
-}
-},{}],92:[function(require,module,exports){
-module.exports = function includes(pattern){
-  return function(d){
-    return d && d.indexOf && ~d.indexOf(pattern)
-  }
-}
-},{}],93:[function(require,module,exports){
-module.exports = is
-is.fn     = isFunction
-is.str    = isString
-is.num    = isNumber
-is.obj    = isObject
-is.lit    = isLiteral
-is.bol    = isBoolean
-is.truthy = isTruthy
-is.falsy  = isFalsy
-is.arr    = isArray
-is.null   = isNull
-is.def    = isDef
-is.in     = isIn
-
-function is(v){
-  return function(d){
-    return d == v
-  }
-}
-
-function isFunction(d) {
-  return typeof d == 'function'
-}
-
-function isBoolean(d) {
-  return typeof d == 'boolean'
-}
-
-function isString(d) {
-  return typeof d == 'string'
-}
-
-function isNumber(d) {
-  return typeof d == 'number'
-}
-
-function isObject(d) {
-  return typeof d == 'object'
-}
-
-function isLiteral(d) {
-  return typeof d == 'object' 
-      && !(d instanceof Array)
-}
-
-function isTruthy(d) {
-  return !!d == true
-}
-
-function isFalsy(d) {
-  return !!d == false
-}
-
-function isArray(d) {
-  return d instanceof Array
-}
-
-function isNull(d) {
-  return d === null
-}
-
-function isDef(d) {
-  return typeof d !== 'undefined'
-}
-
-function isIn(set) {
-  return function(d){
-    return !set ? false  
-         : set.indexOf ? ~set.indexOf(d)
-         : d in set
-  }
-}
-},{}],94:[function(require,module,exports){
-var is = require('utilise/is')
-  , str = require('utilise/str')
-
-module.exports = function key(k, v){ 
-  var set = arguments.length > 1
-    , keys = str(k).split('.')
-    , root = keys.shift()
-
-  return function deep(o){
-    var masked = {}
-    return !o ? undefined 
-         : !k ? o
-         : is.arr(k) ? (k.map(copy), masked)
-         : o[k] || !keys.length ? (set ? ((o[k] = is.fn(v) ? v(o[k]) : v), o)
-                                       :   o[k])
-                                : (set ? (key(keys.join('.'), v)(o[root] ? o[root] : (o[root] = {})), o)
-                                       : key(keys.join('.'))(o[root]))
-
-    function copy(k){
-      var val = key(k)(o)
-      ;(val != undefined) && key(k, val)(masked)
-    }
-  }
-}
-},{"utilise/is":93,"utilise/str":110}],95:[function(require,module,exports){
-module.exports = function keys(o) {
-  return Object.keys(o || {})
-}
-},{}],96:[function(require,module,exports){
-module.exports = function lo(d){
-  return (d || '').toLowerCase()
-}
-
-},{}],97:[function(require,module,exports){
-var is = require('utilise/is')
-  , to = require('utilise/to')
-  , owner = require('utilise/owner')
-
-module.exports = function log(prefix){
-  return function(d){
-    if (!owner.console || !console.log.apply) return d;
-    is.arr(arguments[2]) && (arguments[2] = arguments[2].length)
-    var args = to.arr(arguments)
-    args.unshift(prefix.grey ? prefix.grey : prefix)
-    return console.log.apply(console, args), d
-  }
-}
-},{"utilise/is":93,"utilise/owner":100,"utilise/to":111}],98:[function(require,module,exports){
-module.exports = function noop(){}
-},{}],99:[function(require,module,exports){
-module.exports = function not(fn){
-  return function(){
-    return !fn.apply(this, arguments)
-  }
-}
-},{}],100:[function(require,module,exports){
-(function (global){
-module.exports = require('utilise/client') ? /* istanbul ignore next */ window : global
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"utilise/client":74}],101:[function(require,module,exports){
-module.exports = function parse(d){
-  return d && JSON.parse(d)
-}
-},{}],102:[function(require,module,exports){
-module.exports = function prepend(v) {
-  return function(d){
-    return v+d
-  }
-}
-},{}],103:[function(require,module,exports){
-var is = require('utilise/is')
-  , identity = require('utilise/identity')
-
-module.exports = function proxy(fn, ret, ctx){ 
-  return function(){
-    var result = (fn || identity).apply(ctx || this, arguments)
-    return is.fn(ret) ? ret.call(ctx || this, result) : ret || result
-  }
-}
-},{"utilise/identity":91,"utilise/is":93}],104:[function(require,module,exports){
-module.exports = function raw(selector, doc){
-  var prefix = !doc && document.head.createShadowRoot ? 'html /deep/ ' : ''
-  return (doc ? doc : document).querySelector(prefix+selector)
-}
-},{}],105:[function(require,module,exports){
-module.exports = function(target, source) {
-  var i = 1, n = arguments.length, method
-  while (++i < n) target[method = arguments[i]] = rebind(target, source, source[method])
-  return target
-}
-
-function rebind(target, source, method) {
-  return function() {
-    var value = method.apply(source, arguments)
-    return value === source ? target : value
-  }
-}
-},{}],106:[function(require,module,exports){
-module.exports = function replace(from, to){
-  return function(d){
-    return d.replace(from, to)
-  }
-}
-},{}],107:[function(require,module,exports){
-var is = require('utilise/is')
-  , body = require('utilise/body')
-  , first = require('utilise/first')
-  , values = require('utilise/values')
-
-module.exports = function resourcify(ripple){
-  return function(d) {
-    var o = {}
-      , names = d ? d.split(' ') : []
-
-    return   names.length == 0 ? undefined
-         :   names.length == 1 ? body(ripple)(first(names))
-         : ( names.map(function(d) { return o[d] = body(ripple)(d) })
-           , values(o).some(is.falsy) ? undefined : o 
-           )
-  }
-}
-},{"utilise/body":71,"utilise/first":84,"utilise/is":93,"utilise/values":113}],108:[function(require,module,exports){
-module.exports = function sel(el){
-  return el.node ? el : d3.select(el)
-}
-},{}],109:[function(require,module,exports){
-module.exports = function split(delimiter){
-  return function(d){
-    return d.split(delimiter)
-  }
-}
-
-},{}],110:[function(require,module,exports){
-var is = require('utilise/is') 
-
-module.exports = function str(d){
-  return d === 0 ? '0'
-       : !d ? ''
-       : is.fn(d) ? '' + d
-       : is.obj(d) ? JSON.stringify(d)
-       : String(d)
-}
-},{"utilise/is":93}],111:[function(require,module,exports){
-module.exports = { 
-  arr: toArray
-, obj: toObject
-}
-
-function toArray(d){
-  return Array.prototype.slice.call(d, 0)
-}
-
-function toObject(d) {
-  var by = 'id'
-    , o = {}
-
-  return arguments.length == 1 
-    ? (by = d, reduce)
-    : reduce.apply(this, arguments)
-
-  function reduce(p,v,i){
-    if (i === 0) p = {}
-    p[v[by]] = v
-    return p
-  }
-}
-},{}],112:[function(require,module,exports){
-var is = require('utilise/is')
-
-module.exports = function unique(d, i){
-  if (!i) unique.matched = []
-  return !is.in(unique.matched)(d) 
-       ? unique.matched.push(d)
-       : false 
-}
-
-},{"utilise/is":93}],113:[function(require,module,exports){
-var keys = require('utilise/keys')
-  , from = require('utilise/from')
-
-module.exports = function values(o) {
-  return !o ? [] : keys(o).map(from(o))
-}
-},{"utilise/from":87,"utilise/keys":95}],114:[function(require,module,exports){
-module.exports = function wrap(d){
-  return function(){
-    return d
-  }
-}
-},{}],115:[function(require,module,exports){
-var key = require('utilise/key')
-
-module.exports = function za(k) {
-  return function(a, b){
-    var ka = key(k)(a) || ''
-      , kb = key(k)(b) || ''
-
-    return ka > kb ? -1 
-         : ka < kb ?  1 
-                   :  0
-  }
-}
-
-},{"utilise/key":94}],116:[function(require,module,exports){
+},{}],142:[function(require,module,exports){
 
 /**
  * Module dependencies.
@@ -9393,6 +9655,4 @@ function ws(uri, protocols, opts) {
 
 if (WebSocket) ws.prototype = WebSocket.prototype;
 
-},{}],117:[function(require,module,exports){
-arguments[4][91][0].apply(exports,arguments)
-},{"dup":91}]},{},[1]);
+},{}]},{},[30]);

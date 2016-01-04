@@ -4,6 +4,106 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.default = features;
+/* istanbul ignore next */
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// -------------------------------------------
+// Extend Components with Features
+// -------------------------------------------
+function features(ripple) {
+  if (!true) return;
+  log('creating');
+  ripple.render = render(ripple)(ripple.render);
+  return ripple;
+}
+
+var render = function render(ripple) {
+  return function (next) {
+    return function (el) {
+      var features = (0, str)((0, attr)(el, 'is')).split(' ').map((0, from)(ripple.resources)).filter((0, header)('content-type', 'application/javascript')),
+          css = (0, str)((0, attr)('css')(el)).split(' ');
+
+      features.filter((0, by)('headers.needs', includes('[css]'))).map((0, key)('name')).map((0, append)('.css')).filter((0, not)(is.in(css))).map(function (d) {
+        return (0, attr)('css', ((0, str)((0, attr)('css')(el)) + ' ' + d).trim())(el);
+      });
+
+      var node = next(el);
+
+      return !node ? undefined : features.map((0, key)('body')).map(function (d) {
+        return d.call(node, node.state);
+      });
+    };
+  };
+};
+
+var log = window.log('[ri/features]');
+},{}],2:[function(require,module,exports){
+'use strict';
+
+var _slicedToArray = (function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; })();
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = needs;/* istanbul ignore next */
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// -------------------------------------------
+// Define Default Attributes for Components
+// -------------------------------------------
+function needs(ripple) {
+  if (!true) return;
+  log('creating');
+  ripple.render = render(ripple)(ripple.render);
+  return ripple;
+}
+
+function render(ripple) {
+  return function (next) {
+    return function (el) {
+      var component = (0, lo)(el.nodeName);
+      if (!(component in ripple.resources)) return;
+
+      var headers = ripple.resources[component].headers,
+          attrs = headers.attrs = headers.attrs || parse(headers.needs, component);
+
+      return attrs.map(function (_ref) {
+        var _ref2 = _slicedToArray(_ref, 2);
+
+        var name = _ref2[0];
+        var values = _ref2[1];
+
+        return values.some(function (v, i) {
+          var from = (0, attr)(el, name) || '';
+          return (0, includes)(v)(from) ? false : (0, attr)(el, name, (from + ' ' + v).trim());
+        });
+      }).some(Boolean) ? el.draw() : next(el);
+    };
+  };
+}
+
+function parse() {
+  var attrs = arguments.length <= 0 || arguments[0] === undefined ? '' : arguments[0];
+  var component = arguments[1];
+
+  return attrs.split('[').slice(1).map((0, replace)(']', '')).map((0, split)('=')).map(function (_ref3) {
+    var _ref4 = _slicedToArray(_ref3, 2);
+
+    var k = _ref4[0];
+    var v = _ref4[1];
+    return v ? [k, v.split(' ')] : k == 'css' ? [k, [component + '.css']] : [k, []];
+  });
+}
+
+var log = window.log('[ri/needs]'),
+    err = window.err('[ri/needs]');
+},{}],3:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 exports.default = create;
 
 var _rijs = require('rijs.backpressure');
@@ -26,107 +126,118 @@ var _rijs9 = require('rijs.reactive');
 
 var _rijs10 = _interopRequireDefault(_rijs9);
 
-var _rijs11 = require('rijs.prehtml');
+var _rijs11 = require('rijs.features');
 
 var _rijs12 = _interopRequireDefault(_rijs11);
 
-var _rijs13 = require('rijs.offline');
+var _rijs13 = require('rijs.prehtml');
 
 var _rijs14 = _interopRequireDefault(_rijs13);
 
-var _rijs15 = require('rijs.helpers');
+var _rijs15 = require('rijs.offline');
 
 var _rijs16 = _interopRequireDefault(_rijs15);
 
-var _rijs17 = require('rijs.precss');
+var _rijs17 = require('rijs.helpers');
 
 var _rijs18 = _interopRequireDefault(_rijs17);
 
-var _rijs19 = require('rijs.shadow');
+var _rijs19 = require('rijs.precss');
 
 var _rijs20 = _interopRequireDefault(_rijs19);
 
-var _rijs21 = require('rijs.resdir');
+var _rijs21 = require('rijs.shadow');
 
 var _rijs22 = _interopRequireDefault(_rijs21);
 
-var _rijs23 = require('rijs.mysql');
+var _rijs23 = require('rijs.resdir');
 
 var _rijs24 = _interopRequireDefault(_rijs23);
 
-var _rijs25 = require('rijs.serve');
+var _rijs25 = require('rijs.mysql');
 
 var _rijs26 = _interopRequireDefault(_rijs25);
 
-var _rijs27 = require('rijs.delay');
+var _rijs27 = require('rijs.serve');
 
 var _rijs28 = _interopRequireDefault(_rijs27);
 
-var _rijs29 = require('rijs.sync');
+var _rijs29 = require('rijs.delay');
 
 var _rijs30 = _interopRequireDefault(_rijs29);
 
-var _rijs31 = require('rijs.core');
+var _rijs31 = require('rijs.needs');
 
 var _rijs32 = _interopRequireDefault(_rijs31);
 
-var _rijs33 = require('rijs.data');
+var _rijs33 = require('rijs.sync');
 
 var _rijs34 = _interopRequireDefault(_rijs33);
 
-var _rijs35 = require('rijs.html');
+var _rijs35 = require('rijs.core');
 
 var _rijs36 = _interopRequireDefault(_rijs35);
 
-var _rijs37 = require('rijs.css');
+var _rijs37 = require('rijs.data');
 
 var _rijs38 = _interopRequireDefault(_rijs37);
 
-var _rijs39 = require('rijs.fn');
+var _rijs39 = require('rijs.html');
 
 var _rijs40 = _interopRequireDefault(_rijs39);
 
-var _rijs41 = require('rijs.db');
+var _rijs41 = require('rijs.css');
 
 var _rijs42 = _interopRequireDefault(_rijs41);
+
+var _rijs43 = require('rijs.fn');
+
+var _rijs44 = _interopRequireDefault(_rijs43);
+
+var _rijs45 = require('rijs.db');
+
+var _rijs46 = _interopRequireDefault(_rijs45);
 /* istanbul ignore next */
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-// import hypermedia from 'rijs.hypermedia'
-
-client && !window.ripple && create();
+true && !window.ripple && create();
 
 function create(opts) {
-  var ripple = (0, _rijs32.default)(); // empty base collection of resources
+  var ripple = (0, _rijs36.default)(); // empty base collection of resources
 
   // enrich..
   (0, _rijs6.default)(ripple); // exposes a single instance
-  (0, _rijs34.default)(ripple); // register data types
-  // hypermedia(ripple)     // register hypermedia types
-  (0, _rijs36.default)(ripple); // register html types
-  (0, _rijs38.default)(ripple); // register css types
-  (0, _rijs40.default)(ripple); // register fn types
-  (0, _rijs16.default)(ripple); // expose helper functions and constants
-  (0, _rijs24.default)(ripple); // adds mysql adaptor crud hooks
-  (0, _rijs42.default)(ripple, opts); // enable external connections
+  (0, _rijs38.default)(ripple); // register data types
+  (0, _rijs40.default)(ripple); // register html types
+  (0, _rijs42.default)(ripple); // register css types
+  (0, _rijs44.default)(ripple); // register fn types
+  (0, _rijs18.default)(ripple); // expose helper functions and constants
+  (0, _rijs26.default)(ripple); // adds mysql adaptor crud hooks
+  (0, _rijs46.default)(ripple, opts); // enable external connections
   (0, _rijs4.default)(ripple); // invoke web components, fn.call(<el>, data)
+  (0, _rijs32.default)(ripple); // define default attrs for components
   (0, _rijs10.default)(ripple); // react to changes in resources
-  (0, _rijs18.default)(ripple); // preapplies scoped css
-  (0, _rijs12.default)(ripple); // preapplies html templates
-  (0, _rijs20.default)(ripple); // encapsulates with shadow dom or closes gap
-  (0, _rijs28.default)(ripple); // async rendering delay
-  (0, _rijs26.default)(opts); // serve client libraries
-  (0, _rijs30.default)(ripple, opts); // syncs resources between server/client
-  (0, _rijs2.default)(ripple); // restricts broadcast to clients based on need
+  (0, _rijs20.default)(ripple); // preapplies scoped css
+  (0, _rijs14.default)(ripple); // preapplies html templates
+  (0, _rijs22.default)(ripple); // encapsulates with shadow dom or closes gap
+  (0, _rijs30.default)(ripple); // async rendering delay
+  (0, _rijs12.default)(ripple); // extend components with features
+  (0, _rijs28.default)(opts); // serve true libraries
+  (0, _rijs34.default)(ripple, opts); // syncs resources between server/true
+  (0, _rijs2.default)(ripple); // restricts broadcast to trues based on need
   (0, _rijs8.default)(ripple, opts); // populates sessionid on each connection
-  (0, _rijs14.default)(ripple); // loads/saves from/to localstorage
-  (0, _rijs22.default)(ripple, opts); // loads from resources folder
+  (0, _rijs16.default)(ripple); // loads/saves from/to localstorage
+  (0, _rijs24.default)(ripple, opts); // loads from resources folder
 
   return ripple;
 }
-},{"rijs.backpressure":3,"rijs.components":4,"rijs.core":7,"rijs.css":9,"rijs.data":10,"rijs.db":22,"rijs.delay":11,"rijs.fn":12,"rijs.helpers":13,"rijs.html":14,"rijs.mysql":22,"rijs.offline":15,"rijs.precss":16,"rijs.prehtml":17,"rijs.reactive":18,"rijs.resdir":22,"rijs.serve":22,"rijs.sessions":22,"rijs.shadow":19,"rijs.singleton":20,"rijs.sync":21}],2:[function(require,module,exports){
+},{"rijs.backpressure":6,"rijs.components":7,"rijs.core":10,"rijs.css":12,"rijs.data":13,"rijs.db":5,"rijs.delay":14,"rijs.features":1,"rijs.fn":15,"rijs.helpers":16,"rijs.html":17,"rijs.mysql":5,"rijs.needs":2,"rijs.offline":18,"rijs.precss":19,"rijs.prehtml":20,"rijs.reactive":21,"rijs.resdir":5,"rijs.serve":5,"rijs.sessions":5,"rijs.shadow":22,"rijs.singleton":23,"rijs.sync":24}],4:[function(require,module,exports){
 
-},{}],3:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
+module.exports = function identity(d) {
+  return d
+}
+},{}],6:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -141,7 +252,7 @@ function backpressure(ripple) {
   log('creating');
 
   if (!ripple.io) return ripple;
-  if (client) return ripple.draw = draw(ripple)(ripple.draw), ripple.render = loaded(ripple)(ripple.render), ripple.deps = deps, start(ripple);
+  if (true) return ripple.draw = draw(ripple)(ripple.draw), ripple.render = loaded(ripple)(ripple.render), ripple.deps = deps, start(ripple);
 
   (0, values)(ripple.types).map(function (type) {
     return type.to = (0, proxy)(type.to, limit);
@@ -156,14 +267,16 @@ function backpressure(ripple) {
 }
 
 function draw(ripple) {
-  var refresh = (0, debounce)(10)(function (d) {
-    return (0, all)(':unresolved').map(ripple.draw);
-  });
-  return function (d) {
+  var refresh = function refresh(d) {
+    return (0, all)(':unresolved').filter((0, not)((0, key)('requested'))).map((0, key)('requested', true)).map(ripple.draw);
+  };
+
+  return function (next) {
     return function (thing) {
-      var everything = !thing && (!this || !this.nodeName && !this.node);
-      if (shadows || customs && everything) refresh();
-      return d.apply(this, arguments);
+      var everything = !thing && (!this || !this.nodeName && !this.node),
+          ret = next.apply(this, arguments);
+      if (shadows || customs && everything) raf(refresh);
+      return ret;
     };
   };
 }
@@ -194,12 +307,12 @@ function track(ripple) {
   return function (_ref) {
     var name = _ref.name;
     var body = _ref.body;
+    var headers = _ref.headers;
 
     var exists = name in this.deps;
     this.deps[name] = 1;
     if (!exists) ripple.sync(this)(name);
-    if (body.loading) return false;
-    return true;
+    return !headers.pull;
   };
 }
 
@@ -207,7 +320,9 @@ function load(ripple) {
   (0, group)('pulling cache', function (fn) {
     return ((0, parse)(localStorage.ripple) || []).map(function (_ref2) {
       var name = _ref2.name;
-      return ripple(name, { loading: loading });
+      return log(name);
+    }).map(function (name) {
+      return ripple.io.emit('change', { name: name, headers: headers });
     });
   });
 }
@@ -239,13 +354,11 @@ function loaded(ripple) {
     return function (el) {
       var deps = ripple.deps(el);
 
-      deps.filter((0, not)(is.in(ripple.resources))).map(function (name) {
+      return deps.filter((0, not)(is.in(ripple.resources))).map(function (name) {
         return debug('pulling', name), name;
       }).map(function (name) {
-        return ripple(name, { loading: loading });
-      });
-
-      return deps.map((0, from)(ripple.resources)).every((0, not)((0, key)('body.loading'))) ? render(el) : false;
+        return ripple.io.emit('change', { name: name, headers: headers });
+      }).length ? false : render(el);
     };
   };
 }
@@ -258,11 +371,13 @@ function ready(fn) {
 
 var log = window.log('[ri/backpressure]'),
     err = window.err('[ri/backpressure]'),
-    shadows = client && !!document.head.createShadowRoot,
-    customs = client && !!document.registerElement,
-    loading = true,
+    shadows = true && !!document.head.createShadowRoot,
+    customs = true && !!document.registerElement,
+    raf = true && requestAnimationFrame,
+    pull = true,
+    headers = { 'content-type': 'text/plain', pull: pull },
     debug = noop;
-},{}],4:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -290,7 +405,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 // MutationObserver(ripple.draw) - redraws element being observed
 
 function components(ripple) {
-  if (!client) return ripple;
+  if (!true) return ripple;
   log('creating');
 
   if (!customs) ready(polyfill(ripple));
@@ -301,7 +416,7 @@ function components(ripple) {
   (0, key)('types.application/data.render', (0, wrap)((0, _data2.default)(ripple)))(ripple);
   ripple.draw = draw(ripple);
   ripple.render = render(ripple);
-  ripple.on('change', raf(ripple));
+  ripple.on('change', ripple.draw);
   return ripple;
 }
 
@@ -330,10 +445,10 @@ function resource(ripple) {
 }
 
 // batch renders on render frames
-function raf(ripple) {
-  return function (res) {
-    return !(0, header)('pending')(res) && (res.headers.pending = requestAnimationFrame(function () {
-      return delete ripple.resources[res.name].headers.pending, ripple.draw(res);
+function batch(ripple) {
+  return function (el) {
+    return !el.pending && (el.pending = requestAnimationFrame(function (d) {
+      return delete el.pending, ripple.render(el);
     }));
   };
 }
@@ -349,19 +464,22 @@ function invoke(ripple) {
     if (!el.draw) el.draw = function (d) {
       return ripple.draw(el);
     };
-    return ripple.render(el);
+    return batch(ripple)(el), el;
   };
 }
 
 function render(ripple) {
   return function (el) {
-    var name = (0, attr)(el, 'is') || el.tagName.toLowerCase(),
+    var name = (0, lo)(el.tagName),
         deps = (0, attr)(el, 'data'),
         fn = (0, body)(ripple)(name),
-        data = (0, resourcify)(ripple)(deps);
+        data = bodies(ripple)(deps);
+
+    if (!fn) return el;
+    if (deps && !data) return el;
 
     try {
-      fn && (!deps || data) && fn.call(el.shadowRoot || el, data);
+      fn.call(el.shadowRoot || el, defaults(el, data));
     } catch (e) {
       err(e, e.stack);
     }
@@ -398,6 +516,20 @@ function clean(ripple) {
 }
 
 // helpers
+function defaults(el, data) {
+  el.state = el.state || {};
+  overwrite(el.state)(data);
+  overwrite(el.state)(el.__data__);
+  el.__data__ = el.state;
+  return el.state;
+}
+
+function overwrite(to) {
+  return function (from) {
+    return keys(from).map((0, copy)(from, to));
+  };
+}
+
 function onlyIfDifferent(m) {
   return (0, attr)(m.target, m.attributeName) != m.oldValue;
 }
@@ -418,13 +550,26 @@ function drawNodes(ripple) {
   };
 }
 
+function bodies(ripple) {
+  return function (deps) {
+    var o = {},
+        names = deps ? deps.split(' ') : [];
+
+    names.map(function (d) {
+      return o[d] = (0, body)(ripple)(d);
+    });
+
+    return !names.length ? undefined : (0, values)(o).some(is.falsy) ? undefined : o;
+  };
+}
+
 var log = window.log('[ri/components]'),
     err = window.err('[ri/components]'),
-    mutation = client && window.MutationRecord || noop,
-    customs = client && !!document.registerElement,
+    mutation = true && window.MutationRecord || noop,
+    customs = true && !!document.registerElement,
     isAttached = customs ? 'html *, :host-context(html) *' : 'html *';
-client && (Element.prototype.matches = Element.prototype.matches || Element.prototype.msMatchesSelector);
-},{"./types/data":5,"./types/fn":6}],5:[function(require,module,exports){
+true && (Element.prototype.matches = Element.prototype.matches || Element.prototype.msMatchesSelector);
+},{"./types/data":8,"./types/fn":9}],8:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -439,27 +584,26 @@ function data(ripple) {
     return (0, all)('[data~="' + res.name + '"]:not([inert])').map(ripple.draw);
   };
 }
-},{}],6:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = fn;
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 // register custom element prototype (render is automatic)
 function fn(ripple) {
   return function (res) {
-    if (!customs || registered(res)) return (0, all)(res.name + ':not([inert])\n                 ,[is="' + res.name + '"]:not([inert])').map(ripple.draw);
+    if (!customs || !customEl(res) || registered(res)) return (0, all)(res.name + ':not([inert])\n                 ,[is="' + res.name + '"]:not([inert])').map(ripple.draw);
 
     var proto = Object.create(HTMLElement.prototype),
         opts = { prototype: proto },
         extend = res.headers['extends'];
 
     extend && (opts.extends = extend);
-    proto.attachedCallback = proto.attributeChangedCallback = ripple.draw;
+    proto.attachedCallback = ripple.draw;
     document.registerElement(res.name, opts);
   };
 }
@@ -470,8 +614,11 @@ function registered(res) {
   return extend ? document.createElement(extend, res.name).attachedCallback : document.createElement(res.name).attachedCallback;
 }
 
-var customs = client && !!document.registerElement;
-},{}],7:[function(require,module,exports){
+var customs = true && !!document.registerElement,
+    customEl = function customEl(d) {
+  return (0, includes)('-')(d.name);
+};
+},{}],10:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -559,7 +706,7 @@ function types() {
 
 var err = window.err('[ri/core]'),
     log = window.log('[ri/core]');
-},{"./types/text":8}],8:[function(require,module,exports){
+},{"./types/text":11}],11:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -573,7 +720,7 @@ exports.default = {
     return !(0, includes)('.html')(res.name) && !(0, includes)('.css')(res.name) && is.str(res.body);
   }
 };
-},{}],9:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -599,7 +746,7 @@ function css(ripple) {
 }
 
 var log = window.log('[ri/types/css]');
-},{}],10:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -648,7 +795,7 @@ function trickle(ripple) {
 }
 
 var log = window.log('[ri/types/data]');
-},{}],11:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -660,22 +807,24 @@ exports.default = delay;function _interopRequireDefault(obj) { return obj && obj
 // API: Delays the rendering of a component [delay=ms]
 // -------------------------------------------
 function delay(ripple) {
-  if (!client) return ripple;
+  if (!true) return ripple;
   log('creating');
-
-  var render = ripple.render;
-
-  ripple.render = function (el) {
-    var delay = (0, attr)('delay')(el);
-    return delay != null ? (el.setAttribute('inert', ''), el.removeAttribute('delay'), setTimeout(el.removeAttribute.bind(el, 'inert'), +delay)) : render(el);
-  };
-
+  ripple.render = render(ripple.render);
   return ripple;
 }
 
+var render = function render(next) {
+  return function (el) {
+    var delay = (0, attr)('delay')(el);
+    delay != null ? ((0, attr)('inert', '')(el), (0, attr)('delay', false)(el), time(+delay, function (d) {
+      return (0, attr)('inert', false)(el), el.draw();
+    })) : next(el);
+  };
+};
+
 var log = window.log('[ri/delay]'),
     err = window.err('[ri/delay]');
-},{}],12:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -705,7 +854,7 @@ function fnc(ripple) {
 }
 
 var log = window.log('[ri/types/fn]');
-},{}],13:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -756,7 +905,7 @@ function serialise(res) {
 }
 
 var log = window.log('[ri/helpers]');
-},{}],14:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -782,7 +931,7 @@ function html(ripple) {
 }
 
 var log = window.log('[ri/types/html]');
-},{}],15:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -797,7 +946,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 // API: Pre-applies Scoped CSS [css=name]
 // -------------------------------------------
 function offline(ripple) {
-  if (!client || !window.localStorage) return;
+  if (!true || !window.localStorage) return;
   log('creating');
   load(ripple);
   ripple.on('change.cache', (0, debounce)(1000)(cache(ripple)));
@@ -831,7 +980,7 @@ function silent(ripple) {
 
 var log = window.log('[ri/offline]'),
     err = window.err('[ri/offline]');
-},{}],16:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -845,7 +994,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 // API: Pre-applies Scoped CSS [css=name]
 // -------------------------------------------
 function precss(ripple) {
-  if (!client) return;
+  if (!true) return;
   log('creating');
 
   ripple.render = render(ripple)(ripple.render);
@@ -873,15 +1022,15 @@ function render(ripple) {
       if (css.some(not(is.in(ripple.resources)))) return;
 
       // retrieve styles
-      styles = css.map(from(ripple.resources)).map((0, key)('body')).map(polyfill(host, shadow));
+      styles = css.map(from(ripple.resources)).map((0, key)('body')).map(scope(host, shadow, css));
 
       // reuse or create style tag
       css.map(function (d) {
         return (0, raw)('style[resource="' + d + '"]', shadow ? root : head) || el('style[resource=' + d + ']');
-      }).map(function (d, i) {
-        return d.innerHTML = styles[i], d;
-      }).filter(not(by('parentNode'))).map(function (d) {
-        return shadow ? root.insertBefore(d, root.firstChild) : head.appendChild(d), d;
+      }).map((0, key)('innerHTML', function (d, i) {
+        return styles[i];
+      })).filter(not(by('parentNode'))).map(function (d) {
+        return shadow ? root.insertBefore(d, root.firstChild) : head.appendChild(d);
       });
 
       // continue with rest of the rendering pipeline
@@ -890,26 +1039,25 @@ function render(ripple) {
   };
 }
 
-function polyfill(el, shadow) {
-  return shadow ? identity : function (styles) {
-    var prefix = (0, attr)(el, 'is') ? '[is="' + (0, attr)(el, 'is') + '"]' : el.nodeName.toLowerCase(),
-        escaped = prefix.replace(/\[/g, '\\[').replace(/\]/g, '\\]');
+function scope(el, shadow, names) {
+  return shadow ? identity : function (styles, i) {
+    var prefix = '[css~="' + names[i] + '"]',
+        escaped = '\\[css~="' + names[i] + '"\\]';
 
-    return !prefix ? styles : styles.replace(/:host\((.+?)\)/gi, function ($1, $2) {
+    return styles.replace(/^(?!.*:host)([^@%\n]*){/gim, function ($1) {
+      return prefix + ' ' + $1;
+    }) // ... {      -> tag ... {
+    .replace(/^(?!.*:host)(.*?),\s*$/gim, function ($1) {
+      return prefix + ' ' + $1;
+    }) // ... ,      -> tag ... ,
+    .replace(/:host\((.*?)\)/gi, function ($1, $2) {
       return prefix + $2;
     }) // :host(...) -> tag...
     .replace(/:host /gi, prefix + " ") // :host      -> tag
-    .replace(/^([^@%\n]*){/gim, function ($1) {
-      return prefix + ' ' + $1;
-    }) // ... {      -> tag ... {
-    .replace(/^(.*?),\s*$/gim, function ($1) {
-      return prefix + ' ' + $1;
-    }) // ... ,      -> tag ... ,
     .replace(/\/deep\/ /gi, '') // /deep/     ->
-    .replace(/^.*:host-context\((.+)\)/gim, function ($1, $2) {
+    .replace(/^.*:host-context\((.*)\)/gim, function ($1, $2) {
       return $2 + " " + prefix;
-    }) // :host(...) -> tag...
-    .replace(new RegExp(escaped + '[\\s]*' + escaped, "g"), prefix); // tag tag    -> tag
+    }); // :host(...) -> tag...
   };
 }
 
@@ -921,7 +1069,7 @@ function css(ripple) {
 
 var log = window.log('[ri/precss]'),
     err = window.err('[ri/precss]');
-},{}],17:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -934,7 +1082,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 // API: Pre-applies HTML Templates [template=name]
 // -------------------------------------------
 function prehtml(ripple) {
-  if (!client) return;
+  if (!true) return;
   log('creating');
 
   var render = ripple.render;
@@ -962,7 +1110,7 @@ function html(ripple) {
 
 var log = window.log('[ri/prehtml]'),
     err = window.err('[ri/prehtml]');
-},{}],18:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1077,7 +1225,7 @@ function normalize(change) {
 var log = window.log('[ri/reactive]'),
     err = window.err('[ri/reactive]'),
     debug = false;
-},{}],19:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1091,27 +1239,33 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 // API: Mixes Shadow DOM Encapsulation into rendering pipeline
 // -------------------------------------------
 function shadow(ripple) {
-  if (!client) return;
+  if (!true) return;
   log('creating', document.head.createShadowRoot ? 'encapsulation' : 'closing gap');
-
-  var render = ripple.render;
-
-  ripple.render = function (el) {
-    el.createShadowRoot ? !el.shadowRoot && el.createShadowRoot() && reflect(el) : (el.shadowRoot = el, el.shadowRoot.host = el);
-
-    return render(el);
-  };
-
+  ripple.render = render(ripple.render);
   return ripple;
 }
 
-function reflect(el) {
-  el.shadowRoot.innerHTML = el.innerHTML;
-}
+var render = function render(next) {
+  return function (el) {
+    el.createShadowRoot ? !el.shadowRoot && el.createShadowRoot() && (reflect(el), retarget(el)) : (el.shadowRoot = el, el.shadowRoot.host = el);
+
+    return next(el);
+  };
+};
+
+var reflect = function reflect(el) {
+  return el.shadowRoot.innerHTML = el.innerHTML;
+};
+
+var retarget = function retarget(el) {
+  return keys(el).concat(['on', 'once', 'emit', 'classList', 'getAttribute', 'setAttribute']).map(function (d) {
+    return el.shadowRoot[d] = is.fn(el[d]) ? el[d].bind(el) : el[d];
+  });
+};
 
 var log = window.log('[ri/shadow]'),
     err = window.err('[ri/shadow]');
-},{}],20:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1131,7 +1285,7 @@ function singleton(ripple) {
 }
 
 var log = window.log('[ri/singleton]');
-},{}],21:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1143,12 +1297,12 @@ exports.default = sync;var _jsondiffpatch = require('jsondiffpatch');
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 // -------------------------------------------
-// API: Synchronises resources between server/client
+// API: Synchronises resources between server/true
 // -------------------------------------------
 function sync(ripple, server) {
   log('creating');
 
-  if (!client && !server) return;
+  if (!true && !server) return;
   (0, values)(ripple.types).map(headers(ripple));
   ripple.sync = emit(ripple);
   ripple.io = io(server);
@@ -1239,7 +1393,7 @@ function headers(ripple) {
   return function (type) {
     var parse = type.parse || noop;
     type.parse = function (res) {
-      if (client) return parse.apply(this, arguments), res;
+      if (true) return parse.apply(this, arguments), res;
       var existing = ripple.resources[res.name],
           from = (0, header)('proxy-from')(existing),
           to = (0, header)('proxy-to')(existing);
@@ -1258,12 +1412,12 @@ function silent(ripple) {
 }
 
 function io(opts) {
-  var r = !client ? require('socket.io')(opts.server || opts) : window.io ? window.io() : is.fn(require('socket.io-client')) ? require('socket.io-client')() : { on: noop, emit: noop };
+  var r = !true ? require('socket.io')(opts.server || opts) : window.io ? window.io() : is.fn(require('socket.io-client')) ? require('socket.io-client')() : { on: noop, emit: noop };
   r.use = r.use || noop;
   return r;
 }
 
-// emit all or some resources, to all or some clients
+// emit all or some resources, to all or some trues
 function emit(ripple) {
   return function (socket) {
     return function (name) {
@@ -1271,7 +1425,7 @@ function emit(ripple) {
       if (!name) return (0, values)(ripple.resources).map((0, key)('name')).map(emit(ripple)(socket)), ripple;
 
       var res = ripple.resources[name],
-          sockets = client ? [ripple.io] : ripple.io.of('/').sockets,
+          sockets = true ? [ripple.io] : ripple.io.of('/').sockets,
           lgt = stats(sockets.length, name),
           silent = (0, header)('silent', true)(res);
 
@@ -1323,8 +1477,4 @@ var log = window.log('[ri/sync]'),
     err = window.err('[ri/sync]'),
     debug = noop,
     types = { push: push, remove: remove, update: update };
-},{"jsondiffpatch":2,"socket.io":2,"socket.io-client":2}],22:[function(require,module,exports){
-module.exports = function identity(d) {
-  return d
-}
-},{}]},{},[1]);
+},{"jsondiffpatch":4,"socket.io":4,"socket.io-client":4}]},{},[3]);
