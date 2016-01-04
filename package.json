@@ -19,9 +19,9 @@
     "ignore": "find ./dist -type f -exec sed -i \"s/function _interopRequire/\\/* istanbul ignore next *\\/\\nfunction _interopRequire/g\" {} ;",
     "minify": "uglifyjs dist/ripple.js -m -c keep_fargs=false -o dist/ripple.min.js --screw-ie8",
     "minify:pure": "uglifyjs dist/ripple.pure.js -m -c keep_fargs=false -o dist/ripple.pure.min.js --screw-ie8",
+    "version": "npm run build && git add -A",
     "postversion": "git push && git push --tags",
-    "test": "popper",
-    "version": "rm -f npm-shrinkwrap.json && npm update && npm run build && npm prune && npm shrinkwrap && git add -A"
+    "test": "popper"
   },
   "dependencies": {
     "rijs.backpressure": "*",
