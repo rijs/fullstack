@@ -37,6 +37,7 @@
     "rijs.html": "*",
     "rijs.hypermedia": "*",
     "rijs.mysql": "*",
+    "rijs.needs": "*",
     "rijs.offline": "*",
     "rijs.precss": "*",
     "rijs.prehtml": "*",
