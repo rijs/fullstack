@@ -119,13 +119,13 @@ function create(opts) {
   (0, _rijs26.default)(ripple); // adds mysql adaptor crud hooks
   (0, _rijs46.default)(ripple, opts); // enable external connections
   (0, _rijs4.default)(ripple); // invoke web components, fn.call(<el>, data)
+  (0, _rijs12.default)(ripple); // extend components with features
   (0, _rijs32.default)(ripple); // define default attrs for components
   (0, _rijs10.default)(ripple); // react to changes in resources
   (0, _rijs20.default)(ripple); // preapplies scoped css
   (0, _rijs14.default)(ripple); // preapplies html templates
   (0, _rijs22.default)(ripple); // encapsulates with shadow dom or closes gap
   (0, _rijs30.default)(ripple); // async rendering delay
-  (0, _rijs12.default)(ripple); // extend components with features
   (0, _rijs28.default)(opts); // serve client libraries
   (0, _rijs34.default)(ripple, opts); // syncs resources between server/client
   (0, _rijs2.default)(ripple); // restricts broadcast to clients based on need
