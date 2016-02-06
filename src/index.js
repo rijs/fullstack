@@ -38,13 +38,13 @@ export default function create(opts){
   mysql(ripple)          // adds mysql adaptor crud hooks
   db(ripple, opts)       // enable external connections
   components(ripple)     // invoke web components, fn.call(<el>, data)
+  features(ripple)       // extend components with features
   needs(ripple)          // define default attrs for components
   reactive(ripple)       // react to changes in resources
   precss(ripple)         // preapplies scoped css 
   prehtml(ripple)        // preapplies html templates
   shadow(ripple)         // encapsulates with shadow dom or closes gap
   delay(ripple)          // async rendering delay 
-  features(ripple)       // extend components with features
   serve(opts)            // serve client libraries
   sync(ripple, opts)     // syncs resources between server/client
   backpressure(ripple)   // restricts broadcast to clients based on need
