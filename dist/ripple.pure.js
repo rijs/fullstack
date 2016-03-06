@@ -220,7 +220,7 @@ function create(opts) {
 
   return ripple;
 }
-},{"rijs.backpressure":7,"rijs.components":8,"rijs.core":11,"rijs.css":13,"rijs.data":14,"rijs.db":6,"rijs.delay":15,"rijs.features":1,"rijs.fn":16,"rijs.helpers":17,"rijs.mysql":6,"rijs.needs":2,"rijs.offline":18,"rijs.precss":19,"rijs.resdir":6,"rijs.serve":6,"rijs.sessions":6,"rijs.shadow":21,"rijs.singleton":22,"rijs.sync":23,"rijs.versioned":5}],4:[function(require,module,exports){
+},{"rijs.backpressure":7,"rijs.components":8,"rijs.core":11,"rijs.css":13,"rijs.data":14,"rijs.db":6,"rijs.delay":15,"rijs.features":1,"rijs.fn":16,"rijs.helpers":17,"rijs.mysql":18,"rijs.needs":2,"rijs.offline":19,"rijs.precss":20,"rijs.resdir":6,"rijs.serve":6,"rijs.sessions":6,"rijs.shadow":22,"rijs.singleton":23,"rijs.sync":24,"rijs.versioned":5}],4:[function(require,module,exports){
 
 },{}],5:[function(require,module,exports){
 'use strict';
@@ -894,6 +894,7 @@ function helpers(ripple) {
 
 var attach = function attach(next) {
   return function (res) {
+    if (next) res = next(res);
     var helpers = res.headers.helpers;
 
     (0, keys)(helpers).map(function (name) {
@@ -902,7 +903,7 @@ var attach = function attach(next) {
       return (0, def)(res.body, name, helpers[name]);
     });
 
-    return next ? next(res) : res;
+    return res;
   };
 };
 
@@ -923,6 +924,8 @@ var serialise = function serialise(next) {
 
 var log = window.log('[ri/helpers]');
 },{}],18:[function(require,module,exports){
+arguments[4][6][0].apply(exports,arguments)
+},{"dup":6}],19:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -965,7 +968,7 @@ var cache = function cache(ripple) {
 
 var log = window.log('[ri/offline]'),
     err = window.err('[ri/offline]');
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1041,7 +1044,7 @@ var css = function css(ripple) {
 
 var log = window.log('[ri/precss]'),
     err = window.err('[ri/precss]');
-},{"cssscope":20}],20:[function(require,module,exports){
+},{"cssscope":21}],21:[function(require,module,exports){
 module.exports = function scope(styles, prefix) {
   return styles
     .replace(/^(?!.*:host)([^@%\n]*){/gim, function($1){ return prefix+' '+$1 })       // ... {                 -> tag ... {
@@ -1050,7 +1053,7 @@ module.exports = function scope(styles, prefix) {
     .replace(/:host /gi, prefix + ' ')                                                 // :host ...             -> tag ...
     .replace(/^.*:host-context\((.*)\)/gim, function($1, $2){ return $2+' ' +prefix }) // ... :host-context(..) -> ... tag..
 }
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1097,7 +1100,7 @@ var after = function after(el) {
 
 var log = window.log('[ri/shadow]'),
     err = window.err('[ri/shadow]');
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1117,7 +1120,7 @@ function singleton(ripple) {
 }
 
 var log = window.log('[ri/singleton]');
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
