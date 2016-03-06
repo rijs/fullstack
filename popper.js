@@ -73,7 +73,7 @@ function headers(argument) {
   return { silent: true, 'cache-control': 'no-cache' }
 }
 
-function minify(d){ console.log('minify', d)
+function minify(d){
   return uglify(d.toString(), { fromString: true }).code
 }
 
