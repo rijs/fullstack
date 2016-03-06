@@ -220,7 +220,7 @@ function create(opts) {
 
   return ripple;
 }
-},{"rijs.backpressure":7,"rijs.components":8,"rijs.core":11,"rijs.css":13,"rijs.data":14,"rijs.db":6,"rijs.delay":15,"rijs.features":1,"rijs.fn":16,"rijs.helpers":17,"rijs.mysql":18,"rijs.needs":2,"rijs.offline":19,"rijs.precss":20,"rijs.resdir":6,"rijs.serve":6,"rijs.sessions":6,"rijs.shadow":22,"rijs.singleton":23,"rijs.sync":24,"rijs.versioned":5}],4:[function(require,module,exports){
+},{"rijs.backpressure":7,"rijs.components":8,"rijs.core":11,"rijs.css":13,"rijs.data":14,"rijs.db":6,"rijs.delay":15,"rijs.features":1,"rijs.fn":16,"rijs.helpers":17,"rijs.mysql":6,"rijs.needs":2,"rijs.offline":18,"rijs.precss":19,"rijs.resdir":6,"rijs.serve":6,"rijs.sessions":6,"rijs.shadow":21,"rijs.singleton":22,"rijs.sync":23,"rijs.versioned":5}],4:[function(require,module,exports){
 
 },{}],5:[function(require,module,exports){
 'use strict';
@@ -297,6 +297,40 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = backpressure;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* istanbul ignore next */
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -328,14 +362,15 @@ var pull = function pull(el) {
 
 var track = function track(ripple) {
   return function (next) {
-    return function (res, _ref) {
+    return function (_ref) {
       var name = _ref.name;
       var headers = _ref.headers;
 
       var exists = name in this.deps;
-
       if (!headers || !headers.pull) return next ? next.apply(this, arguments) : true;
-      return this.deps[name] = 1, ripple.stream(this)(name), false;
+      this.deps[name] = 1;
+      ripple.stream(this)(name);
+      return false;
     };
   };
 };
@@ -354,7 +389,7 @@ var refresh = function refresh(ripple) {
         var name = _ref3.name;
         return log(name);
       }).map(function (name) {
-        return ripple.io.emit('change', [name, { name: name, headers: headers }]);
+        return ripple.io.emit('change', [name, false, { name: name, headers: headers }]);
       });
     });
   };
@@ -387,7 +422,7 @@ var loaded = function loaded(ripple) {
       return ripple.deps(el).filter((0, not)(is.in(ripple.resources))).map(function (name) {
         return debug('pulling', name), name;
       }).map(function (name) {
-        return ripple.io.emit('change', [name, { name: name, headers: headers }]);
+        return ripple.io.emit('change', [name, false, { name: name, headers: headers }]);
       }).length ? false : pull(render(el));
     };
   };
@@ -396,9 +431,6 @@ var loaded = function loaded(ripple) {
 /* istanbul ignore next */
 var log = window.log('[ri/backpressure]'),
     err = window.err('[ri/backpressure]'),
-    shadows = true && !!document.head.createShadowRoot,
-    customs = true && !!document.registerElement,
-    raf = true && requestAnimationFrame,
     headers = { pull: true },
     debug = noop;
 },{}],8:[function(require,module,exports){
@@ -924,8 +956,6 @@ var serialise = function serialise(next) {
 
 var log = window.log('[ri/helpers]');
 },{}],18:[function(require,module,exports){
-arguments[4][6][0].apply(exports,arguments)
-},{"dup":6}],19:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -968,7 +998,7 @@ var cache = function cache(ripple) {
 
 var log = window.log('[ri/offline]'),
     err = window.err('[ri/offline]');
-},{}],20:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1044,7 +1074,7 @@ var css = function css(ripple) {
 
 var log = window.log('[ri/precss]'),
     err = window.err('[ri/precss]');
-},{"cssscope":21}],21:[function(require,module,exports){
+},{"cssscope":20}],20:[function(require,module,exports){
 module.exports = function scope(styles, prefix) {
   return styles
     .replace(/^(?!.*:host)([^@%\n]*){/gim, function($1){ return prefix+' '+$1 })       // ... {                 -> tag ... {
@@ -1053,7 +1083,7 @@ module.exports = function scope(styles, prefix) {
     .replace(/:host /gi, prefix + ' ')                                                 // :host ...             -> tag ...
     .replace(/^.*:host-context\((.*)\)/gim, function($1, $2){ return $2+' ' +prefix }) // ... :host-context(..) -> ... tag..
 }
-},{}],22:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1100,7 +1130,7 @@ var after = function after(el) {
 
 var log = window.log('[ri/shadow]'),
     err = window.err('[ri/shadow]');
-},{}],23:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1120,7 +1150,7 @@ function singleton(ripple) {
 }
 
 var log = window.log('[ri/singleton]');
-},{}],24:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1131,6 +1161,30 @@ Object.defineProperty(exports, "__esModule", {
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
 exports.default = sync;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* istanbul ignore next */
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
