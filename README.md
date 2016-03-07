@@ -25,4 +25,5 @@ Ripple is a modular fullstack framework. In the diverse and fast-moving world of
 
 Related Articles
 
+* [Vanilla Components Specifications](https://github.com/pemrouz/vanilla#vanilla)
 * [Guide to Building Components](https://github.com/rijs/docs/blob/master/components.md)
