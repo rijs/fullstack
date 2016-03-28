@@ -238,8 +238,10 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function version(ripple) {
   log('creating');
 
+  var type = ripple.types['application/data'];
   ripple.on('change.version', commit(ripple));
   ripple.version = checkout(ripple);
+  ripple.version.calc = calc(ripple);
   ripple.version.log = [];
   return ripple;
 }
@@ -264,7 +266,7 @@ var checkout = function checkout(ripple) {
 
 var application = function application(ripple) {
   return function (index) {
-    return ripple.version.log[rel(ripple.version, index)].map(resource(ripple));
+    return ripple.version.log[rel(ripple.version.log, index)].map(resource(ripple));
   };
 };
 
@@ -272,12 +274,28 @@ var resource = function resource(ripple) {
   return function (_ref2) {
     var name = _ref2.name;
     var index = _ref2.index;
-    return ripple(name, ripple.resources[name].body.log[rel(ripple.resources[name].body, index)].value.toJS());
+    return ripple(name, ripple.version.calc(name, index));
   };
 };
 
-var rel = function rel(_ref3, index) {
-  var log = _ref3.log;
+var calc = function calc(ripple) {
+  return function (name, index) {
+    var log = ripple.resources[name].body.log,
+        end = rel(log, index),
+        i = end;
+
+    if (log[end].cache) return log[end].cache;
+
+    while (is.def(log[i].key)) {
+      i--;
+    }var root = (0, clone)(log[i].value);
+    while (i !== end) {
+      (0, set)(log[++i])(root);
+    }return (0, def)(log[end], 'cache', root);
+  };
+};
+
+var rel = function rel(log, index) {
   return index < 0 ? log.length + index - 1 : index;
 };
 
@@ -667,7 +685,6 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = core;
-
 var _text = require('./types/text');
 
 var _text2 = _interopRequireDefault(_text);
@@ -715,7 +732,7 @@ var register = function register(ripple) {
 
     if (!res) return err('failed to register', name), false;
     ripple.resources[name] = res;
-    ripple.emit('change', [name, { type: 'update', value: res.body }]);
+    ripple.emit('change', [name, res.body.log ? (0, last)(res.body.log) : { type: 'update', value: res.body }]);
     return ripple.resources[name].body;
   };
 };
@@ -795,7 +812,6 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = data;
-
 /* istanbul ignore next */
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -813,19 +829,11 @@ function data(ripple) {
     parse: function parse(res) {
       var existing = ripple.resources[res.name] || {};
 
-      !res.body && (res.body = []);
-      !res.body.on && (res.body = (0, emitterify)(res.body, null));
-
+      res.body = (0, set)()(res.body || [], existing.body && existing.body.log);
       (0, extend)(res.headers)(existing.headers);
-      (0, overwrite)(res.body.on)(existing.body && existing.body.on || {});
-
-      if (logged(existing)) logged(res) ? res.body.log = existing.body.log.reset(res.body) : (0, def)(res.body, 'log', existing.body.log.reset(res.body), 1);
-
+      (0, overwrite)(res.body.on)(listeners(existing));
       res.body.on('change.bubble', function (change) {
         return ripple.emit('change', [res.name, change], (0, not)(is.in(['data'])));
-      });
-      res.body.on('log.bubble', function (change) {
-        return res.body.emit('change', change);
       });
 
       return res;
@@ -842,7 +850,7 @@ var trickle = function trickle(ripple) {
 };
 
 var log = window.log('[ri/types/data]'),
-    logged = (0, key)('body.log');
+    listeners = (0, key)('body.on');
 },{}],15:[function(require,module,exports){
 'use strict';
 
@@ -1162,30 +1170,6 @@ var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = [
 
 exports.default = sync;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* istanbul ignore next */
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -1198,12 +1182,16 @@ function sync(ripple, server) {
 /* istanbul ignore next */
   if (!true && !server) return;
 /* istanbul ignore next */
-  if (!true) ripple.to = clean(ripple.to), (0, values)(ripple.types).map(headers(ripple));
+  if (!true) ripple.to = clean(ripple.to), (0, values)(ripple.types).map(function (type) {
+    return type.parse = headers(ripple)(type.parse);
+  });
 
   ripple.stream = stream(ripple);
+  ripple.respond = respond(ripple);
   ripple.io = io(server);
   ripple.on('change.stream', ripple.stream()); // both   - broadcast change to everyone
   ripple.io.on('change', consume(ripple)); // true - receive change
+  ripple.io.on('response', response(ripple)); // true - receive response
   ripple.io.on('connection', function (s) {
     return s.on('change', consume(ripple));
   }); // server - receive change
@@ -1213,6 +1201,27 @@ function sync(ripple, server) {
   ripple.io.use(setIP);
   return ripple;
 }
+
+var respond = function respond(ripple) {
+  return function (socket, name, time) {
+    return function (reply) {
+      socket.emit('response', [name, time, reply]);
+    };
+  };
+};
+
+var response = function response(ripple) {
+  return function (_ref) {
+/* istanbul ignore next */
+    var _ref2 = _slicedToArray(_ref, 3);
+
+    var name = _ref2[0];
+    var time = _ref2[1];
+    var reply = _ref2[2];
+
+    ripple.resources[name].body.emit('response._' + time, reply);
+  };
+};
 
 // send diff to all or some sockets
 var stream = function stream(ripple) {
@@ -1270,28 +1279,29 @@ var to = function to(ripple, res, change) {
 
 // incoming transforms
 var consume = function consume(ripple) {
-  return function (_ref) {
+  return function (_ref3) {
 /* istanbul ignore next */
-    var _ref2 = _slicedToArray(_ref, 3);
+    var _ref4 = _slicedToArray(_ref3, 3);
 
-    var name = _ref2[0];
-    var change = _ref2[1];
-    var _ref2$ = _ref2[2];
-    var req = _ref2$ === undefined ? {} : _ref2$;
+    var name = _ref4[0];
+    var change = _ref4[1];
+    var _ref4$ = _ref4[2];
+    var req = _ref4$ === undefined ? {} : _ref4$;
 
     log('receiving', name);
 
     var res = ripple.resources[name],
         xall = ripple.from,
-        xtype = type(ripple)(res).from || type(ripple)(req).from,
+        xtype = type(ripple)(res).from || type(ripple)(req).from // is latter needed?
+    ,
         xres = (0, header)('from')(res),
-        types = ripple.types,
         next = (0, set)(change),
-        silent = silence(this);
+        silent = silence(this),
+        respond = ripple.respond(this, name, change.time);
 
-    return xall && !xall.call(this, req, change) ? debug('skip all', name) // rejected - by xall
-    : xtype && !xtype.call(this, req, change) ? debug('skip type', name) // rejected - by xtype
-    : xres && !xres.call(this, req, change) ? debug('skip res', name) // rejected - by xres
+    return xall && !xall.call(this, req, change, respond) ? debug('skip all', name) // rejected - by xall
+    : xtype && !xtype.call(this, req, change, respond) ? debug('skip type', name) // rejected - by xtype
+    : xres && !xres.call(this, req, change, respond) ? debug('skip res', name) // rejected - by xres
     : !change ? ripple(silent(req)) // accept - replace (new)
     : !change.key ? ripple(silent({ name: name, body: change.value })) // accept - replace at root
     : (silent(res), next(res.body)); // accept - deep change
@@ -1305,16 +1315,14 @@ var count = function count(total, name) {
 };
 
 var headers = function headers(ripple) {
-  return function (type) {
-/* istanbul ignore next */
-    var parse = type.parse || noop;
-    type.parse = function (res) {
+  return function (next) {
+    return function (res) {
       var existing = ripple.resources[res.name],
           from = (0, header)('from')(res) || (0, header)('from')(existing),
           to = (0, header)('to')(res) || (0, header)('to')(existing);
       if (from) res.headers.from = from;
       if (to) res.headers.to = to;
-      return parse.apply(this, arguments), res;
+      return next ? next(res) : res;
     };
   };
 };
@@ -1333,10 +1341,10 @@ var setIP = function setIP(socket, next) {
 };
 
 var clean = function clean(next) {
-  return function (_ref3, change) {
-    var name = _ref3.name;
-    var body = _ref3.body;
-    var headers = _ref3.headers;
+  return function (_ref5, change) {
+    var name = _ref5.name;
+    var body = _ref5.body;
+    var headers = _ref5.headers;
 
     if (change) return next ? next.apply(this, arguments) : true;
 
