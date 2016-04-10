@@ -248,7 +248,7 @@ function version(ripple) {
 
 var commit = function commit(ripple) {
   return function (name, change) {
-    return logged(ripple.resources[name]) && ripple.version.log.push((0, values)(ripple.resources).filter((0, by)('body.log')).map(index));
+    return logged(ripple.resources[name]) && ripple.version.log.push((0, values)(ripple.resources).filter((0, by)(logged)).map(index));
   };
 };
 
@@ -299,7 +299,9 @@ var rel = function rel(log, index) {
   return index < 0 ? log.length + index - 1 : index;
 };
 
-var logged = (0, key)('body.log');
+var logged = function logged(res) {
+  return res.body.log && res.body.log.max > 0;
+};
 
 var log = window.log('[ri/versioned]'),
     err = window.err('[ri/versioned]');
@@ -457,9 +459,7 @@ var log = window.log('[ri/backpressure]'),
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = components;
-
-var _data = require('./types/data');
+exports.default = components;var _data = require('./types/data');
 
 var _data2 = _interopRequireDefault(_data);
 
@@ -484,7 +484,6 @@ function components(ripple) {
   if (!true) return ripple;
   log('creating');
 
-  if (!customs) (0, ready)(polyfill(ripple));
   (0, values)(ripple.types).map(function (type) {
     return type.parse = (0, proxy)(type.parse, clean(ripple));
   });
@@ -494,9 +493,10 @@ function components(ripple) {
   (0, key)('types.application/data.render', function (d) {
     return (0, _data2.default)(ripple);
   })(ripple);
-  ripple.draw = draw(ripple);
+  ripple.draw = Node.prototype.draw = draw(ripple);
   ripple.render = render(ripple);
   ripple.on('change.draw', ripple.draw);
+  (0, time)(0, ripple.draw);
   return ripple;
 }
 
@@ -536,14 +536,11 @@ var batch = function batch(ripple) {
 // main function to render a particular custom element with any data it needs
 var invoke = function invoke(ripple) {
   return function (el) {
+    if (!(0, includes)('-')(el.nodeName)) return;
     if (el.nodeName == '#document-fragment') return invoke(ripple)(el.host);
     if (el.nodeName == '#text') return invoke(ripple)(el.parentNode);
     if (!el.matches(isAttached)) return;
     if ((0, attr)(el, 'inert') != null) return;
-    if (!el.on) (0, emitterify)(el);
-    if (!el.draw) el.draw = function (d) {
-      return ripple.draw(el);
-    };
     return batch(ripple)(el), el;
   };
 };
@@ -568,18 +565,6 @@ var render = function render(ripple) {
   };
 };
 
-// polyfill
-var polyfill = function polyfill(ripple) {
-  return function (d) {
-    if (typeof MutationObserver == 'undefined') return;
-    if (document.body.muto) document.body.muto.disconnect();
-    var muto = document.body.muto = new MutationObserver(drawCustomEls(ripple)),
-        conf = { childList: true, subtree: true };
-
-    muto.observe(document.body, conf);
-  };
-};
-
 // clean local headers for transport
 var clean = function clean(ripple) {
   return function (res) {
@@ -594,16 +579,6 @@ var defaults = function defaults(el, data) {
   (0, overwrite)(el.state)(el.__data__);
   el.__data__ = el.state;
   return el.state;
-};
-
-var onlyIfDifferent = function onlyIfDifferent(m) {
-  return (0, attr)(m.target, m.attributeName) != m.oldValue;
-};
-
-var drawCustomEls = function drawCustomEls(ripple) {
-  return function (mutations) {
-    return mutations.map((0, key)('addedNodes')).map(to.arr).reduce(flatten).filter((0, by)('nodeName', (0, includes)('-'))).map(ripple.draw) | 0;
-  };
 };
 
 var bodies = function bodies(ripple) {
@@ -651,6 +626,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = fn;
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 // register custom element prototype (render is automatic)
@@ -659,20 +635,16 @@ function fn(ripple) {
     if (!customs || !customEl(res) || registered(res)) return (0, all)(res.name + ':not([inert])\n                 ,[is="' + res.name + '"]:not([inert])').map(ripple.draw);
 
     var proto = Object.create(HTMLElement.prototype),
-        opts = { prototype: proto },
-        extend = res.headers['extends'];
+        opts = { prototype: proto };
 
-    extend && (opts.extends = extend);
     proto.attachedCallback = ripple.draw;
     document.registerElement(res.name, opts);
   };
 }
 
-function registered(res) {
-  var extend = (0, header)('extends')(res);
-
-  return extend ? document.createElement(extend, res.name).attachedCallback : document.createElement(res.name).attachedCallback;
-}
+var registered = function registered(res) {
+  return document.createElement(res.name).attachedCallback;
+};
 
 var customs = true && !!document.registerElement,
     customEl = function customEl(d) {
@@ -732,7 +704,11 @@ var register = function register(ripple) {
 
     if (!res) return err('failed to register', name), false;
     ripple.resources[name] = res;
-    ripple.emit('change', [name, res.body.log ? (0, last)(res.body.log) : { type: 'update', value: res.body }]);
+    ripple.emit('change', [name, {
+      type: 'update',
+      value: res.body,
+      time: now(res)
+    }]);
     return ripple.resources[name].body;
   };
 };
@@ -764,7 +740,10 @@ var types = function types() {
 };
 
 var err = window.err('[ri/core]'),
-    log = window.log('[ri/core]');
+    log = window.log('[ri/core]'),
+    now = function now(d, t) {
+  return t = (0, key)('body.log.length')(d), is.num(t) ? t - 1 : t;
+};
 },{"./types/text":12}],12:[function(require,module,exports){
 'use strict';
 
@@ -829,8 +808,8 @@ function data(ripple) {
     parse: function parse(res) {
       var existing = ripple.resources[res.name] || {};
 
-      res.body = (0, set)()(res.body || [], existing.body && existing.body.log);
       (0, extend)(res.headers)(existing.headers);
+      res.body = (0, set)()(res.body || [], existing.body && existing.body.log, is.num(res.headers.log) ? res.headers.log : -1);
       (0, overwrite)(res.body.on)(listeners(existing));
       res.body.on('change.bubble', function (change) {
         return ripple.emit('change', [res.name, change], (0, not)(is.in(['data'])));
