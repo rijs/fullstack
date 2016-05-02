@@ -73,7 +73,6 @@ var render = function render(ripple) {
 
         var name = _ref2[0];
         var values = _ref2[1];
-
         return values.some(function (v, i) {
           var from = (0, attr)(el, name) || '';
           return (0, includes)(v)(from) ? false : (0, attr)(el, name, (from + ' ' + v).trim());
@@ -315,43 +314,7 @@ module.exports = function identity(d) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = backpressure;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* istanbul ignore next */
+exports.default = backpressure;/* istanbul ignore next */
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 // -------------------------------------------
@@ -360,8 +323,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function backpressure(ripple) {
   log('creating');
   if (!ripple.io) return ripple;
-/* istanbul ignore next */
-  if (true) return ripple.render = loaded(ripple)(ripple.render), ripple.deps = deps, (0, ready)(start(ripple)), ripple.io.on('connect', refresh(ripple)), ripple.io.on('reconnect', reconnect(ripple)), ripple;
+  if (true) return ripple.render = loaded(ripple)(ripple.render), ripple.pull = pull(ripple), ripple.deps = deps, ripple.requested = {}, (0, ready)(start(ripple)), ripple.io.on('connect', refresh(ripple)), ripple.io.on('reconnect', reconnect(ripple)), ripple;
 
   ripple.to = limit(ripple.to);
   ripple.from = track(ripple)(ripple.from);
@@ -371,13 +333,18 @@ function backpressure(ripple) {
   return ripple;
 }
 
-/* istanbul ignore next */
 var start = function start(ripple) {
-  return pull;
+  return function (d) {
+    return ripple.pull(document.body);
+  };
 };
 
-var pull = function pull(el) {
-  return (0, all)('*', el && el.nodeName ? el : false).filter((0, by)('nodeName', (0, includes)('-'))).filter((0, not)((0, key)('requested'))).map((0, key)('requested', true)).map(ripple.draw), el;
+var pull = function pull(ripple) {
+  return function (el) {
+    return !el ? undefined : ((0, all)('*', el).filter((0, by)('nodeName', (0, includes)('-'))).filter((0, by)('nodeName', function (d) {
+      return !is.in(ripple.requested)((0, lo)(d));
+    })).map(ripple.draw), el);
+  };
 };
 
 var track = function track(ripple) {
@@ -407,11 +374,18 @@ var refresh = function refresh(ripple) {
     return (0, group)('refreshing', function (d) {
       return (0, values)(ripple.resources).map(function (_ref3) {
         var name = _ref3.name;
-        return log(name);
-      }).map(function (name) {
-        return ripple.io.emit('change', [name, false, { name: name, headers: headers }]);
+        return emit(ripple)(name);
       });
     });
+  };
+};
+
+var emit = function emit(ripple) {
+  return function (name) {
+    log('pulling', name);
+    ripple.io.emit('change', [name, false, { name: name, headers: headers }]);
+    ripple.requested[name] = 1;
+    return name;
   };
 };
 
@@ -421,12 +395,10 @@ var limit = function limit(next) {
   };
 };
 
-/* istanbul ignore next */
 var deps = function deps(el) {
   return format([(0, key)('nodeName'), (0, attr)('data'), (0, attr)('css')])(el);
 };
 
-/* istanbul ignore next */
 var format = function format(arr) {
   return function (el) {
     return arr.map(function (extract) {
@@ -435,24 +407,17 @@ var format = function format(arr) {
   };
 };
 
-/* istanbul ignore next */
 var loaded = function loaded(ripple) {
   return function (render) {
     return function (el) {
-      return ripple.deps(el).filter((0, not)(is.in(ripple.resources))).map(function (name) {
-        return debug('pulling', name), name;
-      }).map(function (name) {
-        return ripple.io.emit('change', [name, false, { name: name, headers: headers }]);
-      }).length ? false : pull(render(el));
+      return ripple.deps(el).filter((0, not)(is.in(ripple.resources))).filter((0, not)(is.in(ripple.requested))).map(emit(ripple)).length ? false : ripple.pull(render(el));
     };
   };
 };
 
-/* istanbul ignore next */
-var log = window.log('[ri/backpressure]'),
-    err = window.err('[ri/backpressure]'),
-    headers = { pull: true },
-    debug = noop;
+var log = window.log('[ri/back]'),
+    err = window.err('[ri/back]'),
+    headers = { pull: true };
 },{}],8:[function(require,module,exports){
 'use strict';
 
@@ -527,8 +492,10 @@ var resource = function resource(ripple) {
 // batch renders on render frames
 var batch = function batch(ripple) {
   return function (el) {
-    return !el.pending && (el.pending = requestAnimationFrame(function (d) {
-      return delete el.pending, ripple.render(el);
+    return el.pending ? el.pending.push(ripple.change) : (el.pending = [ripple.change], requestAnimationFrame(function (d) {
+      el.change = el.pending;
+      delete el.pending;
+      ripple.render(el);
     }));
   };
 };
@@ -812,7 +779,8 @@ function data(ripple) {
       res.body = (0, set)()(res.body || [], existing.body && existing.body.log, is.num(res.headers.log) ? res.headers.log : -1);
       (0, overwrite)(res.body.on)(listeners(existing));
       res.body.on('change.bubble', function (change) {
-        return ripple.emit('change', [res.name, change], (0, not)(is.in(['data'])));
+        ripple.emit('change', ripple.change = [res.name, change], (0, not)(is.in(['data'])));
+        delete ripple.change;
       });
 
       return res;
@@ -1093,25 +1061,26 @@ function shadow(ripple) {
 
 var render = function render(next) {
   return function (el) {
-    el.createShadowRoot ? !el.shadowRoot && el.createShadowRoot() && (reflect(el), retarget(el)) : (el.shadowRoot = el, el.shadowRoot.host = el);
+    el.createShadowRoot ? !el.shadowRoot && el.createShadowRoot() && retarget(reflect(el)) : (el.shadowRoot = el, el.shadowRoot.host = el);
 
-    return after(next(el));
+    return next(el);
   };
 };
 
 var reflect = function reflect(el) {
-  return el.shadowRoot.innerHTML = el.innerHTML;
+  return el.shadowRoot.innerHTML = el.innerHTML, el.innerHTML = '', el;
 };
 
 var retarget = function retarget(el) {
   return (0, keys)(el).concat(['on', 'once', 'emit', 'classList', 'getAttribute', 'setAttribute']).map(function (d) {
-    return el.shadowRoot[d] = is.fn(el[d]) ? el[d].bind(el) : el[d];
-  });
-};
-
-var after = function after(el) {
-  return (0, keys)(el).map(function (d) {
-    return el.shadowRoot[d] = el[d];
+    return is.fn(el[d]) ? el.shadowRoot[d] = el[d].bind(el) : Object.defineProperty(el.shadowRoot, d, {
+      get: function get(z) {
+        return el[d];
+      },
+      set: function set(z) {
+        return el[d] = z;
+      }
+    });
   });
 };
 
