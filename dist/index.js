@@ -112,13 +112,13 @@ function create(opts) {
   (0, _rijs4.default)(ripple); // invoke web components, fn.call(<el>, data)
   (0, _rijs30.default)(ripple); // define default attrs for components
   (0, _rijs18.default)(ripple); // preapplies scoped css
-  (0, _rijs12.default)(ripple); // extend components with features
   (0, _rijs20.default)(ripple); // encapsulates with shadow dom or closes gap
   (0, _rijs28.default)(ripple); // async rendering delay
-  (0, _rijs26.default)(opts); // serve client libraries
+  (0, _rijs26.default)(ripple, opts); // serve client libraries
   (0, _rijs14.default)(ripple); // loads/saves from/to localstorage
   (0, _rijs32.default)(ripple, opts); // syncs resources between server/client
   (0, _rijs2.default)(ripple); // restricts broadcast to clients based on need
+  (0, _rijs12.default)(ripple); // extend components with features
   (0, _rijs6.default)(ripple); // versioning info and time travel
   (0, _rijs10.default)(ripple, opts); // populates sessionid on each connection
   (0, _rijs22.default)(ripple, opts); // loads from resources folder

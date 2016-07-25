@@ -37,13 +37,13 @@ export default function create(opts){
   components(ripple)     // invoke web components, fn.call(<el>, data)
   needs(ripple)          // define default attrs for components
   precss(ripple)         // preapplies scoped css 
-  features(ripple)       // extend components with features
   shadow(ripple)         // encapsulates with shadow dom or closes gap
   delay(ripple)          // async rendering delay 
-  serve(opts)            // serve client libraries
+  serve(ripple, opts)    // serve client libraries
   offline(ripple)        // loads/saves from/to localstorage
   sync(ripple, opts)     // syncs resources between server/client
   backpressure(ripple)   // restricts broadcast to clients based on need
+  features(ripple)       // extend components with features
   versioned(ripple)      // versioning info and time travel
   sessions(ripple, opts) // populates sessionid on each connection
   resdir(ripple, opts)   // loads from resources folder

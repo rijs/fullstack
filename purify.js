@@ -15,6 +15,7 @@ module.exports = function (file) {
       pure = pure.replace(new RegExp(d+'.default','g'), d.slice(1,-1)) })
     pure = pure.replace(/require\('utilise\/(.*?)'\)/gi, 'window.$1')
     pure = pure.replace(/\n\n\n/g, '')
+    pure = pure.replace(/process.env/g, '{}')
     console.log('replaced', utilities.length, 'in', file)
 
     // compile client=true

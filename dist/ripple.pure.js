@@ -1,7 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-module.exports = function identity(d) {
-  return d
-}
+
 },{}],2:[function(require,module,exports){
 'use strict';
 
@@ -112,22 +110,20 @@ function create(opts) {
   (0, _rijs4.default)(ripple); // invoke web components, fn.call(<el>, data)
   (0, _rijs30.default)(ripple); // define default attrs for components
   (0, _rijs18.default)(ripple); // preapplies scoped css
-  (0, _rijs12.default)(ripple); // extend components with features
   (0, _rijs20.default)(ripple); // encapsulates with shadow dom or closes gap
   (0, _rijs28.default)(ripple); // async rendering delay
-  (0, _rijs26.default)(opts); // serve true libraries
+  (0, _rijs26.default)(ripple, opts); // serve true libraries
   (0, _rijs14.default)(ripple); // loads/saves from/to localstorage
   (0, _rijs32.default)(ripple, opts); // syncs resources between server/true
   (0, _rijs2.default)(ripple); // restricts broadcast to trues based on need
+  (0, _rijs12.default)(ripple); // extend components with features
   (0, _rijs6.default)(ripple); // versioning info and time travel
   (0, _rijs10.default)(ripple, opts); // populates sessionid on each connection
   (0, _rijs22.default)(ripple, opts); // loads from resources folder
 
   return ripple;
 }
-},{"rijs.backpressure":5,"rijs.components":6,"rijs.core":9,"rijs.css":11,"rijs.data":12,"rijs.db":1,"rijs.delay":13,"rijs.features":14,"rijs.fn":15,"rijs.helpers":16,"rijs.mysql":24,"rijs.needs":17,"rijs.offline":18,"rijs.precss":19,"rijs.resdir":25,"rijs.serve":26,"rijs.sessions":27,"rijs.shadow":20,"rijs.singleton":21,"rijs.sync":22,"rijs.versioned":23}],3:[function(require,module,exports){
-
-},{}],4:[function(require,module,exports){
+},{"rijs.backpressure":4,"rijs.components":5,"rijs.core":8,"rijs.css":10,"rijs.data":11,"rijs.db":12,"rijs.delay":13,"rijs.features":14,"rijs.fn":15,"rijs.helpers":16,"rijs.mysql":17,"rijs.needs":18,"rijs.offline":19,"rijs.precss":20,"rijs.resdir":21,"rijs.serve":22,"rijs.sessions":23,"rijs.shadow":24,"rijs.singleton":25,"rijs.sync":26,"rijs.versioned":27}],3:[function(require,module,exports){
 module.exports = function scope(styles, prefix) {
   return styles
     .replace(/^(?!.*:host)([^@%\n]*){/gim, function($1){ return prefix+' '+$1 })       // ... {                 -> tag ... {
@@ -136,7 +132,7 @@ module.exports = function scope(styles, prefix) {
     .replace(/:host /gi, prefix + ' ')                                                 // :host ...             -> tag ...
     .replace(/^.*:host-context\((.*)\)/gim, function($1, $2){ return $2+' ' +prefix }) // ... :host-context(..) -> ... tag..
 }
-},{}],5:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -146,12 +142,12 @@ exports.default = backpressure;/* istanbul ignore next */
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 // -------------------------------------------
-// API: Applies backpressure on the flow of streams
+// Applies backpressure on the flow of streams
 // -------------------------------------------
 function backpressure(ripple) {
   log('creating');
   if (!ripple.io) return ripple;
-  if (true) return ripple.render = loaded(ripple)(ripple.render), ripple.pull = pull(ripple), ripple.deps = deps, ripple.requested = {}, (0, ready)(start(ripple)), ripple.io.on('connect', refresh(ripple)), ripple.io.on('reconnect', reconnect(ripple)), ripple;
+  if (true) return ripple.render = loaded(ripple)(ripple.render), ripple.pull = emit(ripple), ripple.deps = deps, ripple.requested = {}, (0, ready)(start(ripple)), ripple.io.on('connect', refresh(ripple)), ripple.io.on('reconnect', reconnect(ripple)), ripple;
 
   ripple.to = limit(ripple.to);
   ripple.from = track(ripple)(ripple.from);
@@ -163,11 +159,11 @@ function backpressure(ripple) {
 
 var start = function start(ripple) {
   return function (d) {
-    return ripple.pull(document.body);
+    return scan(ripple)(document.body);
   };
 };
 
-var pull = function pull(ripple) {
+var scan = function scan(ripple) {
   return function (el) {
     return !el ? undefined : ((0, all)('*', el).filter((0, by)('nodeName', (0, includes)('-'))).filter((0, by)('nodeName', function (d) {
       return !is.in(ripple.requested)((0, lo)(d));
@@ -177,21 +173,24 @@ var pull = function pull(ripple) {
 
 var track = function track(ripple) {
   return function (next) {
-    return function (_ref) {
-      var name = _ref.name;
-      var headers = _ref.headers;
+    return function (req, res) {
+      var name = req.name;
+      var type = req.type;
+      var socket = req.socket;
+      var send = ripple.send;
+      var exists = name in socket.deps;
 
-      var exists = name in this.deps;
-      if (!headers || !headers.pull) return next ? next.apply(this, arguments) : true;
-      this.deps[name] = 1;
-      ripple.stream(this)(name);
+      if (!(name in ripple.resources)) return;
+      if (type !== 'pull') return (next || identity)(req, res);
+      socket.deps[name] = 1;
+      send(socket)(name);
       return false;
     };
   };
 };
 
-var reconnect = function reconnect(_ref2) {
-  var io = _ref2.io;
+var reconnect = function reconnect(_ref) {
+  var io = _ref.io;
   return function (d) {
     return io.io.disconnect(), io.io.connect();
   };
@@ -200,8 +199,8 @@ var reconnect = function reconnect(_ref2) {
 var refresh = function refresh(ripple) {
   return function (d) {
     return (0, group)('refreshing', function (d) {
-      return (0, values)(ripple.resources).map(function (_ref3) {
-        var name = _ref3.name;
+      return (0, values)(ripple.resources).map(function (_ref2) {
+        var name = _ref2.name;
         return emit(ripple)(name);
       });
     });
@@ -211,20 +210,20 @@ var refresh = function refresh(ripple) {
 var emit = function emit(ripple) {
   return function (name) {
     log('pulling', name);
-    ripple.io.emit('change', [name, false, { name: name, headers: headers }]);
+    ripple.io.emit('change', { name: name, type: 'pull' });
     ripple.requested[name] = 1;
     return name;
   };
 };
 
 var limit = function limit(next) {
-  return function (res) {
-    return !(res.name in this.deps) ? false : !next ? true : next.apply(this, arguments);
+  return function (req) {
+    return req.name in req.socket.deps ? (next || identity)(req) : false;
   };
 };
 
 var deps = function deps(el) {
-  return format([(0, key)('nodeName'), (0, attr)('data'), (0, attr)('css')])(el);
+  return format([(0, key)('nodeName'), (0, attr)('data'), (0, attr)('css'), (0, attr)('is')])(el);
 };
 
 var format = function format(arr) {
@@ -236,19 +235,16 @@ var format = function format(arr) {
 };
 
 var loaded = function loaded(ripple) {
-  return function (render) {
+  return function (next) {
     return function (el) {
-      return ripple.deps(el)
-      // .filter(not(is.in(ripple.resources)))
-      .filter((0, not)(is.in(ripple.requested))).map(emit(ripple)).length ? false : ripple.pull(render(el));
+      return ripple.deps(el).filter((0, not)(is.in(ripple.requested))).map(emit(ripple)).length ? false : scan(ripple)(next(el));
     };
   };
 };
 
 var log = window.log('[ri/back]'),
-    err = window.err('[ri/back]'),
-    headers = { pull: true };
-},{}],6:[function(require,module,exports){
+    err = window.err('[ri/back]');
+},{}],5:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -409,7 +405,7 @@ var log = window.log('[ri/components]'),
     customs = true && !!document.registerElement,
     isAttached = customs ? 'html *, :host-context(html) *' : 'html *';
 true && (Element.prototype.matches = Element.prototype.matches || Element.prototype.msMatchesSelector);
-},{"./types/data":7,"./types/fn":8}],7:[function(require,module,exports){
+},{"./types/data":6,"./types/fn":7}],6:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -424,7 +420,7 @@ function data(ripple) {
     return (0, all)('[data~="' + res.name + '"]:not([inert])').map(ripple.draw);
   };
 }
-},{}],8:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -455,7 +451,7 @@ var customs = true && !!document.registerElement,
     customEl = function customEl(d) {
   return (0, includes)('-')(d.name);
 };
-},{}],9:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -556,7 +552,7 @@ var err = window.err('[ri/core]'),
     now = function now(d, t) {
   return t = (0, key)('body.log.length')(d), is.num(t) ? t - 1 : t;
 };
-},{"./types/text":10}],10:[function(require,module,exports){
+},{"./types/text":9}],9:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -570,7 +566,7 @@ exports.default = {
     return !(0, includes)('.html')(res.name) && !(0, includes)('.css')(res.name) && is.str(res.body);
   }
 };
-},{}],11:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -596,7 +592,7 @@ function css(ripple) {
 }
 
 var log = window.log('[ri/types/css]');
-},{}],12:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -643,6 +639,10 @@ var trickle = function trickle(ripple) {
 
 var log = window.log('[ri/types/data]'),
     listeners = (0, key)('body.on');
+},{}],12:[function(require,module,exports){
+module.exports = function identity(d) {
+  return d
+}
 },{}],13:[function(require,module,exports){
 'use strict';
 
@@ -703,9 +703,9 @@ var render = function render(ripple) {
 
       var node = next(el);
 
-      return !node || !node.state ? undefined : features.map((0, key)('body')).map(function (d) {
+      return !node || !node.state ? undefined : (features.map((0, key)('body')).map(function (d) {
         return d.call(node.shadowRoot || node, node.state);
-      });
+      }), node);
     };
   };
 };
@@ -740,7 +740,7 @@ var parse = function parse(res) {
 };
 var log = window.log('[ri/types/fn]');
 var to = function to(res) {
-  return res.body = (0, str)(res.body), res;
+  return res.value = (0, str)(res.value), res;
 };
 },{}],16:[function(require,module,exports){
 'use strict';
@@ -748,7 +748,9 @@ var to = function to(res) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = helpers;/* istanbul ignore next */
+exports.default = helpers;
+
+/* istanbul ignore next */
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 // -------------------------------------------
@@ -779,9 +781,8 @@ var attach = function attach(next) {
 };
 
 var serialise = function serialise(next) {
-  return function (res, change) {
-    if (change) return next ? next.call(this, res, change) : true;
-    var helpers = res.headers.helpers;
+  return function (req) {
+    var helpers = req.headers.helpers;
 
     (0, keys)(helpers).filter(function (name) {
       return is.fn(helpers[name]);
@@ -789,12 +790,14 @@ var serialise = function serialise(next) {
       return helpers[name] = (0, str)(helpers[name]);
     });
 
-    return next ? next.call(this, res, change) : res;
+    return (next || identity)(req);
   };
 };
 
 var log = window.log('[ri/helpers]');
 },{}],17:[function(require,module,exports){
+arguments[4][12][0].apply(exports,arguments)
+},{"dup":12}],18:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = (function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; })();
@@ -853,7 +856,7 @@ var parse = function parse() {
 
 var log = window.log('[ri/needs]'),
     err = window.err('[ri/needs]');
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -896,13 +899,14 @@ var cache = function cache(ripple) {
 
 var log = window.log('[ri/offline]'),
     err = window.err('[ri/offline]');
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = precss;var _cssscope = require('cssscope');
+exports.default = precss;
+var _cssscope = require('cssscope');
 
 var _cssscope2 = _interopRequireDefault(_cssscope);
 
@@ -910,7 +914,7 @@ var _cssscope2 = _interopRequireDefault(_cssscope);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 // -------------------------------------------
-// API: Pre-applies Scoped CSS [css=name]
+// Pre-applies Scoped CSS [css=name]
 // -------------------------------------------
 function precss(ripple) {
   if (!true) return;
@@ -941,14 +945,16 @@ var render = function render(ripple) {
       if (css.some((0, not)(is.in(ripple.resources)))) return;
 
       // retrieve styles
-      styles = css.map((0, from)(ripple.resources)).map((0, key)('body')).map(shadow ? identity : transform(css));
+      styles = css.map((0, from)(ripple.resources)).map(function (d) {
+        return d.body;
+      }).map(shadow ? identity : transform(css));
 
       // reuse or create style tag
       css.map(function (d) {
         return (0, raw)('style[resource="' + d + '"]', shadow ? root : head) || (0, el)('style[resource=' + d + ']');
-      }).map((0, key)('innerHTML', function (d, i) {
-        return styles[i];
-      })).filter((0, not)((0, by)('parentNode'))).map(function (d) {
+      }).map(function (d, i) {
+        return d.innerHTML = styles[i], d;
+      }).filter((0, not)((0, by)('parentNode'))).map(function (d) {
         return shadow ? root.insertBefore(d, root.firstChild) : head.appendChild(d);
       });
 
@@ -972,7 +978,13 @@ var css = function css(ripple) {
 
 var log = window.log('[ri/precss]'),
     err = window.err('[ri/precss]');
-},{"cssscope":4}],20:[function(require,module,exports){
+},{"cssscope":3}],21:[function(require,module,exports){
+arguments[4][12][0].apply(exports,arguments)
+},{"dup":12}],22:[function(require,module,exports){
+arguments[4][12][0].apply(exports,arguments)
+},{"dup":12}],23:[function(require,module,exports){
+arguments[4][12][0].apply(exports,arguments)
+},{"dup":12}],24:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1020,7 +1032,7 @@ var retarget = function retarget(el) {
 
 var log = window.log('[ri/shadow]'),
     err = window.err('[ri/shadow]');
-},{}],21:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1040,17 +1052,13 @@ function singleton(ripple) {
 }
 
 var log = window.log('[ri/singleton]');
-},{}],22:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-
-/* istanbul ignore next */
-var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
-
-exports.default = sync;
+exports.default = sync;var _to = window.to;
 
 /* istanbul ignore next */
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -1062,138 +1070,141 @@ function sync(ripple, server) {
   log('creating');
 
 /* istanbul ignore next */
-  if (!true && !server) return;
+  if (!true && !server) return ripple;
 /* istanbul ignore next */
   if (!true) ripple.to = clean(ripple.to), (0, values)(ripple.types).map(function (type) {
     return type.parse = headers(ripple)(type.parse);
   });
 
-  ripple.stream = stream(ripple);
-  ripple.respond = respond(ripple);
   ripple.io = io(server);
-  ripple.on('change.stream', ripple.stream()); // both   - broadcast change to everyone
-  ripple.io.on('change', consume(ripple)); // true - receive change
-  ripple.io.on('response', response(ripple)); // true - receive response
-  ripple.io.on('connection', function (s) {
-    return s.on('change', consume(ripple));
-  }); // server - receive change
-  ripple.io.on('connection', function (s) {
-    return ripple.stream(s)();
-  }); // server - send all resources to new true
-  ripple.io.use(setIP);
+  ripple.io.use(ip);
+  ripple.req = send(ripple)(ripple);
+/* istanbul ignore next */
+  ripple.send = true ? send(ripple)(ripple.io) : send(ripple);
+  ripple.on('change.send', broadcast(ripple));
+  ripple.io.on('change', consume(ripple));
+  ripple.io.on('connection', connected(ripple));
   return ripple;
 }
 
-var respond = function respond(ripple) {
-  return function (socket, name, time) {
-    return function (reply) {
-      socket.emit('response', [name, time, reply]);
-    };
+var connected = function connected(ripple) {
+  return function (socket) {
+    log('connected'.green, (0, str)(socket.ip).grey);
+    socket.on('change', consume(ripple));
+    ripple.send(socket)();
   };
 };
 
-var response = function response(ripple) {
-  return function (_ref) {
+var broadcast = function broadcast(ripple) {
+  return function (name, change) {
 /* istanbul ignore next */
-    var _ref2 = _slicedToArray(_ref, 3);
-
-    var name = _ref2[0];
-    var time = _ref2[1];
-    var reply = _ref2[2];
-
-    ripple.resources[name].body.emit('response._' + time, reply);
+    (true ? ripple.send : ripple.send())((0, extend)({ name: name })(change));
   };
 };
 
-// send diff to all or some sockets
-var stream = function stream(ripple) {
-  return function (sockets) {
-    return function (name, change) {
-      if (!name) return (0, values)(ripple.resources).map(function (d) {
-        return stream(ripple)(sockets)(d.name);
-      });
+var normalize = function normalize(ripple) {
+  var next = arguments.length <= 1 || arguments[1] === undefined ? identity : arguments[1];
+  return function (name, type, value) {
+    var req = is.obj(name) ? name : { name: name, type: type, value: value },
+        resource = ripple.resources[req.name];
 
-/* istanbul ignore next */
-      var everyone = true ? [ripple.io] : (0, values)(ripple.io.of('/').sockets),
-          log = count(everyone.length, name),
-          res = ripple.resources[name],
-          send = to(ripple, res, change);
+    if (!req.name) return next((0, values)(ripple.resources).map(normalize(ripple)));
 
-      return !res ? log('no resource', name) : is.str(sockets) ? (log(everyone.filter((0, by)('sessionID', sockets)).map(send)), ripple) : !sockets ? (log(everyone.map(send)), ripple) : (log(send(sockets)), ripple);
+    if (!resource) return Promise.resolve([404, err('cannot find ' + req.name)]);
+
+    if (!req.type) req = {
+      name: req.name,
+      type: 'update',
+      headers: resource.headers,
+      value: resource.body,
+      time: now(resource)
     };
+
+    if (req.type == 'update' && !req.key) req.headers = resource.headers;
+
+    return next(req);
+  };
+};
+
+// send all or some req, to all or some sockets
+var send = function send(ripple) {
+  var l = arguments.length <= 1 || arguments[1] === undefined ? log : arguments[1];
+  return function (who) {
+    return normalize(ripple, function (req) {
+      var count = function count(sent) {
+        return (0, str)(sent.length).green.bold + '/' + (0, str)(everyone.length).green;
+      },
+          all = function all(d) {
+        return req.length && log('send'.grey, count(sockets), 'all'.bold, ('(' + req.length + ')').grey);
+      },
+/* istanbul ignore next */
+          everyone = true ? [ripple.io] : (0, values)(ripple.io.of('/').sockets),
+          sockets = is.arr(who) ? who : is.str(who) ? everyone.filter((0, by)('sessionID', who)) : !who ? everyone : [who],
+/* istanbul ignore next */
+          promises = is.arr(req) ? (all(), req.map(send(ripple, l = noop)(sockets))) : sockets.map(function (s) {
+        return to(ripple, req, s);
+      }).filter(Boolean);
+
+      if (promises.length) l('send'.grey, count(promises), req.name);
+      return Promise.all(promises);
+    });
   };
 };
 
 // outgoing transforms
-var to = function to(ripple, res, change) {
-  return function (socket) {
-    if ((0, header)('silent', socket)(res)) return delete res.headers.silent, false;
+var to = function to(ripple, req, socket, resource) {
+  if ((0, header)('silent', socket)(resource = ripple.resources[req.name])) return delete resource.headers.silent, false;
 
-    var xres = (0, header)('to')(res),
-        xtype = type(ripple)(res).to,
-        xall = ripple.to,
-        body,
-        rep,
-        out;
+  var nametype = '(' + req.name + ', ' + req.type + ')',
+      xres = (0, header)('to')(resource) || identity,
+      xtyp = type(ripple)(resource).to || identity,
+      xall = ripple.to || identity,
+      p = (0, promise)();
 
-    body = res.body;
-    if (xres) {
-      if (!(out = xres.call(socket, res, change))) return false;
-      if (out !== true) {
-        change = false, body = out;
-      }
-    }
+  req = (0, extend)({ socket: socket })(req);
+  if (!(req = xres(req))) return false;
+  if (!(req = xtyp(req))) return false;
+  if (!(req = xall(req))) return false;
+  delete req.socket;
 
-    rep = { name: res.name, body: body, headers: res.headers };
-    if (xtype) {
-      if (!(out = xtype.call(socket, rep, change))) return false;
-      if (out !== true) change = false, rep = out;
-    }
+  socket == ripple ? consume(ripple)(req, res) : socket.emit('change', req, res);
 
-    if (xall) {
-      if (!(out = xall.call(socket, rep, change))) return false;
-      if (out !== true) change = false, rep = out;
-    }
+  return p;
 
-    return socket.emit('change', change ? [res.name, change] : [res.name, false, rep]), true;
-  };
+  function res() {
+    deb('ack'.grey, nametype, (0, str)(socket.ip).grey);
+    p.resolve.call(ripple, (0, _to.arr)(arguments));
+  }
 };
 
 // incoming transforms
 var consume = function consume(ripple) {
-  return function (_ref3, ack) {
+  return function (req) {
 /* istanbul ignore next */
-    var _ref4 = _slicedToArray(_ref3, 3);
+    var res = arguments.length <= 1 || arguments[1] === undefined ? noop : arguments[1];
 
-    var name = _ref4[0];
-    var change = _ref4[1];
-    var _ref4$ = _ref4[2];
-    var req = _ref4$ === undefined ? {} : _ref4$;
+    var nametype = '(' + req.name + ', ' + req.type + ')',
+        resource = ripple.resources[req.name],
+        silent = silence(req.socket = this),
+        xres = (0, header)('from')(resource) || identity,
+        xtyp = type(ripple)(resource).from || identity,
+        xall = ripple.from || identity;
 
-    log('receiving', name);
-
-    var res = ripple.resources[name],
-        xall = ripple.from,
-        xtype = type(ripple)(res).from || type(ripple)(req).from // is latter needed?
-    ,
-        xres = (0, header)('from')(res),
-        next = (0, set)(change),
-        silent = silence(this),
-        respond = ack || ripple.respond(this, name, change.time);
-
-    return xall && !xall.call(this, req, change, respond) ? debug('skip all', name) // rejected - by xall
-    : xtype && !xtype.call(this, req, change, respond) ? debug('skip type', name) // rejected - by xtype
-    : xres && !xres.call(this, req, change, respond) ? debug('skip res', name) // rejected - by xres
-    : !change ? ripple(silent(req)) // accept - replace (new)
-    : !change.key ? ripple(silent({ name: name, body: change.value })) // accept - replace at root
-    : (silent(res), next(res.body)); // accept - deep change
+    log('recv'.grey, nametype);
+    try {
+      !req.name ? res(404, err('not found'.red, req.name)) : !(req = xall(req, res)) ? deb('skip', 'global', nametype) : !(req = xtyp(req, res)) ? deb('skip', 'type', nametype) : !(req = xres(req, res)) ? deb('skip', 'resource', nametype) : !req.key && req.type == 'update' ? (ripple(silent(body(req))), res(200, deb('ok ' + nametype))) : isStandardVerb(req.type) ? ((0, set)(req)(silent(resource).body), res(200, deb('ok ' + nametype, key.grey))) : !isStandardVerb(req.type) ? res(405, err('method not allowed', nametype)) : res(400, err('cannot process', nametype));
+    } catch (e) {
+      res(e.status || 500, err(e.message, nametype, '\n', e.stack));
+    }
   };
 };
 
-var count = function count(total, name) {
-  return function (tally) {
-    return debug((0, str)((is.arr(tally) ? tally : [1]).filter(Boolean).length).green.bold + '/' + (0, str)(total).green, 'sending', name);
-  };
+var body = function body(_ref) {
+  var name = _ref.name;
+  var _body = _ref.body;
+  var value = _ref.value;
+  var headers = _ref.headers;
+  return { name: name, headers: headers, body: value };
 };
 
 var headers = function headers(ripple) {
@@ -1217,26 +1228,23 @@ var io = function io(opts) {
   return r;
 };
 
-var setIP = function setIP(socket, next) {
+var ip = function ip(socket, next) {
   socket.ip = socket.request.headers['x-forwarded-for'] || socket.request.connection.remoteAddress;
   next();
 };
 
 var clean = function clean(next) {
-  return function (_ref5, change) {
-    var name = _ref5.name;
-    var body = _ref5.body;
-    var headers = _ref5.headers;
-
-    if (change) return next ? next.apply(this, arguments) : true;
+  return function (req, res) {
+    if (!req.headers || !req.headers.silent) return (next || identity)(req, res);
 
     var stripped = {};
 
-    (0, keys)(headers).filter((0, not)((0, is)('silent'))).map(function (header) {
-      return stripped[header] = headers[header];
+    (0, keys)(req.headers).filter((0, not)((0, is)('silent'))).map(function (header) {
+      return stripped[header] = req.headers[header];
     });
 
-    return (next || identity).apply(this, [{ name: name, body: body, headers: stripped }, change]);
+    req.headers = stripped;
+    return (next || identity)(req, res);
   };
 };
 
@@ -1245,16 +1253,20 @@ var type = function type(ripple) {
     return ripple.types[(0, header)('content-type')(res)] || {};
   };
 },
+    now = function now(d, t) {
+  return t = (0, key)('body.log.length')(d), is.num(t) ? t - 1 : t;
+},
     silence = function silence(socket) {
   return function (res) {
     return (0, key)('headers.silent', socket)(res);
   };
 },
+    isStandardVerb = is.in(['update', 'add', 'remove']),
     log = window.log('[ri/sync]'),
     err = window.err('[ri/sync]'),
 /* istanbul ignore next */
-    debug = noop;
-},{"socket.io":3,"socket.io-client":3}],23:[function(require,module,exports){
+    deb = (!true && {}.DEBUG || '').split(',').some((0, is)('[ri/sync]')) ? log : identity;
+},{"socket.io":1,"socket.io-client":1}],27:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1337,12 +1349,4 @@ var logged = function logged(res) {
 
 var log = window.log('[ri/versioned]'),
     err = window.err('[ri/versioned]');
-},{}],24:[function(require,module,exports){
-arguments[4][1][0].apply(exports,arguments)
-},{"dup":1}],25:[function(require,module,exports){
-arguments[4][1][0].apply(exports,arguments)
-},{"dup":1}],26:[function(require,module,exports){
-arguments[4][1][0].apply(exports,arguments)
-},{"dup":1}],27:[function(require,module,exports){
-arguments[4][1][0].apply(exports,arguments)
-},{"dup":1}]},{},[2]);
+},{}]},{},[2]);
