@@ -103,7 +103,7 @@ function create(opts) {
   (0, _rijs38.default)(ripple, opts); // enable external connections
   (0, _rijs4.default)(ripple); // invoke web components, fn.call(<el>, data)
   (0, _rijs26.default)(ripple); // define default attrs for components
-  (0, _rijs18.default)(ripple); // preapplies scoped css
+  (0, _rijs18.default)(ripple); // preapplies scoped css 
   (0, _rijs24.default)(ripple, opts); // serve client libraries
   (0, _rijs14.default)(ripple); // loads/saves from/to localstorage
   (0, _rijs28.default)(ripple, opts); // syncs resources between server/client
