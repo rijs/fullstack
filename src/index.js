@@ -7,11 +7,9 @@ import features from 'rijs.features'
 import offline from 'rijs.offline'
 import helpers from 'rijs.helpers'
 import precss from 'rijs.precss'
-import shadow from 'rijs.shadow'
 import resdir from 'rijs.resdir'
 import mysql from 'rijs.mysql'
 import serve from 'rijs.serve'
-import delay from 'rijs.delay'
 import needs from 'rijs.needs'
 import sync from 'rijs.sync'
 import core from 'rijs.core'
@@ -37,8 +35,6 @@ export default function create(opts){
   components(ripple)     // invoke web components, fn.call(<el>, data)
   needs(ripple)          // define default attrs for components
   precss(ripple)         // preapplies scoped css 
-  shadow(ripple)         // encapsulates with shadow dom or closes gap
-  delay(ripple)          // async rendering delay 
   serve(ripple, opts)    // serve client libraries
   offline(ripple)        // loads/saves from/to localstorage
   sync(ripple, opts)     // syncs resources between server/client
