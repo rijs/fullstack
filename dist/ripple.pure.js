@@ -1,8 +1,4 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-module.exports = function identity(d) {
-  return d
-}
-},{}],2:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -50,63 +46,53 @@ var _rijs19 = require('rijs.resdir');
 
 var _rijs20 = _interopRequireDefault(_rijs19);
 
-var _rijs21 = require('rijs.mysql');
+var _rijs21 = require('rijs.serve');
 
 var _rijs22 = _interopRequireDefault(_rijs21);
 
-var _rijs23 = require('rijs.serve');
+var _rijs23 = require('rijs.needs');
 
 var _rijs24 = _interopRequireDefault(_rijs23);
 
-var _rijs25 = require('rijs.needs');
+var _rijs25 = require('rijs.sync');
 
 var _rijs26 = _interopRequireDefault(_rijs25);
 
-var _rijs27 = require('rijs.sync');
+var _rijs27 = require('rijs.core');
 
 var _rijs28 = _interopRequireDefault(_rijs27);
 
-var _rijs29 = require('rijs.core');
+var _rijs29 = require('rijs.data');
 
 var _rijs30 = _interopRequireDefault(_rijs29);
 
-var _rijs31 = require('rijs.data');
+var _rijs31 = require('rijs.css');
 
 var _rijs32 = _interopRequireDefault(_rijs31);
 
-var _rijs33 = require('rijs.css');
+var _rijs33 = require('rijs.fn');
 
 var _rijs34 = _interopRequireDefault(_rijs33);
-
-var _rijs35 = require('rijs.fn');
-
-var _rijs36 = _interopRequireDefault(_rijs35);
-
-var _rijs37 = require('rijs.db');
-
-var _rijs38 = _interopRequireDefault(_rijs37);
 /* istanbul ignore next */
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 true && !window.ripple && create();
 
 function create(opts) {
-  var ripple = (0, _rijs30.default)(); // empty base collection of resources
+  var ripple = (0, _rijs28.default)(); // empty base collection of resources
 
   // enrich..
   (0, _rijs8.default)(ripple); // exposes a single instance
-  (0, _rijs32.default)(ripple); // register data types
-  (0, _rijs34.default)(ripple); // register css types
-  (0, _rijs36.default)(ripple); // register fn types
+  (0, _rijs30.default)(ripple); // register data types
+  (0, _rijs32.default)(ripple); // register css types
+  (0, _rijs34.default)(ripple); // register fn types
   (0, _rijs16.default)(ripple); // expose helper functions and constants
-  (0, _rijs22.default)(ripple); // adds mysql adaptor crud hooks
-  (0, _rijs38.default)(ripple, opts); // enable external connections
   (0, _rijs4.default)(ripple); // invoke web components, fn.call(<el>, data)
-  (0, _rijs26.default)(ripple); // define default attrs for components
+  (0, _rijs24.default)(ripple); // define default attrs for components
   (0, _rijs18.default)(ripple); // preapplies scoped css 
-  (0, _rijs24.default)(ripple, opts); // serve true libraries
+  (0, _rijs22.default)(ripple, opts); // serve true libraries
   (0, _rijs14.default)(ripple); // loads/saves from/to localstorage
-  (0, _rijs28.default)(ripple, opts); // syncs resources between server/true
+  (0, _rijs26.default)(ripple, opts); // syncs resources between server/true
   (0, _rijs2.default)(ripple); // restricts broadcast to trues based on need
   (0, _rijs12.default)(ripple); // extend components with features
   (0, _rijs6.default)(ripple); // versioning info and time travel
@@ -115,9 +101,9 @@ function create(opts) {
 
   return ripple;
 }
-},{"rijs.backpressure":5,"rijs.components":6,"rijs.core":9,"rijs.css":11,"rijs.data":12,"rijs.db":1,"rijs.features":13,"rijs.fn":14,"rijs.helpers":15,"rijs.mysql":22,"rijs.needs":16,"rijs.offline":17,"rijs.precss":18,"rijs.resdir":23,"rijs.serve":24,"rijs.sessions":25,"rijs.singleton":19,"rijs.sync":20,"rijs.versioned":21}],3:[function(require,module,exports){
+},{"rijs.backpressure":4,"rijs.components":5,"rijs.core":8,"rijs.css":10,"rijs.data":11,"rijs.features":12,"rijs.fn":13,"rijs.helpers":14,"rijs.needs":15,"rijs.offline":16,"rijs.precss":17,"rijs.resdir":21,"rijs.serve":22,"rijs.sessions":23,"rijs.singleton":18,"rijs.sync":19,"rijs.versioned":20}],2:[function(require,module,exports){
 
-},{}],4:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 module.exports = function scope(styles, prefix) {
   return styles
     .replace(/^(?!.*:host)([^@%\n]*){/gim, function($1){ return prefix+' '+$1 })       // ... {                 -> tag ... {
@@ -126,7 +112,7 @@ module.exports = function scope(styles, prefix) {
     .replace(/:host /gi, prefix + ' ')                                                 // :host ...             -> tag ...
     .replace(/^.*:host-context\((.*)\)/gim, function($1, $2){ return $2+' ' +prefix }) // ... :host-context(..) -> ... tag..
 }
-},{}],5:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -240,7 +226,7 @@ var loaded = function loaded(ripple) {
 
 var log = window.log('[ri/back]'),
     err = window.err('[ri/back]');
-},{}],6:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -347,7 +333,7 @@ var render = function render(ripple) {
     if (deps && !data) return el;
 
     try {
-      fn.call(root, defaults(el, data), index(el), root);
+      fn.call(root, root, defaults(el, data));
     } catch (e) {
       err(e, e.stack);
     }
@@ -401,7 +387,7 @@ var log = window.log('[ri/components]'),
     customs = true && !!document.registerElement,
     isAttached = customs ? 'html *, :host-context(html) *' : 'html *';
 true && (Element.prototype.matches = Element.prototype.matches || Element.prototype.msMatchesSelector);
-},{"./types/data":7,"./types/fn":8}],7:[function(require,module,exports){
+},{"./types/data":6,"./types/fn":7}],6:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -416,7 +402,7 @@ function data(ripple) {
     return (0, all)('[data~="' + res.name + '"]:not([inert])').map(ripple.draw);
   };
 }
-},{}],8:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -447,7 +433,7 @@ var customs = true && !!document.registerElement,
     customEl = function customEl(d) {
   return (0, includes)('-')(d.name);
 };
-},{}],9:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -548,7 +534,7 @@ var err = window.err('[ri/core]'),
     now = function now(d, t) {
   return t = (0, key)('body.log.length')(d), is.num(t) ? t - 1 : t;
 };
-},{"./types/text":10}],10:[function(require,module,exports){
+},{"./types/text":9}],9:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -562,7 +548,7 @@ exports.default = {
     return !(0, includes)('.html')(res.name) && !(0, includes)('.css')(res.name) && is.str(res.body);
   }
 };
-},{}],11:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -588,7 +574,7 @@ function css(ripple) {
 }
 
 var log = window.log('[ri/types/css]');
-},{}],12:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -635,7 +621,7 @@ var trickle = function trickle(ripple) {
 
 var log = window.log('[ri/types/data]'),
     listeners = (0, key)('body.on');
-},{}],13:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -667,14 +653,14 @@ var render = function render(ripple) {
       var node = next(el);
 
       return !node || !node.state ? undefined : (features.map((0, key)('body')).map(function (d) {
-        return d.call(node.shadowRoot || node, node.state);
+        return d.call(node.shadowRoot || node, node.shadowRoot || node, node.state);
       }), node);
     };
   };
 };
 
 var log = window.log('[ri/features]');
-},{}],14:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -705,7 +691,7 @@ var log = window.log('[ri/types/fn]');
 var to = function to(res) {
   return res.value = (0, str)(res.value), res;
 };
-},{}],15:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -745,9 +731,9 @@ var attach = function attach(next) {
 
 var serialise = function serialise(next) {
   return function (req) {
-    var helpers = req.headers.helpers;
+    if (!req.headers) return (next || identity)(req);
 
-    (0, keys)(helpers).filter(function (name) {
+    var helpers = req.headers.helpers;    (0, keys)(helpers).filter(function (name) {
       return is.fn(helpers[name]);
     }).map(function (name) {
       return helpers[name] = (0, str)(helpers[name]);
@@ -758,7 +744,7 @@ var serialise = function serialise(next) {
 };
 
 var log = window.log('[ri/helpers]');
-},{}],16:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = (function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; })();
@@ -817,7 +803,7 @@ var parse = function parse() {
 
 var log = window.log('[ri/needs]'),
     err = window.err('[ri/needs]');
-},{}],17:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -860,7 +846,7 @@ var cache = function cache(ripple) {
 
 var log = window.log('[ri/offline]'),
     err = window.err('[ri/offline]');
-},{}],18:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -939,7 +925,7 @@ var css = function css(ripple) {
 
 var log = window.log('[ri/precss]'),
     err = window.err('[ri/precss]');
-},{"cssscope":4}],19:[function(require,module,exports){
+},{"cssscope":3}],18:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -959,7 +945,7 @@ function singleton(ripple) {
 }
 
 var log = window.log('[ri/singleton]');
-},{}],20:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1007,7 +993,7 @@ var connected = function connected(ripple) {
 var broadcast = function broadcast(ripple) {
   return function (name, change) {
 /* istanbul ignore next */
-    (true ? ripple.send : ripple.send())((0, extend)({ name: name })(change));
+    (true ? ripple.send : ripple.send())((0, extend)({ name: name })(change || {}));
   };
 };
 
@@ -1133,7 +1119,7 @@ var headers = function headers(ripple) {
 
 var io = function io(opts) {
 /* istanbul ignore next */
-  var r = !true ? require('socket.io')(opts.server || opts) : window.io ? window.io() : is.fn(require('socket.io-client')) ? require('socket.io-client')() : { on: noop, emit: noop };
+  var r = !true ? require('socket.io')(opts.server || opts) : window.io ? window.io({ transports: ['websocket', 'polling'] }) : is.fn(require('socket.io-client')) ? require('socket.io-client')({ transports: ['websocket', 'polling'] }) : { on: noop, emit: noop };
 /* istanbul ignore next */
   r.use = r.use || noop;
   return r;
@@ -1187,7 +1173,7 @@ var type = function type(ripple) {
     log = window.log('[ri/sync]'),
     err = window.err('[ri/sync]'),
     deb = window.deb('[ri/sync]');
-},{"socket.io":3,"socket.io-client":3}],21:[function(require,module,exports){
+},{"socket.io":2,"socket.io-client":2}],20:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1270,12 +1256,12 @@ var logged = function logged(res) {
 
 var log = window.log('[ri/versioned]'),
     err = window.err('[ri/versioned]');
+},{}],21:[function(require,module,exports){
+module.exports = function identity(d) {
+  return d
+}
 },{}],22:[function(require,module,exports){
-arguments[4][1][0].apply(exports,arguments)
-},{"dup":1}],23:[function(require,module,exports){
-arguments[4][1][0].apply(exports,arguments)
-},{"dup":1}],24:[function(require,module,exports){
-arguments[4][1][0].apply(exports,arguments)
-},{"dup":1}],25:[function(require,module,exports){
-arguments[4][1][0].apply(exports,arguments)
-},{"dup":1}]},{},[2]);
+arguments[4][21][0].apply(exports,arguments)
+},{"dup":21}],23:[function(require,module,exports){
+arguments[4][21][0].apply(exports,arguments)
+},{"dup":21}]},{},[1]);
