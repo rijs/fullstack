@@ -8,7 +8,6 @@ import offline from 'rijs.offline'
 import helpers from 'rijs.helpers'
 import precss from 'rijs.precss'
 import resdir from 'rijs.resdir'
-import mysql from 'rijs.mysql'
 import serve from 'rijs.serve'
 import needs from 'rijs.needs'
 import sync from 'rijs.sync'
@@ -16,7 +15,6 @@ import core from 'rijs.core'
 import data from 'rijs.data'
 import css from 'rijs.css'
 import fn from 'rijs.fn'
-import db from 'rijs.db'
 import client from 'utilise/client'
 
 client && !window.ripple && create()
@@ -30,8 +28,6 @@ export default function create(opts){
   css(ripple)            // register css types
   fn(ripple)             // register fn types
   helpers(ripple)        // expose helper functions and constants
-  mysql(ripple)          // adds mysql adaptor crud hooks
-  db(ripple, opts)       // enable external connections
   components(ripple)     // invoke web components, fn.call(<el>, data)
   needs(ripple)          // define default attrs for components
   precss(ripple)         // preapplies scoped css 
