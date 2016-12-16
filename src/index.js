@@ -9,6 +9,7 @@ import helpers from 'rijs.helpers'
 import precss from 'rijs.precss'
 import resdir from 'rijs.resdir'
 import serve from 'rijs.serve'
+import pages from 'rijs.pages'
 import needs from 'rijs.needs'
 import sync from 'rijs.sync'
 import core from 'rijs.core'
@@ -33,10 +34,11 @@ function create(opts){
   components(ripple)     // invoke web components, fn.call(<el>, data)
   needs(ripple)          // define default attrs for components
   precss(ripple)         // preapplies scoped css 
-  serve(ripple, opts)    // serve client libraries
   offline(ripple)        // loads/saves from/to localstorage
-  sync(ripple, opts)     // syncs resources between server/client
+  sync(ripple, opts)     // syncs resources between server/client  
   backpressure(ripple)   // restricts broadcast to clients based on need
+  serve(ripple, opts)    // serve client libraries
+  pages(ripple, opts)    // serve pages directory 
   features(ripple)       // extend components with features
   versioned(ripple)      // versioning info and time travel
   sessions(ripple, opts) // populates sessionid on each connection
