@@ -19,7 +19,9 @@ import client from 'utilise/client'
 
 client && !window.ripple && create()
 
-export default function create(opts){
+module.exports = create
+
+function create(opts){
   var ripple = core()    // empty base collection of resources
  
   // enrich..
