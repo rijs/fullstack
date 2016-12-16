@@ -39,6 +39,7 @@
     "rijs.mysql": "*",
     "rijs.needs": "*",
     "rijs.offline": "*",
+    "rijs.pages": "*",
     "rijs.precss": "*",
     "rijs.prehtml": "*",
     "rijs.reactive": "*",
