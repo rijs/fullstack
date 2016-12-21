@@ -4,16 +4,12 @@ On the server:
 
 **`index.js`**
 ```js
-const app = require('express')()
-    , server = app.listen(3000)
-    , ripple = require('rijs')({ server })
-
-app.get('/*', (req, res) => res.sendFile(__dirname+'/index.html'))
+const ripple = require('rijs')({ dir: __dirname })
 ```
 
 On the client: 
 
-**`index.html`**
+**`pages/index.html`**
 ```html
 <script src="/ripple.js"></script>
 ```
@@ -24,9 +20,13 @@ Run it:
 $ node index.js
 ```
 
-That's it! **No boilerplate necessary, no build pipeline, no transpilation, no special CLI.** 
+This starts up a server on a random port and statically serves your `/pages` directory. You can also specify a `port` to always use, or pass an existing HTTP `server` (e.g. from express). 
 
 Clients will then just be streamed the fine-grained resources they are using (i.e. everything is lazy loaded, no bundling, no over-fetching). 
+
+Ripple keeps clients/servers in sync by replicating an immutable log of actions in the background, and subsequently the view - or other modules - which are reactively updated when the local store is updated.
+
+That's it! No boilerplate necessary, no build pipeline, no special transpilation, no magical CLI.
 
 &nbsp; 
 ## Components
