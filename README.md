@@ -100,7 +100,13 @@ export default function component(node, data){ ... }
     export default function shop({ stock }){ ... }
     ```
 
-    Declaring the data needed on a component is used to reactively rerender it when the data changes.
+    Declaring the data needed on a component is used to reactively rerender it when the data changes. 
+
+    Alternatively, you can use `ripple.pull` directly to retrieve a resource, which has similar semantics to [dynamic `import()`](https://github.com/tc39/proposal-dynamic-import) (i.e. resolves from local cache or returns a single promise):
+
+    ```js
+    const dependency = await pull('dependency')
+    ```
 
 * The other option is to explicitly pass down data to the component from the parent:
 
