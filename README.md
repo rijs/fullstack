@@ -235,11 +235,11 @@ resources
 │   ├── stock.js
 │   ├── order.js
 │   └── ...
-└── my-app
+├── my-app
 │   ├── my-app.js
 │   ├── my-app.css
 │   └── test.js
-└── another-component
+├── another-component
 │   ├── another-component.js
 │   ├── another-component.css
 │   └── test.js
