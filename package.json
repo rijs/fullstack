@@ -1,6 +1,6 @@
 {
   "name": "rijs",
-  "version": "0.7.0-rc2",
+  "version": "0.7.0",
   "main": "dist",
   "author": "Pedram Emrouznejad (https://github.com/pemrouz)",
   "license": "pemrouz.mit-license.org",
