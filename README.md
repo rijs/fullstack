@@ -28,6 +28,14 @@ Ripple keeps clients/servers in sync by replicating an immutable log of actions 
 
 That's it! No boilerplate necessary, no build pipeline, no special transpilation, no magical CLI.
 
+The basic API is:
+
+```js
+ripple(name)        // getter
+ripple(name, body)  // setter
+ripple.on('change', (name, change) => { .. })
+```
+
 &nbsp; 
 ## Components
 
