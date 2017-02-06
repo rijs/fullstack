@@ -996,9 +996,9 @@
       "resolved": "https://registry.npmjs.org/rijs.reactive/-/rijs.reactive-0.0.6.tgz"
     },
     "rijs.resdir": {
-      "version": "0.2.0",
-      "from": "rijs.resdir@*",
-      "resolved": "https://registry.npmjs.org/rijs.resdir/-/rijs.resdir-0.2.0.tgz"
+      "version": "0.2.1",
+      "from": "rijs.resdir@0.2.1",
+      "resolved": "https://registry.npmjs.org/rijs.resdir/-/rijs.resdir-0.2.1.tgz"
     },
     "rijs.serve": {
       "version": "0.7.0",
