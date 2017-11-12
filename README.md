@@ -275,6 +275,8 @@ ripple
   .resource(require('external-module-3'))
 ```
 
+You can also create resources that proxy to [fero](https://github.com/pemrouz/fero)) services too.
+
 &nbsp;
 ## Offline
 
@@ -320,18 +322,6 @@ export default {
 }
 ```
 
-### Helpers
-
-[This middleware](https://github.com/rijs/helpers#ripple--helpers) makes the specified helper functions available from the resource (hidden properties). This is useful to co-locate all logic for each resource in one place.
-
-```js
-export default {
-  name: 'stock'
-, body: {}
-, headers: { helpers: { addNewStock, removeStock }}
-} 
-```
-
 ### Shadow
 
 If supported by the browser, a shadow root will be created for each component. The component will render into the shadow DOM rather than the light DOM.
@@ -350,152 +340,36 @@ Other debugging tips:
 &nbsp;
 ## Sync
 
-Ripple uses declarative transformation functions to define the flow of data between server-client. All changes flow through these functions which may return a different representation. The concept is analogous to, but more generic than, "request-response" in HTTP. In request-response, you have to make a request to get a response. If you decouple this, consider that you could receive a response without a request, or make a request with multiple responses, or make a request that does not have a response.
-
-There are two proxy functions (`from` and `to`) which you can define in the headers section:
-
-```js
-ripple('tweets', [], { from, to })
-```
-
-#### **`to ({ key, value, type, socket })`**
-
-All outgoing changes will be passed through this first. This function is used to send a different representation to a client, if at all. 
-
-Returning `false` will not send the resource at all, useful for privatising some resources:
-
-```js
-to = req => false
-```
-
-Returning `true` will just continue with streaming the `change`. If you return anything else, it will stream that representation instead.
-
-For example, the following will collapse and just send the total number of tweets. Whenever there is a change to the `tweets` resource, a push will still be triggered to broadcast to all clients so they are still always up to date, but instead of transferring an array of all tweets, they will just get the total count representation now:
-
-```js
-to = req => (req.value = req.value.length, req)
-```
-
-You can vary representations based on authentication. Each socket has a `sessionID` which you could use to lookup whether that user has logged in or not, and send a different representation if so:
-
-```js
-to = req => users[req.socket.sessionID] ? req : filter(req)
-```
-
-#### **`from ({ key, value, type, socket }, res)`**
-
-All incoming changes will be passed through this first. This function is used to process a change before Ripple commits it in-memory and triggers a change notification. 
-
-Typically, you will want to check the `type` (method/verb) and then delegate to the appropiate function. For example, there may be different actions you want to take on a `user` resource:
+You can define a `from` function in the resource headers which will process requests from the client:
 
 ```js
 const from = (req, res) => 
-  req.type == 'register' ? register(req, res)
-: req.type == 'forgot'   ? forgot(req, res)
-: req.type == 'logout'   ? logout(req, res)
-: req.type == 'reset'    ? reset(req, res)
-: req.type == 'login'    ? login(req, res)
-                         : res(405, err('method not allowed', req.type))
-```
+  req.data.type == 'REGISTER' ? register(req, res)
+: req.data.type == 'FORGOT'   ? forgot(req, res)
+: req.data.type == 'LOGOUT'   ? logout(req, res)
+: req.data.type == 'RESET'    ? reset(req, res)
+: req.data.type == 'LOGIN'    ? login(req, res)
+                              : false
 
-Returning `false` will ignore the change:
-
-```js
-from = req => false
-```
-
-Ignore all type of changes, except adding new items:
-
-```js
-from = req => req.type != 'add'
-```
-
-You could choose to ignore whatever change the user made, and take another action instead (Ripple populates the `ip` property on all sockets). Manually updating another resource instead of returning `true` would also trigger a wave of updates to any interested clients/services:
-
-```js
-(..) => (push(socket.ip)(audit), false)` 
-```
-
-If a user successfully logins, you could force a refresh of _all_ resources for that user since they may now have access to more resources:
-
-```js
-(..) => login(username, password).then(d => ripple.send(socket)())` 
-```
-
-These declarative transformation functions have a very high power-to-weight ratio and the above examples are just a few illustrative examples.
-
-You can use the `res` function to reply directly to a request. You can reply with any arbitrary arguments. Conventionally, Ripple will set the first parameter to the (HTTP) status code and the message in the second. This happens for example when a resource is not found (`404`), a `type` has not been handled (`405`), or your custom handler threw an exception (`500`).
-
-&nbsp;
-## Request-Response
-
-The imperative API for sending all or some requests, to all or some clients is:
-
-```js
-const { send } = ripple
-
-send(sockets)(req) // server
-  .then(replies => ..)
-
-send(req)          // client
-  .then(replies => ..)
-```
-
-* `sockets`: could be one socket, an array of sockets, a `sessionID` string identifying some sockets, or nothing which would imply all connected sockets. On the client, you can only send to one socket (the server), so this is pre-bound (i.e. just `send(req)`). 
-
-* `req`: could be the request object you wish to send, the name of a resource to send, an array of either the previous two, or nothing which would imply sending all resources. The `req` object can have any shape, but typically it would look like: 
-
-```js
-send({ name, type, value })
-```
-
-For which you can use the shortcut:
-
-```js
-send(name, type, value)
-```
-
-This function returns a promise with all the replies.
-
-**Pro-tip:** If `sockets == ripple`, you can also send requests to the same node to reuse logic in the from handler for that resource and use this is in a redux like manner. This function is aliased as `ripple.req = ripple.send(ripple)`.
-
-```js
-const { req } = ripple
-
-req({ name: 'store', type: 'INCREMENT' })
-req('store', 'INCREMENT')
-  .then(..)
-  .catch(..)
-```
-
-&nbsp;
-## 7 Error Handling
-
-Your request handler can simply throw an error:
-
-```js
-// server
-function from(req, res) {
-  throw new Error('WTF!!')
+module.exports = { 
+  name: 'users'
+, body: {}
+, headers: { from } 
 }
 ```
 
-The error will be logged and then returned to the client where you can `catch` it.
+This can return a single value, a promise or a stream. On the client you make requests with `ripple.send(name, type, value)`. This returns an awaitable [stream](https://github.com/utilise/emitterify/#emitterify).
+
+You can also use the `.subscribe` API to subscribe to all or part of a resource. The key can be arbitrarily deep, and multiple keys will be merged into a single object. 
 
 ```js
-// client
-send(req)
-  .then()
-  .catch()
+ripple.subscribe(name, key)
+ripple.subscribe(name, [keys])
 ```
 
-By default the response status code is `500` and the message is the error message. You can customise the status code returned by also changing the `status` property on the error.
+Subscriptions are automatically deduplicated are ref-counted, so components can indepedently subscribe to the data they need without worrying about this.
 
-You can also respond directly instead of throwing:
-
-```js
-res(500, 'something went wrong!')
-```
+Note that you can also use `ripple.get` instead of subscribe if you just want to get a single value and then automatically unsubscribe.
 
 &nbsp;
 ## Ripple Minimal
