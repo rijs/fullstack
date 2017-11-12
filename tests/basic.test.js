@@ -42,7 +42,6 @@
 
   async function startup(){
     const ripple = require('..')({ port: 0 })
-    console.log("ripple.server.port", ripple.server.port)
     ripple.server.express.use((req, res) => res.send(`
       <script src="/ripple.js"></script>
     `))
