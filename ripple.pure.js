@@ -351,11 +351,13 @@ var render = function (ripple) { return function (next) { return function (el) {
       var name = ref[0];
       var values = ref[1];
  
-      return values.some(function (v, i) {
-        var from = attr(el, name) || '';
-        return includes(v)(from) ? false
-             : attr(el, name, (from + ' ' + v).trim())
-      }) 
+      return values
+        .map(function (v, i) {
+          var from = attr(el, name) || '';
+          return includes(v)(from) ? false
+               : attr(el, name, (from + ' ' + v).trim())
+        }) 
+        .some(Boolean)
     })
     .some(Boolean) ? el.draw() : next(el)
 }; }; };
@@ -1144,33 +1146,40 @@ var djb = function (str) {
 };
 });
 
+var rijs_fn = createCommonjsModule(function (module) {
 // -------------------------------------------
 // Adds support for function resources
 // -------------------------------------------
-var rijs_fn = function fnc(ripple){
-  log$3('creating');
+module.exports = function fnc(ripple){
+  log('creating');
   ripple.types['application/javascript'] = { 
     selector: selector
   , extract: extract
-  , header: header$2
+  , header: header
   , check: check
-  , parse: parse$1
+  , parse: parse
   };
   return ripple
 };
 
-var selector = function (res) { return ((res.name) + ",[is~=\"" + (res.name) + "\"]"); };
-var extract = function (el) { return (attr$1('is')(el) || '').split(' ').concat(lo(el.nodeName)); };
-var header$2 = 'application/javascript';
-var check = function (res) { return is$2.fn(res.body); };
-var parse$1 = function (res) { return (res.body = fn$1(res.body), res); };
-var log$3   = window.log('[ri/types/fn]');
+var selector = function (res) { return ((res.name) + ",[is~=\"" + (res.name) + "\"]"); }
+    , extract = function (el) { return (attr('is')(el) || '').split(' ').concat(lo(el.nodeName)); }
+    , header = 'application/javascript'
+    , check = function (res) { return is.fn(res.body); }
+    , log   = window.log('[ri/types/fn]')
+    , parse = function (res) { 
+        res.body = fn(res.body);
+        key('headers.transpile.limit', 25)(res);
+        return res
+      };
   
-var attr$1 = window.attr;
-var str$1 = window.str;
-var is$2 = window.is;
-var lo = window.lo;
-var fn$1 = window.fn;
+var attr = window.attr
+    , key = window.key
+    , str = window.str
+    , is = window.is
+    , lo = window.lo
+    , fn = window.fn;
+});
 
 var client = true;
 

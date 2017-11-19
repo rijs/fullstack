@@ -44,11 +44,11 @@
     "rijs.singleton": "*",
     "rijs.sync": "*",
     "rijs.versioned": "*",
-    "utilise": "*"
+    "utilise": "^2.1.6"
   },
   "devDependencies": {
     "puppeteer": "^0.13.0",
-    "rollup": "*",
+    "rollup": "^0.51.7",
     "rollup-plugin-buble": "^0.16.0",
     "rollup-plugin-commonjs": "^8.2.6",
     "rollup-plugin-node-resolve": "^3.0.0",

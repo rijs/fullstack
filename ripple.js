@@ -48,8 +48,7 @@ function isObject(d) {
 }
 
 function isLiteral(d) {
-  return typeof d == 'object' 
-      && !(d instanceof Array)
+  return d.constructor == Object
 }
 
 function isTruthy(d) {
@@ -674,11 +673,13 @@ var render = function (ripple) { return function (next) { return function (el) {
       var name = ref[0];
       var values = ref[1];
  
-      return values.some(function (v, i) {
-        var from = attr(el, name) || '';
-        return includes(v)(from) ? false
-             : attr(el, name, (from + ' ' + v).trim())
-      }) 
+      return values
+        .map(function (v, i) {
+          var from = attr(el, name) || '';
+          return includes(v)(from) ? false
+               : attr(el, name, (from + ' ' + v).trim())
+        }) 
+        .some(Boolean)
     })
     .some(Boolean) ? el.draw() : next(el)
 }; }; };
@@ -862,18 +863,21 @@ var emitterify = function emitterify(body) {
       return remove(o.li, fn), o
     };
 
-    o[Symbol.asyncIterator] = function(){ return { 
-      next: function () { return (o.wait = new Promise(function (resolve) {
-        o.wait = true;
-        o.map(function (d, i, n) {
-          delete o.wait;
-          o.off(n);
-          resolve({ value: d, done: false });
-        });
-
-        o.emit('pull', o);
-      })); }
-    }};
+    o[Symbol.asyncIterator] = function(){ 
+      return { 
+        next: function(){ 
+          return o.wait = new Promise(function(resolve){
+            o.wait = true;
+            o.map(function(d, i, n){
+              delete o.wait;
+              o.off(n);
+              resolve({ value: d, done: false });
+            });
+            o.emit('pull', o);
+          })
+        }
+      }
+    };
 
     return o
   }
@@ -1715,27 +1719,33 @@ var djb = function (str) {
 };
 });
 
+var rijs_fn = createCommonjsModule(function (module) {
 // -------------------------------------------
 // Adds support for function resources
 // -------------------------------------------
-var rijs_fn = function fnc(ripple){
-  log$5('creating');
+module.exports = function fnc(ripple){
+  log$$2('creating');
   ripple.types['application/javascript'] = { 
     selector: selector
   , extract: extract
-  , header: header$3
+  , header: header
   , check: check
-  , parse: parse$4
+  , parse: parse
   };
   return ripple
 };
 
-var selector = function (res) { return ((res.name) + ",[is~=\"" + (res.name) + "\"]"); };
-var extract = function (el) { return (attr('is')(el) || '').split(' ').concat(lo(el.nodeName)); };
-var header$3 = 'application/javascript';
-var check = function (res) { return is_1.fn(res.body); };
-var parse$4 = function (res) { return (res.body = fn(res.body), res); };
-var log$5   = log('[ri/types/fn]');
+var selector = function (res) { return ((res.name) + ",[is~=\"" + (res.name) + "\"]"); }
+    , extract = function (el) { return (attr('is')(el) || '').split(' ').concat(lo(el.nodeName)); }
+    , header = 'application/javascript'
+    , check = function (res) { return is_1.fn(res.body); }
+    , log$$2   = log('[ri/types/fn]')
+    , parse = function (res) { 
+        res.body = fn(res.body);
+        key('headers.transpile.limit', 25)(res);
+        return res
+      };
+});
 
 client && !window.ripple && create();
 
