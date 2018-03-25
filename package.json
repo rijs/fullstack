@@ -1,6 +1,6 @@
 {
   "name": "rijs",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "main": ".",
   "author": "Pedram Emrouznejad (https://github.com/pemrouz)",
   "license": "pemrouz.mit-license.org",
@@ -8,21 +8,13 @@
     "type": "git",
     "url": "git://github.com/rijs/fullstack.git"
   },
-  "browser": {
-    "rijs.pages": "./node_modules/utilise/identity.js",
-    "rijs.sessions": "./node_modules/utilise/identity.js",
-    "rijs.resdir": "./node_modules/utilise/identity.js",
-    "rijs.serve": "./node_modules/utilise/identity.js",
-    "rijs.npm": "./node_modules/utilise/identity.js"
-  },
   "scripts": {
-    "build": "npm run clean && npm run rollup && npm run minify && npm run gzip",
-    "clean": "rm -rf ./ripple.* ",
-    "rollup": "rollup -c && rollup -c rollup.pure.config.js",
-    "minify": "uglifyjs ripple.js -m -c keep_fargs=false > ripple.min.js && npm run minify:pure",
-    "minify:pure": "uglifyjs ripple.pure.js -m -c keep_fargs=false > ripple.pure.min.js",
-    "gzip": "gzip -c ripple.min.js > ripple.min.js.gz && npm run gzip:pure",
-    "gzip:pure": "gzip -c ripple.pure.min.js > ripple.pure.min.js.gz",
+    "clean": "rm -rf ./client/ripple.*",
+    "build": "npm run clean && npm run client && npm run rollup && npm run minify && npm run gzip",
+    "client": "uglifyjs index.js -b -d client=true -c > ./client/ripple.js",
+    "rollup": "rollup -c",
+    "minify": "uglifyjs ./client/ripple.bundle.js -m -c keep_fargs=false > ./client/ripple.min.js",
+    "gzip": "gzip -c ./client/ripple.min.js > ./client/ripple.min.js.gz",
     "version": "npm run build && git add -A",
     "postversion": "git push && git push --tags",
     "test": "tap ./tests/*.js"
@@ -32,27 +24,24 @@
     "rijs.core": "*",
     "rijs.css": "*",
     "rijs.data": "*",
-    "rijs.features": "*",
     "rijs.fn": "*",
-    "rijs.needs": "*",
-    "rijs.offline": "*",
     "rijs.pages": "*",
-    "rijs.precss": "*",
     "rijs.resdir": "*",
     "rijs.serve": "*",
     "rijs.sessions": "*",
     "rijs.singleton": "*",
-    "rijs.sync": "^2.1.5",
-    "rijs.versioned": "*",
-    "utilise": "^2.1.6"
+    "rijs.sync": "*",
+    "utilise": "*"
   },
   "devDependencies": {
-    "puppeteer": "^0.13.0",
-    "rollup": "^0.51.8",
-    "rollup-plugin-buble": "^0.16.0",
-    "rollup-plugin-commonjs": "^8.2.6",
-    "rollup-plugin-node-resolve": "^3.0.0",
+    "puppeteer": "^1.0.0",
+    "rollup": "*",
+    "rollup-plugin-async": "*",
+    "rollup-plugin-buble": "*",
+    "rollup-plugin-nodent": "*",
+    "rollup-plugin-commonjs": "*",
+    "rollup-plugin-node-resolve": "*",
     "tap": "^10.7.3",
-    "uglify-es": "^3.1.10"
+    "uglify-es": "^3.3.10"
   }
 }

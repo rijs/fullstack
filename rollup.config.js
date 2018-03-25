@@ -1,17 +1,24 @@
-import buble from 'rollup-plugin-buble'
-import commonjs from 'rollup-plugin-commonjs';
 import nodeResolve from 'rollup-plugin-node-resolve';
+import commonjs from 'rollup-plugin-commonjs';
+import async from 'rollup-plugin-async';
+import buble from 'rollup-plugin-buble'
 
 export default {
-  entry: 'index.js'
-, dest: 'ripple.js'
-, format: 'iife'
-, moduleName: 'rijs'
+  input: 'client/ripple.js'
+, output: { 
+    file: 'client/ripple.bundle.js' 
+  , format: 'iife'
+  } 
+, name: 'rijs'
 , plugins: [
     nodeResolve({ browser: true })
-  , commonjs({
-      ignoreGlobal: true
+  , commonjs({ ignoreGlobal: true })
+  , async()
+  , buble({ 
+      transforms: { 
+        generator: false
+      , classes: false 
+      }
     })
-  , buble()
   ]
 }

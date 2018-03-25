@@ -4,10 +4,12 @@ import replace from 'rollup-plugin-replace'
 import buble from 'rollup-plugin-buble'
 
 export default {
-  entry: 'index.js'
-, dest: 'ripple.pure.js'
-, format: 'iife'
-, moduleName: 'rijs'
+  input: 'index.js'
+, output: {
+    file: 'ripple.pure.js'
+  , format: 'iife'
+  }
+, name: 'rijs'
 , plugins: [
     replace({
       delimiters: ['','']
@@ -52,12 +54,15 @@ export default {
       , "require('utilise/za')": "window.za"
       , "require('utilise/owner')": "window"
       , "require('utilise/client')": "true"
+
+      , "require('rijs.sessions')": "d => d"
+      , "require('rijs.resdir')": "d => d"
+      , "require('rijs.pages')": "d => d"
+      , "require('rijs.serve')": "d => d"
       }
     })
   , nodeResolve({ browser: true })
-  , commonjs({
-      ignoreGlobal: true
-    })
+  , commonjs({ ignoreGlobal: true })
   , buble()
   ]
 }

@@ -1,49 +1,53 @@
 (async () => {
   const puppeteer = require('puppeteer')
       , browser = await puppeteer.launch({ headless: process.env.HEADLESS !== 'false' })
-      , { emitterify, file, update, keys, delay } = require('utilise/pure')
-      , { test } = require('tap')
-      
-  await test('define, use component on page with stylesheet, hot reload', async ({ plan, same }) => {
+      , { test } = require('tap')    
+
+  await test('define, use component on page, with stylesheet, hot reload', async ({ plan, same }) => {
+    plan(2)
     const { ripple, page } = await startup()
 
     // register component and css
     ripple
-      .resource('x-foo', node => (node.innerHTML = 'bar'), { needs: '[css]' })
-      .resource('x-foo.css', ':host { color: red }')
+      .resource('web-component', node => node.innerHTML = 'foo')
 
     // append to page
     await page.evaluate(() => {
-      foo = document.createElement('x-foo')
+      foo = document.createElement('web-component')
       document.body.appendChild(foo)
-      foo.draw()
+      foo.render()
     })
 
     // check rendered
-    await page.waitFor('x-foo[css="x-foo.css"]')
-    await page.waitFor(() => 
-       document.body.firstChild.innerHTML == 'bar'
-    && window.getComputedStyle(foo).color == 'rgb(255, 0, 0)'
-    )
-    
-    // register new version of component
-    ripple('x-foo', node => (node.innerHTML = 'boo'))
-    await page.waitFor(() => document.body.firstChild.innerHTML == 'bar')
+    await page.waitFor('web-component')
+    same('foo', await page.evaluate(() => foo.innerHTML))
 
-    // register new version of css
-    ripple('x-foo.css', ':host { color: green }')
-    await page.waitFor(() => window.getComputedStyle(foo).color == 'rgb(0, 128, 0)')
+    // register new version of component
+    ripple('web-component', node => node.innerHTML = 'boo')
+    same('boo', await page.evaluate(() => foo.innerHTML))
 
     await page.close()
-    await browser.close()
   })
 
+  await test('auto load components, with dependencies', async ({ plan, same }) => {
+    plan(1)
+    const { ripple, page } = await startup(`<auto-loaded-component id="component"></auto-loaded-component>`)
+
+    // check rendered
+    await page.waitFor(() => component.innerHTML == 'foo')
+    same(['./resources/utils/foo.js', 'auto-loaded-component'], await page.evaluate(() => Object.keys(ripple.resources)))
+    
+    await page.close()
+  })
+
+  await browser.close()
   process.exit(0)
 
-  async function startup(){
-    const ripple = require('..')({ port: 0 })
+  async function startup(body = ''){
+    const ripple = require('..')({ port: 0, dir: __dirname })
     ripple.server.express.use((req, res) => res.send(`
-      <script src="/ripple.js"></script>
+      <script src="/ripple.min.js"></script>
+      <body>${body}</body> 
     `))
 
     await ripple.server.once('listening')
