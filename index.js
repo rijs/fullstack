@@ -1,5 +1,5 @@
 const client = require('utilise/client')
-
+    
 if (client) !window.ripple && create()
 
 module.exports = create
@@ -14,7 +14,9 @@ function create(opts){
   require('rijs.components')(ripple, opts)
 
   if (!client) {
-    opts.serve = require('path').resolve(__dirname, 'client')
+    const { dirname, resolve } = require('path')
+    opts.dir = opts.dir || dirname(module.parent.filename)
+    opts.serve = resolve(__dirname, 'client')
     require('rijs.sessions')(ripple, opts)
     require('rijs.serve')(ripple, opts)
     require('rijs.pages')(ripple, opts)
