@@ -34,13 +34,13 @@
     "utilise": "*"
   },
   "devDependencies": {
-    "puppeteer": "^1.0.0",
-    "rollup": "*",
+    "puppeteer": "^1.3.0",
+    "rollup": "^0.58.0",
     "rollup-plugin-async": "*",
     "rollup-plugin-buble": "*",
-    "rollup-plugin-nodent": "*",
     "rollup-plugin-commonjs": "*",
     "rollup-plugin-node-resolve": "*",
+    "rollup-plugin-nodent": "*",
     "tap": "^10.7.3",
     "uglify-es": "^3.3.10"
   }
